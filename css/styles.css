@@ -2310,3 +2310,32 @@ tr:hover td {
 ::-webkit-scrollbar-thumb:hover {
     background: var(--text-light);
 }
+
+/* ==========================================================================
+   Banner Institucional UGR - CLM
+   ========================================================================== */
+
+.institutional-banner {
+    width: 100%;
+    background: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.institutional-banner img {
+    width: 100%;
+    max-width: 1200px;
+    height: auto;
+    display: block;
+}
+
+/* Responsive para el banner */
+@media (max-width: 768px) {
+    .institutional-banner img {
+        max-width: 100%;
+        padding: 0 0.5rem;
+    }
+}
+
