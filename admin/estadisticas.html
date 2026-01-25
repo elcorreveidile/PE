@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estadisticas | Panel de Administracion</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        .admin-header { background: linear-gradient(135deg, #c53030, #9b2c2c); }
+        .admin-badge { background: #c53030; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; margin-left: 0.5rem; }
+        .stat-card { text-align: center; padding: 2rem; }
+        .stat-value { font-size: 3rem; font-weight: 700; line-height: 1; }
+        .stat-label { color: var(--text-secondary); margin-top: 0.5rem; }
+        .chart-bar { height: 20px; background: var(--primary-light); border-radius: 4px; margin: 0.5rem 0; transition: width 0.5s ease; }
+        .chart-row { display: flex; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color); }
+        .chart-label { width: 120px; font-size: 0.875rem; }
+        .chart-container { flex: 1; margin: 0 1rem; }
+        .chart-value { width: 60px; text-align: right; font-weight: 600; }
+        .ranking-item { display: flex; align-items: center; padding: 1rem; border-bottom: 1px solid var(--border-color); }
+        .ranking-position { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; margin-right: 1rem; }
+        .ranking-1 { background: #ffd700; color: #000; }
+        .ranking-2 { background: #c0c0c0; color: #000; }
+        .ranking-3 { background: #cd7f32; color: #fff; }
+        .ranking-other { background: var(--bg-light); color: var(--text-secondary); }
+    </style>
+</head>
+<body>
+    <header class="header admin-header">
+        <div class="header-main">
+            <div class="container">
+                <a href="../index.html" class="logo">
+                    <div class="logo-icon">C2</div>
+                    <div class="logo-text">
+                        <span class="logo-title">Panel de Administracion <span class="admin-badge">ADMIN</span></span>
+                        <span class="logo-subtitle">CLM - UGR</span>
+                    </div>
+                </a>
+                <nav class="nav-main"><a href="../index.html">Ver curso</a><a href="../sesiones/index.html">Sesiones</a></nav>
+                <div class="nav-auth"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="section">
+        <div class="container">
+            <div class="page-with-sidebar">
+                <aside class="sidebar">
+                    <div class="sidebar-section">
+                        <h4 class="sidebar-title">Administracion</h4>
+                        <ul class="sidebar-nav">
+                            <li><a href="index.html">Panel principal</a></li>
+                            <li><a href="estudiantes.html">Estudiantes</a></li>
+                            <li><a href="correcciones.html">Correcciones</a></li>
+                            <li><a href="tareas.html">Gestion de tareas</a></li>
+                            <li><a href="estadisticas.html" class="active">Estadisticas</a></li>
+                        </ul>
+                    </div>
+                    <div class="sidebar-section">
+                        <button onclick="PE.Auth.logout()" class="btn btn-outline btn-block">Cerrar sesion</button>
+                    </div>
+                </aside>
+
+                <div class="main-content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-xl);">
+                        <div>
+                            <h1 style="margin-bottom: 0.25rem;">Estadisticas del curso</h1>
+                            <p class="text-secondary mb-0">Metricas y analisis del progreso general</p>
+                        </div>
+                        <button class="btn btn-outline" onclick="exportStats()">Exportar informe</button>
+                    </div>
+
+                    <!-- Estadisticas principales -->
+                    <div class="sessions-grid mb-4" style="grid-template-columns: repeat(4, 1fr);">
+                        <div class="card stat-card">
+                            <span class="stat-value text-primary" id="stat-students">0</span>
+                            <p class="stat-label">Estudiantes matriculados</p>
+                        </div>
+                        <div class="card stat-card">
+                            <span class="stat-value" style="color: var(--success-color);" id="stat-submissions">0</span>
+                            <p class="stat-label">Total de entregas</p>
+                        </div>
+                        <div class="card stat-card">
+                            <span class="stat-value" style="color: var(--accent-color);" id="stat-words">0</span>
+                            <p class="stat-label">Palabras escritas</p>
+                        </div>
+                        <div class="card stat-card">
+                            <span class="stat-value text-primary" id="stat-avg">0</span>
+                            <p class="stat-label">Media palabras/entrega</p>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-lg);">
+                        <!-- Progreso del curso -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Progreso del curso</h3>
+                            </div>
+                            <div class="card-body">
+                                <div style="text-align: center; margin-bottom: 2rem;">
+                                    <div style="font-size: 4rem; font-weight: 700; color: var(--primary-color);" id="course-progress">0%</div>
+                                    <p class="text-secondary">del curso completado</p>
+                                </div>
+                                <div>
+                                    <div class="chart-row">
+                                        <span class="chart-label">Sesiones</span>
+                                        <div class="chart-container">
+                                            <div class="chart-bar" id="bar-sessions" style="width: 0%;"></div>
+                                        </div>
+                                        <span class="chart-value" id="val-sessions">0/32</span>
+                                    </div>
+                                    <div class="chart-row">
+                                        <span class="chart-label">Temas</span>
+                                        <div class="chart-container">
+                                            <div class="chart-bar" id="bar-themes" style="width: 0%; background: var(--success-color);"></div>
+                                        </div>
+                                        <span class="chart-value" id="val-themes">0/14</span>
+                                    </div>
+                                    <div class="chart-row">
+                                        <span class="chart-label">Talleres</span>
+                                        <div class="chart-container">
+                                            <div class="chart-bar" id="bar-workshops" style="width: 0%; background: var(--accent-color);"></div>
+                                        </div>
+                                        <span class="chart-value" id="val-workshops">0/4</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Estado de correcciones -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Estado de correcciones</h3>
+                            </div>
+                            <div class="card-body">
+                                <div style="display: flex; justify-content: center; gap: 3rem; margin-bottom: 2rem;">
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 3rem; font-weight: 700; color: var(--success-color);" id="stat-reviewed">0</div>
+                                        <p class="text-secondary">Corregidas</p>
+                                    </div>
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 3rem; font-weight: 700; color: var(--warning-color);" id="stat-pending">0</div>
+                                        <p class="text-secondary">Pendientes</p>
+                                    </div>
+                                </div>
+                                <div class="progress" style="height: 30px; border-radius: 15px;">
+                                    <div class="progress-bar" id="progress-reviewed" style="width: 0%; background: var(--success-color);"></div>
+                                </div>
+                                <p class="text-secondary text-center mt-2" id="correction-rate">0% de entregas corregidas</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Entregas por sesion -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h3 class="card-title">Entregas por sesion</h3>
+                        </div>
+                        <div class="card-body" id="sessions-chart">
+                            <div class="loader"></div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-lg); margin-top: var(--spacing-lg);">
+                        <!-- Ranking de estudiantes -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Estudiantes mas activos</h3>
+                            </div>
+                            <div class="card-body" id="student-ranking">
+                                <div class="loader"></div>
+                            </div>
+                        </div>
+
+                        <!-- Distribucion por nivel -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Distribucion por nivel</h3>
+                            </div>
+                            <div class="card-body" id="level-distribution">
+                                <div class="loader"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom" style="border:none;padding-top:0;">
+                <span>&copy; 2026 Javier Benitez Lainez | CLM - UGR</span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = PE.Auth.getCurrentUser();
+            if (!user || user.role !== 'admin') {
+                const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+                window.location.href = basePath + '/auth/login.html';
+                return;
+            }
+
+            const users = JSON.parse(localStorage.getItem('pe_c2_users') || '[]');
+            const students = users.filter(u => u.role !== 'admin');
+            const submissions = PE.Submissions.getAll();
+            const sessions = PE.CourseData.sessions;
+            const progress = PE.CourseData.getCourseProgress();
+
+            const reviewed = submissions.filter(s => s.status === 'reviewed');
+            const pending = submissions.filter(s => s.status === 'pending');
+            const totalWords = submissions.reduce((sum, s) => sum + (s.wordCount || 0), 0);
+            const avgWords = submissions.length > 0 ? Math.round(totalWords / submissions.length) : 0;
+
+            // Estadisticas principales
+            document.getElementById('stat-students').textContent = students.length;
+            document.getElementById('stat-submissions').textContent = submissions.length;
+            document.getElementById('stat-words').textContent = totalWords.toLocaleString('es-ES');
+            document.getElementById('stat-avg').textContent = avgWords;
+
+            // Progreso del curso
+            document.getElementById('course-progress').textContent = progress.percentage + '%';
+            document.getElementById('bar-sessions').style.width = progress.percentage + '%';
+            document.getElementById('val-sessions').textContent = progress.completed + '/32';
+
+            const themesCompleted = Math.floor(progress.completed / 2);
+            document.getElementById('bar-themes').style.width = Math.round(themesCompleted / 14 * 100) + '%';
+            document.getElementById('val-themes').textContent = themesCompleted + '/14';
+
+            const workshopsCompleted = sessions.filter(s => s.workshop && new Date(s.date) < new Date()).length;
+            document.getElementById('bar-workshops').style.width = Math.round(workshopsCompleted / 4 * 100) + '%';
+            document.getElementById('val-workshops').textContent = workshopsCompleted + '/4';
+
+            // Estado de correcciones
+            document.getElementById('stat-reviewed').textContent = reviewed.length;
+            document.getElementById('stat-pending').textContent = pending.length;
+            const correctionRate = submissions.length > 0 ? Math.round(reviewed.length / submissions.length * 100) : 0;
+            document.getElementById('progress-reviewed').style.width = correctionRate + '%';
+            document.getElementById('correction-rate').textContent = correctionRate + '% de entregas corregidas';
+
+            // Entregas por sesion
+            const maxSubmissions = Math.max(...sessions.map(s => submissions.filter(sub => sub.sessionId == s.id).length), 1);
+            document.getElementById('sessions-chart').innerHTML = sessions.slice(0, 16).map(session => {
+                const count = submissions.filter(s => s.sessionId == session.id).length;
+                const width = (count / maxSubmissions) * 100;
+                return `
+                    <div class="chart-row">
+                        <span class="chart-label">S${session.id}</span>
+                        <div class="chart-container">
+                            <div class="chart-bar" style="width: ${width}%;"></div>
+                        </div>
+                        <span class="chart-value">${count}</span>
+                    </div>
+                `;
+            }).join('');
+
+            // Ranking de estudiantes
+            const studentStats = students.map(s => ({
+                ...s,
+                submissions: submissions.filter(sub => sub.userId === s.id).length,
+                words: submissions.filter(sub => sub.userId === s.id).reduce((sum, sub) => sum + (sub.wordCount || 0), 0)
+            })).sort((a, b) => b.submissions - a.submissions);
+
+            if (studentStats.length === 0) {
+                document.getElementById('student-ranking').innerHTML = '<p class="text-secondary text-center">No hay estudiantes registrados.</p>';
+            } else {
+                document.getElementById('student-ranking').innerHTML = studentStats.slice(0, 5).map((s, i) => `
+                    <div class="ranking-item">
+                        <div class="ranking-position ${i < 3 ? 'ranking-' + (i + 1) : 'ranking-other'}">${i + 1}</div>
+                        <div style="flex: 1;">
+                            <strong>${PE.Utils.escapeHtml(s.name)}</strong>
+                            <p class="text-secondary mb-0" style="font-size: 0.8rem;">${s.words.toLocaleString('es-ES')} palabras</p>
+                        </div>
+                        <div class="badge badge-primary">${s.submissions} entregas</div>
+                    </div>
+                `).join('');
+            }
+
+            // Distribucion por nivel
+            const levels = { 'B2': 0, 'C1': 0, 'C2': 0 };
+            students.forEach(s => {
+                const level = s.level || 'C2';
+                if (levels.hasOwnProperty(level)) levels[level]++;
+            });
+
+            const totalStudents = students.length || 1;
+            document.getElementById('level-distribution').innerHTML = Object.entries(levels).map(([level, count]) => {
+                const percentage = Math.round(count / totalStudents * 100);
+                return `
+                    <div class="chart-row">
+                        <span class="chart-label"><strong>${level}</strong></span>
+                        <div class="chart-container">
+                            <div class="chart-bar" style="width: ${percentage}%; background: ${level === 'C2' ? 'var(--primary-color)' : level === 'C1' ? 'var(--success-color)' : 'var(--accent-color)'};"></div>
+                        </div>
+                        <span class="chart-value">${count} (${percentage}%)</span>
+                    </div>
+                `;
+            }).join('');
+        });
+
+        function exportStats() {
+            const users = JSON.parse(localStorage.getItem('pe_c2_users') || '[]');
+            const students = users.filter(u => u.role !== 'admin');
+            const submissions = PE.Submissions.getAll();
+            const progress = PE.CourseData.getCourseProgress();
+
+            const report = {
+                fecha: new Date().toISOString(),
+                curso: 'Produccion Escrita C2 - CLM UGR',
+                resumen: {
+                    estudiantes: students.length,
+                    entregas_totales: submissions.length,
+                    entregas_corregidas: submissions.filter(s => s.status === 'reviewed').length,
+                    entregas_pendientes: submissions.filter(s => s.status === 'pending').length,
+                    palabras_totales: submissions.reduce((sum, s) => sum + (s.wordCount || 0), 0),
+                    progreso_curso: progress.percentage + '%'
+                },
+                estudiantes: students.map(s => ({
+                    nombre: s.name,
+                    email: s.email,
+                    nivel: s.level || 'C2',
+                    entregas: submissions.filter(sub => sub.userId === s.id).length
+                }))
+            };
+
+            const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'informe_estadisticas_' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+
+            PE.UI.notify('Informe exportado correctamente', 'success');
+        }
+    </script>
+</body>
+</html>
