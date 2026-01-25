@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil | Produccion Escrita C2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-main">
+            <div class="container">
+                <a href="../index.html" class="logo">
+                    <div class="logo-icon">C2</div>
+                    <div class="logo-text">
+                        <span class="logo-title">Produccion Escrita</span>
+                        <span class="logo-subtitle">CLM - UGR</span>
+                    </div>
+                </a>
+                <nav class="nav-main"><a href="../index.html">Inicio</a><a href="../sesiones/index.html">Sesiones</a><a href="../talleres/index.html">Talleres</a></nav>
+                <div class="nav-auth"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="section">
+        <div class="container">
+            <div class="page-with-sidebar">
+                <aside class="sidebar">
+                    <div class="sidebar-section">
+                        <h4 class="sidebar-title">Mi area</h4>
+                        <ul class="sidebar-nav">
+                            <li><a href="dashboard.html">Panel principal</a></li>
+                            <li><a href="mis-entregas.html">Mis entregas</a></li>
+                            <li><a href="progreso.html">Mi progreso</a></li>
+                            <li><a href="perfil.html" class="active">Mi perfil</a></li>
+                        </ul>
+                    </div>
+                    <div class="sidebar-section">
+                        <button onclick="PE.Auth.logout()" class="btn btn-outline btn-block">Cerrar sesion</button>
+                    </div>
+                </aside>
+
+                <div class="main-content">
+                    <h1>Mi perfil</h1>
+                    <p class="text-secondary mb-4">Gestiona tu informacion personal y preferencias</p>
+
+                    <!-- Informacion del perfil -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title">Informacion personal</h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="profile-form">
+                                <div class="form-group">
+                                    <label class="form-label">Nombre completo</label>
+                                    <input type="text" class="form-control" id="profile-name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Correo electronico</label>
+                                    <input type="email" class="form-control" id="profile-email" disabled>
+                                    <small class="text-secondary">El correo electronico no se puede cambiar</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Nivel de espanol</label>
+                                    <select class="form-control" id="profile-level">
+                                        <option value="B2">B2 - Intermedio alto</option>
+                                        <option value="C1">C1 - Avanzado</option>
+                                        <option value="C2">C2 - Dominio</option>
+                                    </select>
+                                </div>
+                                <div id="profile-message"></div>
+                                <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Cambiar contrasena -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title">Cambiar contrasena</h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="password-form">
+                                <div class="form-group">
+                                    <label class="form-label">Contrasena actual</label>
+                                    <input type="password" class="form-control" id="current-password" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Nueva contrasena</label>
+                                    <input type="password" class="form-control" id="new-password" required minlength="6">
+                                    <small class="text-secondary">Minimo 6 caracteres</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Confirmar nueva contrasena</label>
+                                    <input type="password" class="form-control" id="confirm-password" required>
+                                </div>
+                                <div id="password-message"></div>
+                                <button type="submit" class="btn btn-primary">Cambiar contrasena</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Informacion de la cuenta -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Informacion de la cuenta</h3>
+                        </div>
+                        <div class="card-body">
+                            <div style="display: grid; gap: 1rem;">
+                                <div>
+                                    <span class="text-secondary">Fecha de registro:</span>
+                                    <span id="account-created">-</span>
+                                </div>
+                                <div>
+                                    <span class="text-secondary">Tipo de cuenta:</span>
+                                    <span id="account-type">Estudiante</span>
+                                </div>
+                                <div>
+                                    <span class="text-secondary">Estado:</span>
+                                    <span class="badge badge-success">Activa</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom" style="border:none;padding-top:0;">
+                <span>&copy; 2026 Javier Benitez Lainez | CLM - UGR</span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = PE.Auth.getCurrentUser();
+            if (!user) {
+                const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+                window.location.href = basePath + '/auth/login.html';
+                return;
+            }
+
+            // Cargar datos del perfil
+            document.getElementById('profile-name').value = user.name || '';
+            document.getElementById('profile-email').value = user.email || '';
+            document.getElementById('profile-level').value = user.level || 'C2';
+            document.getElementById('account-created').textContent = user.createdAt ? PE.Utils.formatDate(user.createdAt, 'long') : '-';
+            document.getElementById('account-type').textContent = user.role === 'admin' ? 'Profesor/Administrador' : 'Estudiante';
+
+            // Formulario de perfil
+            document.getElementById('profile-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const messageDiv = document.getElementById('profile-message');
+                const name = document.getElementById('profile-name').value.trim();
+                const level = document.getElementById('profile-level').value;
+
+                if (name.length < 2) {
+                    messageDiv.innerHTML = '<div class="alert alert-error">El nombre debe tener al menos 2 caracteres</div>';
+                    return;
+                }
+
+                // Actualizar usuario en localStorage
+                const users = PE.Utils.storage.get('users') || [];
+                const userIndex = users.findIndex(u => u.id === user.id);
+                if (userIndex !== -1) {
+                    users[userIndex].name = name;
+                    users[userIndex].level = level;
+                    PE.Utils.storage.set('users', users);
+
+                    // Actualizar sesion actual
+                    const currentUser = PE.Utils.storage.get('currentUser');
+                    currentUser.name = name;
+                    currentUser.level = level;
+                    PE.Utils.storage.set('currentUser', currentUser);
+                }
+
+                messageDiv.innerHTML = '<div class="alert alert-success">Perfil actualizado correctamente</div>';
+                setTimeout(() => { messageDiv.innerHTML = ''; }, 3000);
+            });
+
+            // Formulario de contrasena
+            document.getElementById('password-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const messageDiv = document.getElementById('password-message');
+                const currentPassword = document.getElementById('current-password').value;
+                const newPassword = document.getElementById('new-password').value;
+                const confirmPassword = document.getElementById('confirm-password').value;
+
+                // Verificar contrasena actual
+                const users = PE.Utils.storage.get('users') || [];
+                const fullUser = users.find(u => u.id === user.id);
+
+                if (!fullUser || fullUser.password !== currentPassword) {
+                    messageDiv.innerHTML = '<div class="alert alert-error">La contrasena actual es incorrecta</div>';
+                    return;
+                }
+
+                if (newPassword.length < 6) {
+                    messageDiv.innerHTML = '<div class="alert alert-error">La nueva contrasena debe tener al menos 6 caracteres</div>';
+                    return;
+                }
+
+                if (newPassword !== confirmPassword) {
+                    messageDiv.innerHTML = '<div class="alert alert-error">Las contrasenas no coinciden</div>';
+                    return;
+                }
+
+                // Actualizar contrasena
+                const userIndex = users.findIndex(u => u.id === user.id);
+                if (userIndex !== -1) {
+                    users[userIndex].password = newPassword;
+                    PE.Utils.storage.set('users', users);
+                }
+
+                messageDiv.innerHTML = '<div class="alert alert-success">Contrasena actualizada correctamente</div>';
+                document.getElementById('password-form').reset();
+                setTimeout(() => { messageDiv.innerHTML = ''; }, 3000);
+            });
+        });
+    </script>
+</body>
+</html>

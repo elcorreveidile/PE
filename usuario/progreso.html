@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Progreso | Producción Escrita C2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-main">
+            <div class="container">
+                <a href="../index.html" class="logo">
+                    <div class="logo-icon">C2</div>
+                    <div class="logo-text">
+                        <span class="logo-title">Producción Escrita</span>
+                        <span class="logo-subtitle">CLM - UGR</span>
+                    </div>
+                </a>
+                <nav class="nav-main"><a href="../index.html">Inicio</a><a href="../sesiones/index.html">Sesiones</a><a href="../talleres/index.html">Talleres</a></nav>
+                <div class="nav-auth"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="section">
+        <div class="container">
+            <div class="page-with-sidebar">
+                <aside class="sidebar">
+                    <div class="sidebar-section">
+                        <h4 class="sidebar-title">Mi area</h4>
+                        <ul class="sidebar-nav">
+                            <li><a href="dashboard.html">Panel principal</a></li>
+                            <li><a href="mis-entregas.html">Mis entregas</a></li>
+                            <li><a href="progreso.html" class="active">Mi progreso</a></li>
+                        </ul>
+                    </div>
+                    <div class="sidebar-section">
+                        <button onclick="PE.Auth.logout()" class="btn btn-outline btn-block">Cerrar sesion</button>
+                    </div>
+                </aside>
+
+                <div class="main-content">
+                    <h1>Mi progreso</h1>
+                    <p class="text-secondary mb-4">Seguimiento de tu avance en el curso de Produccion Escrita C2</p>
+
+                    <!-- Resumen general -->
+                    <div class="sessions-grid mb-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h3 class="text-primary" style="font-size: 2.5rem; margin-bottom: 0.5rem;" id="stat-sessions">0</h3>
+                                <p class="text-secondary mb-0">Sesiones completadas</p>
+                                <p class="text-secondary" style="font-size: 0.85rem;">de 32 totales</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h3 class="text-primary" style="font-size: 2.5rem; margin-bottom: 0.5rem;" id="stat-submissions">0</h3>
+                                <p class="text-secondary mb-0">Entregas realizadas</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h3 class="text-primary" style="font-size: 2.5rem; margin-bottom: 0.5rem;" id="stat-reviewed">0</h3>
+                                <p class="text-secondary mb-0">Entregas corregidas</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h3 class="text-primary" style="font-size: 2.5rem; margin-bottom: 0.5rem;" id="stat-words">0</h3>
+                                <p class="text-secondary mb-0">Palabras escritas</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progreso del curso -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title">Progreso del curso</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                    <span>Avance general</span>
+                                    <span id="progress-percent">0%</span>
+                                </div>
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <p class="text-secondary">El curso consta de 32 sesiones de 90 minutos, los lunes y miercoles de febrero a mayo de 2026.</p>
+                        </div>
+                    </div>
+
+                    <!-- Temas completados -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title">Temas del curso</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="themes-progress">
+                                <div class="loader"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Talleres -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title">Talleres obligatorios</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="workshops-progress">
+                                <div class="loader"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Historial de actividad -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Actividad reciente</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="activity-list">
+                                <div class="loader"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom" style="border:none;padding-top:0;">
+                <span>&copy; 2026 Javier Benitez Lainez | CLM - UGR</span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = PE.Auth.getCurrentUser();
+            if (!user) {
+                const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+                window.location.href = basePath + '/auth/login.html';
+                return;
+            }
+
+            // Obtener estadisticas
+            const submissions = PE.Submissions.getByUser(user.id);
+            const reviewed = submissions.filter(s => s.status === 'reviewed');
+            const totalWords = submissions.reduce((sum, s) => sum + (s.wordCount || 0), 0);
+
+            // Calcular sesiones completadas (basado en fecha actual)
+            const courseProgress = PE.CourseData.getCourseProgress();
+
+            // Actualizar estadisticas
+            document.getElementById('stat-sessions').textContent = courseProgress.completed;
+            document.getElementById('stat-submissions').textContent = submissions.length;
+            document.getElementById('stat-reviewed').textContent = reviewed.length;
+            document.getElementById('stat-words').textContent = totalWords.toLocaleString('es-ES');
+
+            // Barra de progreso
+            document.getElementById('progress-percent').textContent = courseProgress.percentage + '%';
+            document.getElementById('progress-bar').style.width = courseProgress.percentage + '%';
+
+            // Temas del curso
+            const themes = PE.CourseData.themes;
+            const themesHtml = themes.map((theme, index) => {
+                const isCompleted = index < Math.floor(courseProgress.completed / 2);
+                return `
+                    <div style="display: flex; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+                        <span style="width: 30px; height: 30px; border-radius: 50%; background: ${isCompleted ? 'var(--success-color)' : 'var(--bg-light)'}; display: flex; align-items: center; justify-content: center; margin-right: 1rem; color: ${isCompleted ? 'white' : 'var(--text-secondary)'}; font-size: 0.85rem;">
+                            ${isCompleted ? '&#10003;' : index + 1}
+                        </span>
+                        <span style="flex: 1;">${theme.title}</span>
+                        <span class="badge badge-${isCompleted ? 'success' : 'outline'}">${isCompleted ? 'Completado' : 'Pendiente'}</span>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('themes-progress').innerHTML = themesHtml;
+
+            // Talleres
+            const workshops = PE.CourseData.workshops;
+            const workshopsHtml = workshops.map((workshop, index) => {
+                const workshopSession = PE.CourseData.sessions.find(s => s.workshop === workshop.id);
+                const isCompleted = workshopSession && new Date(workshopSession.date) < new Date();
+                const hasSubmission = submissions.some(s => s.activityId && s.activityId.includes('taller'));
+                return `
+                    <div style="display: flex; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+                        <span style="width: 30px; height: 30px; border-radius: 50%; background: ${hasSubmission ? 'var(--success-color)' : isCompleted ? 'var(--warning-color)' : 'var(--bg-light)'}; display: flex; align-items: center; justify-content: center; margin-right: 1rem; color: ${hasSubmission || isCompleted ? 'white' : 'var(--text-secondary)'}; font-size: 0.85rem;">
+                            ${index + 1}
+                        </span>
+                        <span style="flex: 1;">${workshop.title}</span>
+                        <span class="badge badge-${hasSubmission ? 'success' : isCompleted ? 'warning' : 'outline'}">
+                            ${hasSubmission ? 'Entregado' : isCompleted ? 'Realizado' : 'Pendiente'}
+                        </span>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('workshops-progress').innerHTML = workshopsHtml;
+
+            // Actividad reciente
+            if (submissions.length === 0) {
+                document.getElementById('activity-list').innerHTML = `
+                    <p class="text-secondary text-center">No hay actividad registrada todavia.</p>
+                    <div class="text-center">
+                        <a href="../sesiones/index.html" class="btn btn-primary">Ir a las sesiones</a>
+                    </div>
+                `;
+            } else {
+                const recentSubmissions = [...submissions].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+                const activityHtml = recentSubmissions.map(s => `
+                    <div style="display: flex; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+                        <span style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary-light); display: flex; align-items: center; justify-content: center; margin-right: 1rem; color: white;">
+                            &#9998;
+                        </span>
+                        <div style="flex: 1;">
+                            <p style="margin: 0; font-weight: 500;">${PE.Utils.escapeHtml(s.activityTitle)}</p>
+                            <p class="text-secondary" style="margin: 0; font-size: 0.85rem;">${PE.Utils.formatDate(s.createdAt, 'long')}</p>
+                        </div>
+                        <span class="badge badge-${s.status === 'reviewed' ? 'success' : 'warning'}">
+                            ${s.status === 'reviewed' ? 'Corregido' : 'Pendiente'}
+                        </span>
+                    </div>
+                `).join('');
+                document.getElementById('activity-list').innerHTML = activityHtml;
+            }
+        });
+    </script>
+</body>
+</html>
