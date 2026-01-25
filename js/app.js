@@ -1,6 +1,7 @@
 /**
  * Producción Escrita C2 - JavaScript Principal
  * Sistema de gestión del curso
+ * Con soporte para API Backend y fallback a localStorage
  */
 
 // ==========================================================================
@@ -9,7 +10,10 @@
 
 const CONFIG = {
     STORAGE_PREFIX: 'pe_c2_',
-    API_DELAY: 500, // Simular delay de API
+    // URL del backend API - cambiar en producción
+    API_URL: localStorage.getItem('pe_c2_api_url') || '',
+    // Si está vacío, usa localStorage como fallback
+    USE_API: false, // Se actualiza automáticamente si la API responde
     COURSE_START: new Date('2026-02-02'),
     COURSE_END: new Date('2026-05-21'),
     SESSION_DAYS: [1, 3], // Lunes = 1, Miércoles = 3
@@ -19,9 +23,87 @@ const CONFIG = {
 const AppState = {
     user: null,
     isAdmin: false,
+    token: null,
     currentSession: null,
     submissions: [],
     notifications: [],
+};
+
+// ==========================================================================
+// Cliente API
+// ==========================================================================
+
+const API = {
+    // Verificar si la API está disponible
+    async checkAvailability() {
+        if (!CONFIG.API_URL) return false;
+        try {
+            const response = await fetch(`${CONFIG.API_URL}/api/health`, {
+                method: 'GET',
+                timeout: 3000
+            });
+            CONFIG.USE_API = response.ok;
+            return response.ok;
+        } catch {
+            CONFIG.USE_API = false;
+            return false;
+        }
+    },
+
+    // Hacer petición a la API
+    async request(endpoint, options = {}) {
+        const url = `${CONFIG.API_URL}/api${endpoint}`;
+        const headers = {
+            'Content-Type': 'application/json',
+            ...options.headers
+        };
+
+        // Añadir token de autenticación si existe
+        if (AppState.token) {
+            headers['Authorization'] = `Bearer ${AppState.token}`;
+        }
+
+        try {
+            const response = await fetch(url, {
+                ...options,
+                headers
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Error en la petición');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('API Error:', error);
+            throw error;
+        }
+    },
+
+    // Métodos de conveniencia
+    get(endpoint) {
+        return this.request(endpoint, { method: 'GET' });
+    },
+
+    post(endpoint, body) {
+        return this.request(endpoint, {
+            method: 'POST',
+            body: JSON.stringify(body)
+        });
+    },
+
+    put(endpoint, body) {
+        return this.request(endpoint, {
+            method: 'PUT',
+            body: JSON.stringify(body)
+        });
+    },
+
+    delete(endpoint) {
+        return this.request(endpoint, { method: 'DELETE' });
+    }
 };
 
 // ==========================================================================
@@ -103,19 +185,26 @@ const Utils = {
 };
 
 // ==========================================================================
-// Sistema de Autenticación
+// Sistema de Autenticación (con soporte API y localStorage)
 // ==========================================================================
 
 const Auth = {
-    // Inicializar usuarios de demostración
+    // Inicializar usuarios de demostración (solo localStorage)
     init() {
-        if (!Utils.storage.get('users')) {
+        // Cargar token guardado
+        const savedToken = Utils.storage.get('token');
+        if (savedToken) {
+            AppState.token = savedToken;
+        }
+
+        // Inicializar usuarios demo en localStorage si no hay API
+        if (!CONFIG.USE_API && !Utils.storage.get('users')) {
             Utils.storage.set('users', [
                 {
                     id: 'admin1',
-                    email: 'profesor@curso.es',
+                    email: 'benitezl@go.ugr.es',
                     password: 'admin123',
-                    name: 'Profesor',
+                    name: 'Javier Benítez Láinez',
                     role: 'admin',
                     createdAt: new Date().toISOString()
                 },
@@ -133,7 +222,17 @@ const Auth = {
     },
 
     // Registrar usuario
-    register(userData) {
+    async register(userData) {
+        if (CONFIG.USE_API) {
+            try {
+                const response = await API.post('/auth/register', userData);
+                return response.data;
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        // Fallback localStorage
         return new Promise((resolve, reject) => {
             setTimeout(() => {
                 const users = Utils.storage.get('users') || [];
@@ -158,12 +257,33 @@ const Auth = {
 
                 const { password, ...safeUser } = newUser;
                 resolve(safeUser);
-            }, CONFIG.API_DELAY);
+            }, 300);
         });
     },
 
     // Iniciar sesión
-    login(email, password) {
+    async login(email, password) {
+        if (CONFIG.USE_API) {
+            try {
+                const response = await API.post('/auth/login', { email, password });
+
+                // Guardar token
+                AppState.token = response.token;
+                Utils.storage.set('token', response.token);
+
+                // Guardar usuario
+                const user = response.data;
+                Utils.storage.set('currentUser', user);
+                AppState.user = user;
+                AppState.isAdmin = user.role === 'admin';
+
+                return user;
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        // Fallback localStorage
         return new Promise((resolve, reject) => {
             setTimeout(() => {
                 const users = Utils.storage.get('users') || [];
@@ -180,25 +300,43 @@ const Auth = {
                 AppState.isAdmin = user.role === 'admin';
 
                 resolve(safeUser);
-            }, CONFIG.API_DELAY);
+            }, 300);
         });
     },
 
     // Cerrar sesión
     logout() {
         Utils.storage.remove('currentUser');
+        Utils.storage.remove('token');
         AppState.user = null;
+        AppState.token = null;
         AppState.isAdmin = false;
         const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
         window.location.href = basePath + '/index.html';
     },
 
     // Verificar sesión actual
-    checkSession() {
+    async checkSession() {
         const user = Utils.storage.get('currentUser');
+        const token = Utils.storage.get('token');
+
         if (user) {
             AppState.user = user;
+            AppState.token = token;
             AppState.isAdmin = user.role === 'admin';
+
+            // Si hay API y token, verificar que el token sigue siendo válido
+            if (CONFIG.USE_API && token) {
+                try {
+                    const response = await API.get('/auth/me');
+                    AppState.user = response.data;
+                    Utils.storage.set('currentUser', response.data);
+                } catch {
+                    // Token inválido, limpiar sesión
+                    this.logout();
+                    return null;
+                }
+            }
         }
         return user;
     },
@@ -211,36 +349,111 @@ const Auth = {
     // Verificar si es admin
     isAdmin() {
         return AppState.isAdmin;
+    },
+
+    // Actualizar perfil
+    async updateProfile(data) {
+        if (CONFIG.USE_API) {
+            const response = await API.put('/auth/profile', data);
+            AppState.user = response.data;
+            Utils.storage.set('currentUser', response.data);
+            return response.data;
+        }
+
+        // Fallback localStorage
+        const users = Utils.storage.get('users') || [];
+        const index = users.findIndex(u => u.id === AppState.user.id);
+        if (index !== -1) {
+            users[index] = { ...users[index], ...data };
+            Utils.storage.set('users', users);
+            const { password, ...safeUser } = users[index];
+            AppState.user = safeUser;
+            Utils.storage.set('currentUser', safeUser);
+            return safeUser;
+        }
+        throw new Error('Usuario no encontrado');
+    },
+
+    // Cambiar contraseña
+    async changePassword(currentPassword, newPassword) {
+        if (CONFIG.USE_API) {
+            return API.put('/auth/password', { currentPassword, newPassword });
+        }
+
+        // Fallback localStorage
+        const users = Utils.storage.get('users') || [];
+        const user = users.find(u => u.id === AppState.user.id);
+        if (!user || user.password !== currentPassword) {
+            throw new Error('Contraseña actual incorrecta');
+        }
+        user.password = newPassword;
+        Utils.storage.set('users', users);
+        return { success: true };
     }
 };
 
 // ==========================================================================
-// Sistema de Entregas
+// Sistema de Entregas (con soporte API y localStorage)
 // ==========================================================================
 
 const Submissions = {
     // Obtener todas las entregas
-    getAll() {
+    async getAll() {
+        if (CONFIG.USE_API) {
+            try {
+                const response = await API.get('/submissions');
+                return response.data || [];
+            } catch {
+                return [];
+            }
+        }
         return Utils.storage.get('submissions') || [];
     },
 
     // Obtener entregas por usuario
-    getByUser(userId) {
-        const all = this.getAll();
+    async getByUser(userId) {
+        if (CONFIG.USE_API) {
+            try {
+                const response = await API.get(`/submissions?userId=${userId}`);
+                return response.data || [];
+            } catch {
+                return [];
+            }
+        }
+        const all = Utils.storage.get('submissions') || [];
         return all.filter(s => s.userId === userId);
     },
 
     // Obtener entregas por sesión
-    getBySession(sessionId) {
-        const all = this.getAll();
+    async getBySession(sessionId) {
+        if (CONFIG.USE_API) {
+            try {
+                const response = await API.get(`/submissions?sessionId=${sessionId}`);
+                return response.data || [];
+            } catch {
+                return [];
+            }
+        }
+        const all = Utils.storage.get('submissions') || [];
         return all.filter(s => s.sessionId === sessionId);
     },
 
     // Crear nueva entrega
-    create(submissionData) {
-        return new Promise((resolve, reject) => {
+    async create(submissionData) {
+        if (CONFIG.USE_API) {
+            const response = await API.post('/submissions', {
+                sessionId: submissionData.sessionId,
+                activityId: submissionData.activityId,
+                activityTitle: submissionData.activityTitle,
+                content: submissionData.content
+            });
+            return response.data;
+        }
+
+        // Fallback localStorage
+        return new Promise((resolve) => {
             setTimeout(() => {
-                const submissions = this.getAll();
+                const submissions = Utils.storage.get('submissions') || [];
 
                 const newSubmission = {
                     id: Utils.generateId(),
@@ -251,7 +464,7 @@ const Submissions = {
                     activityTitle: submissionData.activityTitle,
                     content: submissionData.content,
                     wordCount: Utils.countWords(submissionData.content),
-                    status: 'pending', // pending, reviewed, returned
+                    status: 'pending',
                     feedback: null,
                     grade: null,
                     createdAt: new Date().toISOString(),
@@ -262,15 +475,21 @@ const Submissions = {
                 Utils.storage.set('submissions', submissions);
 
                 resolve(newSubmission);
-            }, CONFIG.API_DELAY);
+            }, 300);
         });
     },
 
-    // Actualizar entrega (para correcciones)
-    update(submissionId, updates) {
+    // Actualizar entrega
+    async update(submissionId, updates) {
+        if (CONFIG.USE_API) {
+            const response = await API.put(`/submissions/${submissionId}`, updates);
+            return response.data;
+        }
+
+        // Fallback localStorage
         return new Promise((resolve, reject) => {
             setTimeout(() => {
-                const submissions = this.getAll();
+                const submissions = Utils.storage.get('submissions') || [];
                 const index = submissions.findIndex(s => s.id === submissionId);
 
                 if (index === -1) {
@@ -286,18 +505,38 @@ const Submissions = {
 
                 Utils.storage.set('submissions', submissions);
                 resolve(submissions[index]);
-            }, CONFIG.API_DELAY);
+            }, 300);
         });
     },
 
     // Añadir retroalimentación (profesor)
-    addFeedback(submissionId, feedback, grade) {
+    async addFeedback(submissionId, feedback, grade) {
+        if (CONFIG.USE_API) {
+            const response = await API.post(`/submissions/${submissionId}/feedback`, {
+                feedback,
+                grade
+            });
+            return response.data;
+        }
+
         return this.update(submissionId, {
             feedback,
             grade,
             status: 'reviewed',
             reviewedAt: new Date().toISOString()
         });
+    },
+
+    // Eliminar entrega
+    async delete(submissionId) {
+        if (CONFIG.USE_API) {
+            return API.delete(`/submissions/${submissionId}`);
+        }
+
+        const submissions = Utils.storage.get('submissions') || [];
+        const filtered = submissions.filter(s => s.id !== submissionId);
+        Utils.storage.set('submissions', filtered);
+        return { success: true };
     }
 };
 
@@ -903,7 +1142,6 @@ const Forms = {
             await Auth.login(validation.data.email, validation.data.password);
             UI.notify('Registro exitoso. Bienvenido/a al curso.', 'success');
             setTimeout(() => {
-                // Usar ruta absoluta desde la raíz del sitio
                 const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
                 window.location.href = basePath + '/usuario/dashboard.html';
             }, 1000);
@@ -941,7 +1179,6 @@ const Forms = {
             const user = await Auth.login(email, password);
             UI.notify('Sesión iniciada correctamente', 'success');
             setTimeout(() => {
-                // Usar ruta absoluta desde la raíz del sitio
                 const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
                 window.location.href = user.role === 'admin' ? basePath + '/admin/index.html' : basePath + '/usuario/dashboard.html';
             }, 500);
@@ -957,11 +1194,21 @@ const Forms = {
 // Inicialización
 // ==========================================================================
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Verificar disponibilidad de la API
+    await API.checkAvailability();
+
     // Inicializar autenticación
     Auth.init();
-    Auth.checkSession();
+    await Auth.checkSession();
     UI.updateAuthUI();
+
+    // Mostrar indicador de modo
+    if (CONFIG.USE_API) {
+        console.log('Producción Escrita C2 - Modo API (Backend conectado)');
+    } else {
+        console.log('Producción Escrita C2 - Modo localStorage (sin backend)');
+    }
 
     // Menú móvil
     const menuToggle = document.getElementById('menu-toggle');
@@ -1032,6 +1279,33 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Producción Escrita C2 - Aplicación iniciada');
 });
 
+// ==========================================================================
+// Configuración de API (para uso desde consola)
+// ==========================================================================
+
+const APIConfig = {
+    // Configurar URL del backend
+    setUrl(url) {
+        localStorage.setItem('pe_c2_api_url', url);
+        CONFIG.API_URL = url;
+        console.log('URL de API configurada:', url);
+        console.log('Recarga la página para aplicar los cambios.');
+    },
+
+    // Ver configuración actual
+    getUrl() {
+        return CONFIG.API_URL || '(no configurada - usando localStorage)';
+    },
+
+    // Limpiar configuración (volver a localStorage)
+    clear() {
+        localStorage.removeItem('pe_c2_api_url');
+        CONFIG.API_URL = '';
+        CONFIG.USE_API = false;
+        console.log('Configuración de API eliminada. Usando localStorage.');
+    }
+};
+
 // Exportar para uso global
 window.PE = {
     Auth,
@@ -1041,5 +1315,7 @@ window.PE = {
     TextEditor,
     Activities,
     Forms,
-    Utils
+    Utils,
+    API,
+    APIConfig
 };
