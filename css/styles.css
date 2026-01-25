@@ -2317,18 +2317,24 @@ tr:hover td {
 
 .institutional-banner {
     width: 100%;
+    height: 100px;
     background: #ffffff;
     display: flex;
     justify-content: center;
     align-items: center;
     border-bottom: 1px solid var(--border-color);
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
 }
 
 .institutional-banner img {
     width: 100%;
     max-width: 1200px;
-    height: auto;
+    height: 100%;
     display: block;
+    object-fit: cover;
+    object-position: center top;
 }
 
 /* Responsive para el banner */
