@@ -144,7 +144,7 @@
 
     <script src="../js/app.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             const user = PE.Auth.getCurrentUser();
             if (!user) {
                 const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
@@ -153,7 +153,7 @@
             }
 
             // Obtener estadisticas
-            const submissions = PE.Submissions.getByUser(user.id);
+            const submissions = await PE.Submissions.getByUser(user.id);
             const reviewed = submissions.filter(s => s.status === 'reviewed');
             const totalWords = submissions.reduce((sum, s) => sum + (s.wordCount || 0), 0);
 

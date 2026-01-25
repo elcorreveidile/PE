@@ -82,8 +82,8 @@
                 return;
             }
 
-            function renderSubmissions(filter = 'all') {
-                let submissions = PE.Submissions.getByUser(user.id);
+            async function renderSubmissions(filter = 'all') {
+                let submissions = await PE.Submissions.getByUser(user.id);
 
                 if (filter === 'pending') {
                     submissions = submissions.filter(s => s.status === 'pending');
