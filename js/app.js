@@ -189,7 +189,8 @@ const Auth = {
         Utils.storage.remove('currentUser');
         AppState.user = null;
         AppState.isAdmin = false;
-        window.location.href = '/index.html';
+        const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+        window.location.href = basePath + '/index.html';
     },
 
     // Verificar sesión actual
@@ -514,13 +515,14 @@ const UI = {
         if (!authContainer) return;
 
         const user = Auth.getCurrentUser();
+        const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
 
         if (user) {
             authContainer.innerHTML = `
                 <span style="color: rgba(255,255,255,0.8); margin-right: 1rem;">
                     Hola, ${Utils.escapeHtml(user.name)}
                 </span>
-                <a href="${user.role === 'admin' ? 'admin/index.html' : 'usuario/dashboard.html'}" class="btn btn-outline-white btn-sm">
+                <a href="${user.role === 'admin' ? basePath + '/admin/index.html' : basePath + '/usuario/dashboard.html'}" class="btn btn-outline-white btn-sm">
                     ${user.role === 'admin' ? 'Panel admin' : 'Mi área'}
                 </a>
                 <button onclick="Auth.logout()" class="btn btn-accent btn-sm">Salir</button>
@@ -901,7 +903,9 @@ const Forms = {
             await Auth.login(validation.data.email, validation.data.password);
             UI.notify('Registro exitoso. Bienvenido/a al curso.', 'success');
             setTimeout(() => {
-                window.location.href = 'usuario/dashboard.html';
+                // Usar ruta absoluta desde la raíz del sitio
+                const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+                window.location.href = basePath + '/usuario/dashboard.html';
             }, 1000);
         } catch (error) {
             errorContainer.innerHTML = `<div class="alert alert-error">${error.message}</div>`;
@@ -937,7 +941,9 @@ const Forms = {
             const user = await Auth.login(email, password);
             UI.notify('Sesión iniciada correctamente', 'success');
             setTimeout(() => {
-                window.location.href = user.role === 'admin' ? 'admin/index.html' : 'usuario/dashboard.html';
+                // Usar ruta absoluta desde la raíz del sitio
+                const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+                window.location.href = user.role === 'admin' ? basePath + '/admin/index.html' : basePath + '/usuario/dashboard.html';
             }, 500);
         } catch (error) {
             errorContainer.innerHTML = `<div class="alert alert-error">${error.message}</div>`;
