@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Entregas | Producción Escrita C2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-main">
+            <div class="container">
+                <a href="../index.html" class="logo">
+                    <div class="logo-icon">C2</div>
+                    <div class="logo-text">
+                        <span class="logo-title">Producción Escrita</span>
+                        <span class="logo-subtitle">CLM - UGR</span>
+                    </div>
+                </a>
+                <nav class="nav-main"><a href="../index.html">Inicio</a><a href="../sesiones/index.html">Sesiones</a><a href="../talleres/index.html">Talleres</a></nav>
+                <div class="nav-auth"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="section">
+        <div class="container">
+            <div class="page-with-sidebar">
+                <aside class="sidebar">
+                    <div class="sidebar-section">
+                        <h4 class="sidebar-title">Mi área</h4>
+                        <ul class="sidebar-nav">
+                            <li><a href="dashboard.html">Panel principal</a></li>
+                            <li><a href="mis-entregas.html" class="active">Mis entregas</a></li>
+                            <li><a href="progreso.html">Mi progreso</a></li>
+                        </ul>
+                    </div>
+                    <div class="sidebar-section">
+                        <button onclick="PE.Auth.logout()" class="btn btn-outline btn-block">Cerrar sesión</button>
+                    </div>
+                </aside>
+
+                <div class="main-content">
+                    <h1>Mis entregas</h1>
+                    <p class="text-secondary mb-4">Historial de todas tus entregas y su estado de corrección</p>
+
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                <button class="btn btn-sm btn-primary filter-btn active" data-filter="all">Todas</button>
+                                <button class="btn btn-sm btn-outline filter-btn" data-filter="pending">Pendientes</button>
+                                <button class="btn btn-sm btn-outline filter-btn" data-filter="reviewed">Corregidas</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="submissions-list">
+                        <div class="loader"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom" style="border:none;padding-top:0;">
+                <span>&copy; 2026 Javier Benítez Láinez | CLM - UGR</span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = PE.Auth.getCurrentUser();
+            if (!user) {
+                window.location.href = '../auth/login.html';
+                return;
+            }
+
+            function renderSubmissions(filter = 'all') {
+                let submissions = PE.Submissions.getByUser(user.id);
+
+                if (filter === 'pending') {
+                    submissions = submissions.filter(s => s.status === 'pending');
+                } else if (filter === 'reviewed') {
+                    submissions = submissions.filter(s => s.status === 'reviewed');
+                }
+
+                const container = document.getElementById('submissions-list');
+
+                if (submissions.length === 0) {
+                    container.innerHTML = `
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <p class="text-secondary">No tienes entregas ${filter !== 'all' ? 'con este filtro' : 'todavía'}.</p>
+                                <a href="../sesiones/index.html" class="btn btn-primary">Ir a las sesiones</a>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = submissions.map(s => `
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                                <div>
+                                    <h4 style="margin: 0 0 0.5rem;">${PE.Utils.escapeHtml(s.activityTitle)}</h4>
+                                    <p class="text-secondary mb-2">Entregado: ${PE.Utils.formatDate(s.createdAt, 'long')}</p>
+                                    <span class="badge badge-${s.status === 'reviewed' ? 'success' : 'warning'}">
+                                        ${s.status === 'reviewed' ? 'Corregido' : 'Pendiente'}
+                                    </span>
+                                    <span class="text-secondary" style="margin-left: 1rem;">${s.wordCount} palabras</span>
+                                </div>
+                                <button class="btn btn-outline btn-sm" onclick="viewSubmission('${s.id}')">Ver detalles</button>
+                            </div>
+                            ${s.feedback ? `
+                                <div class="alert alert-success mt-3">
+                                    <strong>Retroalimentación:</strong>
+                                    <p style="margin: 0.5rem 0 0;">${PE.Utils.escapeHtml(s.feedback)}</p>
+                                    ${s.grade ? `<p style="margin: 0.5rem 0 0;"><strong>Calificación:</strong> ${s.grade}</p>` : ''}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            renderSubmissions();
+
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn').forEach(b => {
+                        b.classList.remove('active', 'btn-primary');
+                        b.classList.add('btn-outline');
+                    });
+                    btn.classList.add('active', 'btn-primary');
+                    btn.classList.remove('btn-outline');
+                    renderSubmissions(btn.dataset.filter);
+                });
+            });
+        });
+
+        function viewSubmission(id) {
+            const submissions = PE.Submissions.getAll();
+            const s = submissions.find(sub => sub.id === id);
+            if (s) {
+                PE.UI.showModal(s.activityTitle, `
+                    <p class="text-secondary">Entregado: ${PE.Utils.formatDate(s.createdAt, 'long')}</p>
+                    <div style="background: var(--bg-light); padding: 1rem; border-radius: 0.5rem; max-height: 300px; overflow-y: auto;">
+                        ${s.content}
+                    </div>
+                    <p class="text-secondary mt-2">${s.wordCount} palabras</p>
+                    ${s.feedback ? `
+                        <div class="alert alert-success mt-3">
+                            <strong>Retroalimentación del profesor:</strong>
+                            <p style="margin: 0.5rem 0 0;">${PE.Utils.escapeHtml(s.feedback)}</p>
+                            ${s.grade ? `<p style="margin: 0.5rem 0 0;"><strong>Calificación:</strong> ${s.grade}</p>` : ''}
+                        </div>
+                    ` : '<p class="text-secondary mt-3">Pendiente de corrección</p>'}
+                `, [{ text: 'Cerrar' }]);
+            }
+        }
+    </script>
+</body>
+</html>

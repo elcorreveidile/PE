@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Correcciones | Panel Admin - Producción Escrita C2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        .admin-header { background: linear-gradient(135deg, #c53030, #9b2c2c); }
+        .submission-card { border-left: 4px solid var(--warning-color); }
+        .submission-card.reviewed { border-left-color: var(--success-color); }
+    </style>
+</head>
+<body>
+    <header class="header admin-header">
+        <div class="header-main">
+            <div class="container">
+                <a href="../index.html" class="logo">
+                    <div class="logo-icon">C2</div>
+                    <div class="logo-text">
+                        <span class="logo-title">Panel de Administración</span>
+                        <span class="logo-subtitle">CLM - UGR</span>
+                    </div>
+                </a>
+                <nav class="nav-main"><a href="../index.html">Ver curso</a><a href="../sesiones/index.html">Sesiones</a></nav>
+                <div class="nav-auth"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="section">
+        <div class="container">
+            <div class="page-with-sidebar">
+                <aside class="sidebar">
+                    <div class="sidebar-section">
+                        <h4 class="sidebar-title">Administración</h4>
+                        <ul class="sidebar-nav">
+                            <li><a href="index.html">Panel principal</a></li>
+                            <li><a href="estudiantes.html">Estudiantes</a></li>
+                            <li><a href="correcciones.html" class="active">Correcciones</a></li>
+                        </ul>
+                    </div>
+                    <div class="sidebar-section">
+                        <button onclick="PE.Auth.logout()" class="btn btn-outline btn-block">Cerrar sesión</button>
+                    </div>
+                </aside>
+
+                <div class="main-content">
+                    <h1>Corrección de entregas</h1>
+                    <p class="text-secondary mb-4">Revisa y proporciona retroalimentación a las entregas de los estudiantes</p>
+
+                    <!-- Estadísticas -->
+                    <div class="sessions-grid mb-4" style="grid-template-columns: repeat(3, 1fr);">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h3 class="text-primary" id="stat-total">0</h3>
+                                <p class="text-secondary mb-0">Total entregas</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h3 style="color: var(--warning-color);" id="stat-pending">0</h3>
+                                <p class="text-secondary mb-0">Pendientes</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h3 style="color: var(--success-color);" id="stat-reviewed">0</h3>
+                                <p class="text-secondary mb-0">Corregidas</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filtros -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                <button class="btn btn-sm btn-primary filter-btn active" data-filter="pending">Pendientes</button>
+                                <button class="btn btn-sm btn-outline filter-btn" data-filter="reviewed">Corregidas</button>
+                                <button class="btn btn-sm btn-outline filter-btn" data-filter="all">Todas</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lista de entregas -->
+                    <div id="submissions-list"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom" style="border:none;padding-top:0;">
+                <span>&copy; 2026 Javier Benítez Láinez | CLM - UGR</span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = PE.Auth.getCurrentUser();
+            if (!user || user.role !== 'admin') {
+                window.location.href = '../auth/login.html';
+                return;
+            }
+
+            const allSubmissions = PE.Submissions.getAll();
+            const pending = allSubmissions.filter(s => s.status === 'pending');
+            const reviewed = allSubmissions.filter(s => s.status === 'reviewed');
+
+            document.getElementById('stat-total').textContent = allSubmissions.length;
+            document.getElementById('stat-pending').textContent = pending.length;
+            document.getElementById('stat-reviewed').textContent = reviewed.length;
+
+            function renderSubmissions(filter = 'pending') {
+                let submissions = allSubmissions;
+                if (filter === 'pending') submissions = pending;
+                else if (filter === 'reviewed') submissions = reviewed;
+
+                const container = document.getElementById('submissions-list');
+
+                if (submissions.length === 0) {
+                    container.innerHTML = `
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <p class="text-secondary">No hay entregas ${filter === 'pending' ? 'pendientes de corrección' : 'con este filtro'}.</p>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = submissions.map(s => `
+                    <div class="card mb-3 submission-card ${s.status === 'reviewed' ? 'reviewed' : ''}">
+                        <div class="card-body">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                                <div>
+                                    <h4 style="margin: 0 0 0.5rem;">${PE.Utils.escapeHtml(s.activityTitle)}</h4>
+                                    <p class="text-secondary mb-1">
+                                        <strong>Estudiante:</strong> ${PE.Utils.escapeHtml(s.userName || 'Estudiante')}
+                                    </p>
+                                    <p class="text-secondary mb-2">
+                                        Entregado: ${PE.Utils.formatDate(s.createdAt, 'long')} | ${s.wordCount} palabras
+                                    </p>
+                                    <span class="badge badge-${s.status === 'reviewed' ? 'success' : 'warning'}">
+                                        ${s.status === 'reviewed' ? 'Corregido' : 'Pendiente'}
+                                    </span>
+                                </div>
+                                <button class="btn ${s.status === 'reviewed' ? 'btn-outline' : 'btn-primary'}" onclick="reviewSubmission('${s.id}')">
+                                    ${s.status === 'reviewed' ? 'Ver/Editar' : 'Corregir'}
+                                </button>
+                            </div>
+                            <div style="background: var(--bg-light); padding: 1rem; border-radius: 0.5rem; margin-top: 1rem; max-height: 150px; overflow-y: auto;">
+                                ${s.content.substring(0, 500)}${s.content.length > 500 ? '...' : ''}
+                            </div>
+                            ${s.feedback ? `
+                                <div class="alert alert-success mt-3">
+                                    <strong>Tu corrección:</strong> ${PE.Utils.escapeHtml(s.feedback)}
+                                    ${s.grade ? ` | <strong>Calificación:</strong> ${s.grade}` : ''}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            renderSubmissions();
+
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn').forEach(b => {
+                        b.classList.remove('active', 'btn-primary');
+                        b.classList.add('btn-outline');
+                    });
+                    btn.classList.add('active', 'btn-primary');
+                    btn.classList.remove('btn-outline');
+                    renderSubmissions(btn.dataset.filter);
+                });
+            });
+        });
+
+        function reviewSubmission(id) {
+            const submissions = PE.Submissions.getAll();
+            const s = submissions.find(sub => sub.id === id);
+
+            if (s) {
+                PE.UI.showModal('Corregir: ' + s.activityTitle, `
+                    <p><strong>Estudiante:</strong> ${PE.Utils.escapeHtml(s.userName || 'Estudiante')}</p>
+                    <p><strong>Fecha:</strong> ${PE.Utils.formatDate(s.createdAt, 'long')}</p>
+                    <div style="background: var(--bg-light); padding: 1rem; border-radius: 0.5rem; max-height: 250px; overflow-y: auto; margin-bottom: 1rem;">
+                        ${s.content}
+                    </div>
+                    <p class="text-secondary">${s.wordCount} palabras</p>
+                    <div class="form-group">
+                        <label class="form-label">Retroalimentación</label>
+                        <textarea id="feedback-text" class="form-control" rows="5">${s.feedback || ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Calificación</label>
+                        <select id="feedback-grade" class="form-control form-select">
+                            <option value="">Sin calificación</option>
+                            <option value="Excelente" ${s.grade === 'Excelente' ? 'selected' : ''}>Excelente</option>
+                            <option value="Muy bien" ${s.grade === 'Muy bien' ? 'selected' : ''}>Muy bien</option>
+                            <option value="Bien" ${s.grade === 'Bien' ? 'selected' : ''}>Bien</option>
+                            <option value="Suficiente" ${s.grade === 'Suficiente' ? 'selected' : ''}>Suficiente</option>
+                            <option value="Necesita mejorar" ${s.grade === 'Necesita mejorar' ? 'selected' : ''}>Necesita mejorar</option>
+                        </select>
+                    </div>
+                `, [
+                    { text: 'Cancelar' },
+                    {
+                        text: 'Guardar corrección',
+                        class: 'btn-primary',
+                        callback: async () => {
+                            const feedback = document.getElementById('feedback-text').value;
+                            const grade = document.getElementById('feedback-grade').value;
+                            if (!feedback.trim()) {
+                                PE.UI.notify('Escribe tu retroalimentación', 'error');
+                                return;
+                            }
+                            await PE.Submissions.addFeedback(id, feedback, grade);
+                            PE.UI.notify('Corrección guardada', 'success');
+                            location.reload();
+                        },
+                        close: false
+                    }
+                ]);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración | Producción Escrita C2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%231a365d' width='100' height='100' rx='15'/%3E%3Ctext x='50' y='65' font-family='Georgia' font-size='50' font-weight='bold' fill='%23d69e2e' text-anchor='middle'%3EC2%3C/text%3E%3C/svg%3E">
+    <style>
+        .admin-header {
+            background: linear-gradient(135deg, #c53030, #9b2c2c);
+        }
+        .admin-badge {
+            background: #c53030;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+        }
+        .stat-card {
+            text-align: center;
+            padding: var(--spacing-xl);
+        }
+        .stat-value {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            line-height: 1;
+        }
+        .stat-label {
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+        .submission-item {
+            padding: var(--spacing-md);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-md);
+            margin-bottom: var(--spacing-sm);
+            transition: all var(--transition-fast);
+        }
+        .submission-item:hover {
+            background: var(--bg-light);
+            border-color: var(--primary-light);
+        }
+        .submission-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+        .student-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Admin -->
+    <header class="header admin-header">
+        <div class="header-main">
+            <div class="container">
+                <a href="../index.html" class="logo">
+                    <div class="logo-icon">C2</div>
+                    <div class="logo-text">
+                        <span class="logo-title">Panel de Administración <span class="admin-badge">ADMIN</span></span>
+                        <span class="logo-subtitle">Centro de Lenguas Modernas - UGR</span>
+                    </div>
+                </a>
+                <nav class="nav-main" id="nav-main">
+                    <a href="../index.html">Ver curso</a>
+                    <a href="../sesiones/index.html">Sesiones</a>
+                    <a href="../calendario.html">Calendario</a>
+                </nav>
+                <div class="nav-auth"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="section">
+        <div class="container">
+            <div class="page-with-sidebar">
+                <!-- Sidebar Admin -->
+                <aside class="sidebar">
+                    <div class="sidebar-section">
+                        <div class="text-center mb-3">
+                            <div style="width: 80px; height: 80px; background: #c53030; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-size: 2rem; color: white;">
+                                JB
+                            </div>
+                            <h3 class="mt-2 mb-0">Javier Benítez Láinez</h3>
+                            <p class="text-secondary" style="font-size: 0.875rem; margin: 0.25rem 0;">Profesor</p>
+                            <a href="mailto:benitezl@go.ugr.es" class="text-secondary" style="font-size: 0.8125rem;">benitezl@go.ugr.es</a>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-section">
+                        <h4 class="sidebar-title">Administración</h4>
+                        <ul class="sidebar-nav">
+                            <li><a href="index.html" class="active">Panel principal</a></li>
+                            <li><a href="estudiantes.html">Estudiantes</a></li>
+                            <li><a href="correcciones.html">Correcciones</a></li>
+                            <li><a href="tareas.html">Gestión de tareas</a></li>
+                            <li><a href="estadisticas.html">Estadísticas</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="sidebar-section">
+                        <h4 class="sidebar-title">Contenidos</h4>
+                        <ul class="sidebar-nav">
+                            <li><a href="../sesiones/index.html">Editar sesiones</a></li>
+                            <li><a href="../talleres/index.html">Gestionar talleres</a></li>
+                            <li><a href="../recursos/index.html">Recursos</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="sidebar-section">
+                        <button onclick="PE.Auth.logout()" class="btn btn-outline btn-block">Cerrar sesión</button>
+                    </div>
+                </aside>
+
+                <!-- Contenido principal -->
+                <div class="main-content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-xl);">
+                        <div>
+                            <h1 style="margin-bottom: 0.25rem;">Panel de administración</h1>
+                            <p class="text-secondary mb-0">Gestión del curso de Producción Escrita C2</p>
+                        </div>
+                        <span class="badge badge-info">Curso 2025-2026</span>
+                    </div>
+
+                    <!-- Estadísticas generales -->
+                    <div class="sessions-grid mb-4" style="grid-template-columns: repeat(4, 1fr);">
+                        <div class="card stat-card">
+                            <span class="stat-value" id="stat-students">0</span>
+                            <p class="stat-label">Estudiantes</p>
+                        </div>
+                        <div class="card stat-card">
+                            <span class="stat-value" id="stat-submissions">0</span>
+                            <p class="stat-label">Entregas</p>
+                        </div>
+                        <div class="card stat-card">
+                            <span class="stat-value" id="stat-pending">0</span>
+                            <p class="stat-label">Pendientes</p>
+                        </div>
+                        <div class="card stat-card">
+                            <span class="stat-value" id="stat-progress">0%</span>
+                            <p class="stat-label">Progreso curso</p>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-lg);">
+                        <!-- Entregas pendientes de corrección -->
+                        <div class="card">
+                            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                                <h3 style="margin: 0;">Entregas pendientes</h3>
+                                <a href="correcciones.html" class="btn btn-sm btn-outline">Ver todas</a>
+                            </div>
+                            <div class="card-body" id="pending-submissions">
+                                <div class="loader"></div>
+                            </div>
+                        </div>
+
+                        <!-- Lista de estudiantes -->
+                        <div class="card">
+                            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                                <h3 style="margin: 0;">Estudiantes</h3>
+                                <a href="estudiantes.html" class="btn btn-sm btn-outline">Gestionar</a>
+                            </div>
+                            <div class="card-body student-list" id="student-list">
+                                <div class="loader"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Próxima sesión -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h3 style="margin: 0;">Próxima sesión</h3>
+                        </div>
+                        <div class="card-body" id="next-session">
+                            <div class="loader"></div>
+                        </div>
+                    </div>
+
+                    <!-- Acciones rápidas -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h3 style="margin: 0;">Acciones rápidas</h3>
+                        </div>
+                        <div class="card-body">
+                            <div style="display: flex; gap: var(--spacing-md); flex-wrap: wrap;">
+                                <a href="correcciones.html" class="btn btn-primary">Corregir entregas</a>
+                                <a href="../sesiones/index.html" class="btn btn-outline">Ver sesiones</a>
+                                <a href="../calendario.html" class="btn btn-outline">Calendario</a>
+                                <button onclick="exportData()" class="btn btn-outline">Exportar datos</button>
+                                <button onclick="sendReminder()" class="btn btn-outline">Enviar recordatorio</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom" style="border: none; padding-top: 0;">
+                <span>Centro de Lenguas Modernas - Universidad de Granada</span>
+                <span>Producción Escrita C2 - Curso 2025-2026</span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Verificar autenticación de admin
+            const user = PE.Auth.getCurrentUser();
+            if (!user || user.role !== 'admin') {
+                window.location.href = '../auth/login.html';
+                return;
+            }
+
+            // Obtener datos
+            const users = JSON.parse(localStorage.getItem('pe_c2_users') || '[]');
+            const students = users.filter(u => u.role !== 'admin');
+            const submissions = PE.Submissions.getAll();
+            const pending = submissions.filter(s => s.status === 'pending');
+            const progress = PE.CourseData.getCourseProgress();
+
+            // Actualizar estadísticas
+            document.getElementById('stat-students').textContent = students.length;
+            document.getElementById('stat-submissions').textContent = submissions.length;
+            document.getElementById('stat-pending').textContent = pending.length;
+            document.getElementById('stat-progress').textContent = progress.percentage + '%';
+
+            // Entregas pendientes
+            const pendingContainer = document.getElementById('pending-submissions');
+            if (pending.length === 0) {
+                pendingContainer.innerHTML = '<p class="text-secondary text-center">No hay entregas pendientes de corrección.</p>';
+            } else {
+                pendingContainer.innerHTML = pending.slice(0, 5).map(s => `
+                    <div class="submission-item">
+                        <div class="submission-header">
+                            <div>
+                                <strong>${PE.Utils.escapeHtml(s.userName || 'Estudiante')}</strong>
+                                <span class="badge badge-warning ml-2">Pendiente</span>
+                            </div>
+                            <span class="text-secondary" style="font-size: 0.875rem;">${PE.Utils.formatDate(s.createdAt)}</span>
+                        </div>
+                        <p class="text-secondary mb-2" style="font-size: 0.875rem;">${PE.Utils.escapeHtml(s.activityTitle)}</p>
+                        <button class="btn btn-sm btn-primary" onclick="reviewSubmission('${s.id}')">Corregir</button>
+                    </div>
+                `).join('');
+            }
+
+            // Lista de estudiantes
+            const studentContainer = document.getElementById('student-list');
+            if (students.length === 0) {
+                studentContainer.innerHTML = '<p class="text-secondary text-center">No hay estudiantes registrados.</p>';
+            } else {
+                studentContainer.innerHTML = students.map(s => {
+                    const studentSubmissions = submissions.filter(sub => sub.userId === s.id);
+                    return `
+                        <div class="submission-item">
+                            <div class="submission-header">
+                                <strong>${PE.Utils.escapeHtml(s.name)}</strong>
+                                <span class="badge badge-primary">${s.level || 'C2'}</span>
+                            </div>
+                            <p class="text-secondary mb-0" style="font-size: 0.875rem;">
+                                ${s.email} - ${studentSubmissions.length} entregas
+                            </p>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Próxima sesión
+            const nextSession = PE.CourseData.getCurrentSession();
+            document.getElementById('next-session').innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <span class="badge badge-primary mb-2">Sesión ${nextSession.id}</span>
+                        <h4 style="margin: 0.5rem 0;">${nextSession.title}</h4>
+                        <p class="text-secondary mb-0">${nextSession.day}, ${PE.Utils.formatDate(nextSession.date, 'long')}</p>
+                    </div>
+                    <a href="../sesiones/sesion-${String(nextSession.id).padStart(2, '0')}.html" class="btn btn-primary">
+                        Ver/Editar sesión
+                    </a>
+                </div>
+            `;
+        });
+
+        function reviewSubmission(id) {
+            const submissions = PE.Submissions.getAll();
+            const submission = submissions.find(s => s.id === id);
+
+            if (submission) {
+                PE.UI.showModal('Corregir entrega', `
+                    <div class="mb-3">
+                        <strong>Estudiante:</strong> ${PE.Utils.escapeHtml(submission.userName || 'Estudiante')}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Actividad:</strong> ${PE.Utils.escapeHtml(submission.activityTitle)}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Texto entregado:</strong>
+                        <div style="background: var(--bg-light); padding: 1rem; border-radius: 0.5rem; max-height: 200px; overflow-y: auto; margin-top: 0.5rem;">
+                            ${submission.content}
+                        </div>
+                        <p class="text-secondary" style="font-size: 0.875rem; margin-top: 0.5rem;">${submission.wordCount} palabras</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Retroalimentación</label>
+                        <textarea id="feedback-text" class="form-control" rows="4" placeholder="Escribe tu corrección y comentarios..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Calificación (opcional)</label>
+                        <select id="feedback-grade" class="form-control form-select">
+                            <option value="">Sin calificación</option>
+                            <option value="Excelente">Excelente</option>
+                            <option value="Muy bien">Muy bien</option>
+                            <option value="Bien">Bien</option>
+                            <option value="Suficiente">Suficiente</option>
+                            <option value="Necesita mejorar">Necesita mejorar</option>
+                        </select>
+                    </div>
+                `, [
+                    { text: 'Cancelar' },
+                    {
+                        text: 'Enviar corrección',
+                        class: 'btn-primary',
+                        callback: async () => {
+                            const feedback = document.getElementById('feedback-text').value;
+                            const grade = document.getElementById('feedback-grade').value;
+
+                            if (!feedback.trim()) {
+                                PE.UI.notify('Escribe tu retroalimentación', 'error');
+                                return;
+                            }
+
+                            await PE.Submissions.addFeedback(id, feedback, grade);
+                            PE.UI.notify('Corrección enviada correctamente', 'success');
+                            location.reload();
+                        },
+                        close: false
+                    }
+                ]);
+            }
+        }
+
+        function exportData() {
+            const submissions = PE.Submissions.getAll();
+            const users = JSON.parse(localStorage.getItem('pe_c2_users') || '[]');
+
+            const data = {
+                exportDate: new Date().toISOString(),
+                students: users.filter(u => u.role !== 'admin'),
+                submissions: submissions
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'pe_c2_datos_' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+
+            PE.UI.notify('Datos exportados correctamente', 'success');
+        }
+
+        function sendReminder() {
+            PE.UI.showModal('Enviar recordatorio', `
+                <div class="form-group">
+                    <label class="form-label">Mensaje del recordatorio</label>
+                    <textarea id="reminder-text" class="form-control" rows="4" placeholder="Escribe el mensaje para los estudiantes...">Recordatorio: No olvides completar las actividades de la sesión actual.</textarea>
+                </div>
+                <div class="form-group">
+                    <div class="form-check">
+                        <input type="checkbox" id="reminder-all" class="form-check-input" checked>
+                        <label for="reminder-all" class="form-check-label">Enviar a todos los estudiantes</label>
+                    </div>
+                </div>
+            `, [
+                { text: 'Cancelar' },
+                {
+                    text: 'Enviar',
+                    class: 'btn-primary',
+                    callback: () => {
+                        PE.UI.notify('Recordatorio enviado (simulado)', 'success');
+                    }
+                }
+            ]);
+        }
+    </script>
+</body>
+</html>
