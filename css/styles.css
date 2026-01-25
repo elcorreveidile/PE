@@ -1,6 +1,4 @@
-/* ==========================================================================
    Curso de Producción Escrita C2 - Estilos Principales
-   ========================================================================== */
 
 /* Variables CSS */
 :root {
@@ -91,9 +89,7 @@ body {
     flex-direction: column;
 }
 
-/* ==========================================================================
    Accesibilidad - Foco visible
-   ========================================================================== */
 
 /* Skip link para saltar al contenido principal */
 .skip-link {
@@ -157,9 +153,7 @@ select:focus-visible {
     }
 }
 
-/* ==========================================================================
    Lazy Loading de Imágenes
-   ========================================================================== */
 
 /* Imágenes con lazy loading tienen fade-in al cargar */
 img[loading="lazy"],
@@ -178,9 +172,7 @@ img:not([src]) {
     min-height: 100px;
 }
 
-/* ==========================================================================
    Skeleton Screens
-   ========================================================================== */
 
 /* Animación de shimmer para skeletons */
 @keyframes skeleton-shimmer {
@@ -397,9 +389,7 @@ strong, b {
     max-width: var(--container-lg);
 }
 
-/* ==========================================================================
    Header y Navegación
-   ========================================================================== */
 .header {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
     color: white;
@@ -581,9 +571,7 @@ strong, b {
     transition: var(--transition-base);
 }
 
-/* ==========================================================================
    Botones
-   ========================================================================== */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -787,9 +775,7 @@ strong, b {
     width: 100%;
 }
 
-/* ==========================================================================
    Hero Section
-   ========================================================================== */
 .hero {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
     color: white;
@@ -873,9 +859,7 @@ strong, b {
     letter-spacing: 0.05em;
 }
 
-/* ==========================================================================
    Cards
-   ========================================================================== */
 .card {
     background: white;
     border-radius: var(--border-radius-lg);
@@ -1035,18 +1019,14 @@ strong, b {
     font-weight: bold;
 }
 
-/* ==========================================================================
    Grid de sesiones
-   ========================================================================== */
 .sessions-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: var(--spacing-lg);
 }
 
-/* ==========================================================================
    Secciones
-   ========================================================================== */
 .section {
     padding: var(--spacing-3xl) 0;
 }
@@ -1071,9 +1051,7 @@ strong, b {
     background: white;
 }
 
-/* ==========================================================================
    Calendario
-   ========================================================================== */
 .calendar {
     background: white;
     border-radius: var(--border-radius-lg);
@@ -1180,9 +1158,7 @@ strong, b {
     text-overflow: ellipsis;
 }
 
-/* ==========================================================================
    Formularios
-   ========================================================================== */
 .form-group {
     margin-bottom: var(--spacing-lg);
 }
@@ -1271,9 +1247,7 @@ textarea.form-control {
     padding-right: var(--spacing-2xl);
 }
 
-/* ==========================================================================
    Editor de texto enriquecido
-   ========================================================================== */
 .text-editor {
     border: 2px solid var(--border-color);
     border-radius: var(--border-radius-md);
@@ -1342,9 +1316,7 @@ textarea.form-control {
     color: var(--text-light);
 }
 
-/* ==========================================================================
    Badges y etiquetas
-   ========================================================================== */
 .badge {
     display: inline-flex;
     align-items: center;
@@ -1392,9 +1364,7 @@ textarea.form-control {
     border: 1px solid currentColor;
 }
 
-/* ==========================================================================
    Progreso
-   ========================================================================== */
 .progress {
     height: 8px;
     background: var(--bg-light);
@@ -1421,9 +1391,7 @@ textarea.form-control {
     background: var(--error-color);
 }
 
-/* ==========================================================================
    Alertas
-   ========================================================================== */
 .alert {
     padding: var(--spacing-md) var(--spacing-lg);
     border-radius: var(--border-radius-md);
@@ -1471,9 +1439,7 @@ textarea.form-control {
     color: var(--info-color);
 }
 
-/* ==========================================================================
    Tabs
-   ========================================================================== */
 .tabs {
     border-bottom: 2px solid var(--border-color);
     display: flex;
@@ -1525,9 +1491,7 @@ textarea.form-control {
     display: block;
 }
 
-/* ==========================================================================
    Modal
-   ========================================================================== */
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -1607,9 +1571,7 @@ textarea.form-control {
     gap: var(--spacing-sm);
 }
 
-/* ==========================================================================
    Tabla
-   ========================================================================== */
 .table-wrapper {
     overflow-x: auto;
     border-radius: var(--border-radius-md);
@@ -1641,9 +1603,7 @@ tr:hover td {
     background: var(--bg-light);
 }
 
-/* ==========================================================================
    Footer
-   ========================================================================== */
 .footer {
     background: var(--primary-dark);
     color: white;
@@ -1693,9 +1653,7 @@ tr:hover td {
     color: rgba(255, 255, 255, 0.6);
 }
 
-/* ==========================================================================
    Actividades interactivas
-   ========================================================================== */
 .activity {
     background: white;
     border-radius: var(--border-radius-lg);
@@ -1897,9 +1855,7 @@ tr:hover td {
     background: rgba(44, 82, 130, 0.05);
 }
 
-/* ==========================================================================
    Sidebar
-   ========================================================================== */
 .page-with-sidebar {
     display: grid;
     grid-template-columns: 280px 1fr;
@@ -1964,9 +1920,7 @@ tr:hover td {
     color: white;
 }
 
-/* ==========================================================================
    Responsive
-   ========================================================================== */
 @media (max-width: 1024px) {
     .page-with-sidebar {
         grid-template-columns: 1fr;
@@ -2070,9 +2024,7 @@ tr:hover td {
     }
 }
 
-/* ==========================================================================
    Utilidades
-   ========================================================================== */
 .text-center { text-align: center; }
 .text-left { text-align: left; }
 .text-right { text-align: right; }
@@ -2174,9 +2126,7 @@ tr:hover td {
     animation: pulse 2s infinite;
 }
 
-/* ==========================================================================
    Scroll Reveal Animations
-   ========================================================================== */
 
 /* Estados iniciales para elementos que se animarán al hacer scroll */
 .scroll-reveal {
@@ -2311,6 +2261,31 @@ tr:hover td {
     background: var(--text-light);
 }
 
+
+.institutional-banner {
+    width: 100%;
+    height: 100px;
+    background: #ffffff url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABCsAAABkCAMAAACYVErJAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyZpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+/Pp/mixwAAABLSURBVHja7M7RDQAgDMCw2n8q3IuB40Q5rWxv/KgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD4EwAAYxn16aPb3e0AAAAAElFTkSuQmCC') center top no-repeat;
+    background-size: contain;
+    border-bottom: 1px solid var(--border-color);
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+}
+
+/* Ocultar la imagen img ya que usamos background */
+.institutional-banner img {
+    display: none;
+}
+
+/* Responsive para el banner */
+@media (max-width: 768px) {
+    .institutional-banner {
+        background-size: cover;
+        background-position: center center;
+    }
+}
+
 /* ==========================================================================
    Banner Institucional UGR - CLM
    ========================================================================== */
@@ -2318,30 +2293,26 @@ tr:hover td {
 .institutional-banner {
     width: 100%;
     height: 100px;
-    background: #ffffff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    background: #ffffff url('data:image/png;base64,EOF
+cat /tmp/banner_full.txt >> /tmp/banner_css.txt
+echo "') center top no-repeat;" >> /tmp/banner_css.txt
+cat >> /tmp/banner_css.txt << 'EOF'
+    background-size: contain;
     border-bottom: 1px solid var(--border-color);
     position: relative;
     z-index: 1;
     overflow: hidden;
 }
 
+/* Ocultar la imagen img ya que usamos background */
 .institutional-banner img {
-    width: 100%;
-    max-width: 1200px;
-    height: 100%;
-    display: block;
-    object-fit: cover;
-    object-position: center top;
+    display: none;
 }
 
 /* Responsive para el banner */
 @media (max-width: 768px) {
-    .institutional-banner img {
-        max-width: 100%;
-        padding: 0 0.5rem;
+    .institutional-banner {
+        background-size: cover;
+        background-position: center center;
     }
 }
-
