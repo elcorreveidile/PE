@@ -101,14 +101,14 @@
 
     <script src="../js/app.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             const user = PE.Auth.getCurrentUser();
             if (!user || user.role !== 'admin') {
                 window.location.href = '../auth/login.html';
                 return;
             }
 
-            const allSubmissions = PE.Submissions.getAll();
+            const allSubmissions = await PE.Submissions.getAll();
             const pending = allSubmissions.filter(s => s.status === 'pending');
             const reviewed = allSubmissions.filter(s => s.status === 'reviewed');
 
@@ -183,8 +183,8 @@
             });
         });
 
-        function reviewSubmission(id) {
-            const submissions = PE.Submissions.getAll();
+        async function reviewSubmission(id) {
+            const submissions = await PE.Submissions.getAll();
             const s = submissions.find(sub => sub.id === id);
 
             if (s) {

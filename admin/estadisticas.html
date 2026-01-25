@@ -198,7 +198,7 @@
 
     <script src="../js/app.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             const user = PE.Auth.getCurrentUser();
             if (!user || user.role !== 'admin') {
                 const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
@@ -208,7 +208,7 @@
 
             const users = JSON.parse(localStorage.getItem('pe_c2_users') || '[]');
             const students = users.filter(u => u.role !== 'admin');
-            const submissions = PE.Submissions.getAll();
+            const submissions = await PE.Submissions.getAll();
             const sessions = PE.CourseData.sessions;
             const progress = PE.CourseData.getCourseProgress();
 
@@ -303,10 +303,10 @@
             }).join('');
         });
 
-        function exportStats() {
+        async function exportStats() {
             const users = JSON.parse(localStorage.getItem('pe_c2_users') || '[]');
             const students = users.filter(u => u.role !== 'admin');
-            const submissions = PE.Submissions.getAll();
+            const submissions = await PE.Submissions.getAll();
             const progress = PE.CourseData.getCourseProgress();
 
             const report = {

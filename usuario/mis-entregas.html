@@ -146,8 +146,8 @@
             });
         });
 
-        function viewSubmission(id) {
-            const submissions = PE.Submissions.getAll();
+        async function viewSubmission(id) {
+            const submissions = await PE.Submissions.getAll();
             const s = submissions.find(sub => sub.id === id);
             if (s) {
                 PE.UI.showModal(s.activityTitle, `

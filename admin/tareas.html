@@ -117,7 +117,7 @@
 
     <script src="../js/app.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             const user = PE.Auth.getCurrentUser();
             if (!user || user.role !== 'admin') {
                 const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
@@ -125,7 +125,7 @@
                 return;
             }
 
-            const submissions = PE.Submissions.getAll();
+            const submissions = await PE.Submissions.getAll();
             const sessions = PE.CourseData.sessions;
             const pending = submissions.filter(s => s.status === 'pending');
             const reviewed = submissions.filter(s => s.status === 'reviewed');
@@ -243,8 +243,8 @@
             });
         });
 
-        function viewSubmission(id) {
-            const submissions = PE.Submissions.getAll();
+        async function viewSubmission(id) {
+            const submissions = await PE.Submissions.getAll();
             const s = submissions.find(sub => sub.id === id);
             if (s) {
                 PE.UI.showModal(s.activityTitle, `
@@ -272,8 +272,8 @@
             }
         }
 
-        function exportSessionData() {
-            const submissions = PE.Submissions.getAll();
+        async function exportSessionData() {
+            const submissions = await PE.Submissions.getAll();
             const sessions = PE.CourseData.sessions;
 
             const data = sessions.map(session => {
