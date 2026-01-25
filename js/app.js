@@ -19,6 +19,156 @@ const CONFIG = {
     SESSION_DAYS: [1, 3], // Lunes = 1, Miércoles = 3
 };
 
+// ==========================================================================
+// Lazy Loading System
+// ==========================================================================
+
+const LazyLoader = {
+    // Inicializar lazy loading nativo con fallback
+    init() {
+        // Si el navegador soporta loading="lazy", configurar todas las imágenes
+        if ('loading' in HTMLImageElement.prototype) {
+            // El navegador soporta lazy loading nativo
+            this.setupNativeLazyLoading();
+        } else {
+            // Fallback con Intersection Observer
+            this.setupIntersectionObserver();
+        }
+    },
+
+    setupNativeLazyLoading() {
+        // Añadir loading="lazy" a todas las imágenes sin el atributo
+        const images = document.querySelectorAll('img:not([loading])');
+        images.forEach(img => {
+            img.loading = 'lazy';
+        });
+    },
+
+    setupIntersectionObserver() {
+        if (!('IntersectionObserver' in window)) return;
+
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    const src = img.dataset.src;
+
+                    if (src) {
+                        img.src = src;
+                        img.onload = () => img.classList.add('loaded');
+                        observer.unobserve(img);
+                    }
+                }
+            });
+        }, {
+            rootMargin: '50px 0px',
+            threshold: 0.01
+        });
+
+        // Observar imágenes con data-src
+        const lazyImages = document.querySelectorAll('img[data-src]');
+        lazyImages.forEach(img => imageObserver.observe(img));
+    },
+
+    // Método para añadir dinámicamente una imagen con lazy loading
+    loadImage(src, alt = '', className = '') {
+        const img = document.createElement('img');
+        img.alt = alt;
+        if (className) img.className = className;
+
+        if ('loading' in HTMLImageElement.prototype) {
+            img.loading = 'lazy';
+            img.src = src;
+        } else {
+            img.dataset.src = src;
+            this.setupIntersectionObserver();
+        }
+
+        return img;
+    }
+};
+
+// ==========================================================================
+// Skeleton Screen System
+// ==========================================================================
+
+const Skeleton = {
+    // Crear un skeleton de texto
+    text(lines = 3) {
+        let html = '';
+        for (let i = 0; i < lines; i++) {
+            html += '<div class="skeleton skeleton-text"></div>';
+        }
+        return html;
+    },
+
+    // Crear un skeleton de título
+    title() {
+        return '<div class="skeleton skeleton-title"></div>';
+    },
+
+    // Crear un skeleton de card completo
+    card() {
+        return `
+            <div class="skeleton-card">
+                <div class="skeleton skeleton-title"></div>
+                <div class="skeleton skeleton-text"></div>
+                <div class="skeleton skeleton-text"></div>
+                <div class="skeleton skeleton-text"></div>
+            </div>
+        `;
+    },
+
+    // Crear un skeleton de botón
+    button() {
+        return '<div class="skeleton skeleton-button"></div>';
+    },
+
+    // Crear un skeleton de imagen
+    image() {
+        return '<div class="skeleton skeleton-image"></div>';
+    },
+
+    // Crear un skeleton de avatar
+    avatar() {
+        return '<div class="skeleton skeleton-avatar"></div>';
+    },
+
+    // Crear un skeleton de stat
+    stat() {
+        return `
+            <div class="skeleton skeleton-stat">
+                <div class="skeleton skeleton-stat-value"></div>
+                <div class="skeleton skeleton-stat-label"></div>
+            </div>
+        `;
+    },
+
+    // Envolver contenido con skeleton mientras carga
+    wrap(content, skeletonContent) {
+        return `
+            <div class="loading-container">
+                ${skeletonContent}
+                <div class="content" style="display: none;">
+                    ${content}
+                </div>
+            </div>
+        `;
+    },
+
+    // Mostrar contenido y ocultar skeleton
+    reveal(container) {
+        const loadingContainer = container.closest('.loading-container');
+        if (loadingContainer) {
+            loadingContainer.classList.add('loaded');
+            const content = loadingContainer.querySelector('.content');
+            if (content) {
+                content.style.display = '';
+            }
+        }
+    }
+};
+
 // Estado global de la aplicación
 const AppState = {
     user: null,
@@ -1210,13 +1360,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log('Producción Escrita C2 - Modo localStorage (sin backend)');
     }
 
+    // Inicializar animaciones de scroll
+    ScrollReveal.init();
+
+    // Inicializar lazy loading de imágenes
+    LazyLoader.init();
+
     // Menú móvil
     const menuToggle = document.getElementById('menu-toggle');
     const navMain = document.getElementById('nav-main');
 
     if (menuToggle && navMain) {
         menuToggle.addEventListener('click', () => {
-            navMain.classList.toggle('active');
+            const isActive = navMain.classList.toggle('active');
+            // Actualizar atributo ARIA para accesibilidad
+            menuToggle.setAttribute('aria-expanded', isActive);
         });
     }
 
@@ -1224,6 +1382,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.addEventListener('click', (e) => {
         if (navMain && !navMain.contains(e.target) && !menuToggle?.contains(e.target)) {
             navMain.classList.remove('active');
+            if (menuToggle) {
+                menuToggle.setAttribute('aria-expanded', 'false');
+            }
         }
     });
 
@@ -1280,6 +1441,71 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // ==========================================================================
+// Scroll Reveal System
+// ==========================================================================
+
+const ScrollReveal = {
+    observer: null,
+
+    init() {
+        // Verificar soporte de Intersection Observer
+        if (!('IntersectionObserver' in window)) {
+            // Fallback para navegadores antiguos
+            this.fallbackInit();
+            return;
+        }
+
+        // Crear el observer
+        this.observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        // Opcional: dejar de observar después de animar
+                        this.observer.unobserve(entry.target);
+                    }
+                });
+            },
+            {
+                root: null, // viewport
+                rootMargin: '0px 0px -50px 0px', // activar un poco antes
+                threshold: 0.1 // activar cuando 10% del elemento es visible
+            }
+        );
+
+        // Observar todos los elementos con clase scroll-reveal
+        const revealElements = document.querySelectorAll('.scroll-reveal');
+        revealElements.forEach(el => this.observer.observe(el));
+    },
+
+    // Fallback simple para navegadores sin Intersection Observer
+    fallbackInit() {
+        const revealElements = document.querySelectorAll('.scroll-reveal');
+        const checkVisibility = () => {
+            revealElements.forEach(el => {
+                const rect = el.getBoundingClientRect();
+                const isVisible = rect.top < window.innerHeight - 100;
+                if (isVisible) {
+                    el.classList.add('is-visible');
+                }
+            });
+        };
+
+        // Verificar al cargar y al hacer scroll
+        checkVisibility();
+        window.addEventListener('scroll', Utils.debounce(checkVisibility, 100));
+    },
+
+    // Método para añadir dinámicamente elementos
+    observe(element) {
+        if (this.observer) {
+            element.classList.add('scroll-reveal');
+            this.observer.observe(element);
+        }
+    }
+};
+
+// ==========================================================================
 // Configuración de API (para uso desde consola)
 // ==========================================================================
 
@@ -1317,5 +1543,8 @@ window.PE = {
     Forms,
     Utils,
     API,
-    APIConfig
+    APIConfig,
+    ScrollReveal,
+    LazyLoader,
+    Skeleton
 };
