@@ -41,6 +41,15 @@ PORT=3000
 # Entorno (development/production)
 NODE_ENV=development
 
+# Tipo de base de datos: 'sqlite' (desarrollo) o 'postgres' (producción)
+DB_TYPE=sqlite
+
+# Base de datos SQLite (desarrollo local)
+DATABASE_PATH=./data/database.sqlite
+
+# Base de datos PostgreSQL (producción - Supabase)
+DATABASE_URL=postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres
+
 # Clave secreta para JWT (cambiar en producción)
 JWT_SECRET=tu_clave_secreta_muy_larga_y_segura
 
@@ -48,11 +57,16 @@ JWT_SECRET=tu_clave_secreta_muy_larga_y_segura
 JWT_EXPIRES_IN=7d
 
 # Orígenes permitidos para CORS (separados por coma)
-CORS_ORIGIN=http://localhost:5500,https://elcorreveidile.github.io
+FRONTEND_URL=http://localhost:5500,https://elcorreveidile.github.io
 
 # Rate limiting
 RATE_LIMIT_WINDOW_MS=900000
 RATE_LIMIT_MAX_REQUESTS=100
+
+# Admin inicial (se crea al inicializar la base de datos)
+ADMIN_EMAIL=benitezl@go.ugr.es
+ADMIN_PASSWORD=admin123
+ADMIN_NAME=Javier Benítez Láinez
 ```
 
 ## Endpoints de la API
@@ -98,7 +112,29 @@ RATE_LIMIT_MAX_REQUESTS=100
 
 ## Despliegue
 
-### Opción 1: Railway (Recomendado)
+### 📘 Guía Completa de Despliegue en Producción
+
+Para una guía paso a paso detallada, consulta **[DEPLOYMENT.md](../DEPLOYMENT.md)**.
+
+### Resumen Rápido: Supabase + Vercel
+
+**1. Configurar Supabase (Base de Datos PostgreSQL)**
+- Crea proyecto en [supabase.com](https://supabase.com)
+- Copia la `DATABASE_URL` del proyecto
+- Ejecuta: `npm run init-db-postgres`
+
+**2. Desplegar Backend en Vercel**
+- Ve a [vercel.com](https://vercel.com)
+- Importa tu repositorio de GitHub
+- Configura las variables de entorno (`DB_TYPE=postgres`, `DATABASE_URL`, `JWT_SECRET`)
+- Deploy
+
+**3. Desplegar Frontend**
+- Despliega el frontend en Vercel
+- Actualiza la `API_URL` en `js/app.js`
+- Actualiza `FRONTEND_URL` en el backend
+
+### Opción 1: Railway (Alternativa)
 
 1. Crea una cuenta en [railway.app](https://railway.app)
 2. Conecta tu repositorio de GitHub
@@ -180,9 +216,11 @@ backend/
 ├── src/
 │   ├── app.js              # Servidor Express
 │   ├── database/
-│   │   ├── db.js           # Conexión SQLite
-│   │   ├── schema.sql      # Esquema de la base de datos
-│   │   └── init.js         # Script de inicialización
+│   │   ├── db.js           # Conexión BD (SQLite + PostgreSQL)
+│   │   ├── schema.sql      # Esquema SQLite
+│   │   ├── schema-postgres.sql  # Esquema PostgreSQL
+│   │   ├── init.js         # Inicialización SQLite
+│   │   └── init-postgres.js  # Inicialización PostgreSQL
 │   ├── middleware/
 │   │   └── auth.js         # Autenticación JWT
 │   └── routes/
@@ -191,9 +229,19 @@ backend/
 │       └── submissions.js  # Rutas de entregas
 ├── data/                   # Base de datos SQLite (generada)
 ├── .env.example            # Ejemplo de configuración
+├── vercel.json             # Configuración Vercel
 ├── package.json
 └── README.md
 ```
+
+## Compatibilidad de Base de Datos
+
+Este backend soporta **dos tipos de base de datos**:
+
+- **SQLite**: Para desarrollo local (DB_TYPE=sqlite)
+- **PostgreSQL**: Para producción con Supabase (DB_TYPE=postgres)
+
+El cambio entre uno y otro se hace simplemente cambiando la variable de entorno `DB_TYPE`.
 
 ## Seguridad
 

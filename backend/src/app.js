@@ -1,6 +1,6 @@
 /**
  * Producción Escrita C2 - Backend API
- * Servidor Express con SQLite
+ * Servidor Express con SQLite (desarrollo) y PostgreSQL (producción)
  */
 
 require('dotenv').config();

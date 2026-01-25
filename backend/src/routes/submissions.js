@@ -1,10 +1,11 @@
 /**
  * Rutas de entregas (submissions)
+ * Compatible con SQLite y PostgreSQL
  */
 
 const express = require('express');
 const { body, query, validationResult } = require('express-validator');
-const { getDb } = require('../database/db');
+const { query: dbQuery } = require('../database/db');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
@@ -26,9 +27,8 @@ router.get('/', authenticateToken, [
     query('user_id').optional().isInt(),
     query('limit').optional().isInt({ min: 1, max: 100 }),
     query('offset').optional().isInt({ min: 0 })
-], (req, res) => {
+], async (req, res) => {
     try {
-        const db = getDb();
         const { status, session_id, user_id, limit = 50, offset = 0 } = req.query;
 
         let whereClause = [];
@@ -57,7 +57,8 @@ router.get('/', authenticateToken, [
 
         // Contar total
         const countSQL = `SELECT COUNT(*) as total FROM submissions s ${whereSQL}`;
-        const { total } = db.prepare(countSQL).get(...params);
+        const countResult = await dbQuery(countSQL, params);
+        const total = countResult.rows?.[0]?.total || countResult.total;
 
         // Obtener entregas con información de usuario y feedback
         const sql = `
@@ -77,7 +78,8 @@ router.get('/', authenticateToken, [
         `;
 
         params.push(parseInt(limit), parseInt(offset));
-        const submissions = db.prepare(sql).all(...params);
+        const submissionsResult = await dbQuery(sql, params);
+        const submissions = submissionsResult.rows || submissionsResult;
 
         res.json({
             submissions,
@@ -99,12 +101,11 @@ router.get('/', authenticateToken, [
  * GET /api/submissions/:id
  * Obtener una entrega específica
  */
-router.get('/:id', authenticateToken, (req, res) => {
+router.get('/:id', authenticateToken, async (req, res) => {
     try {
-        const db = getDb();
         const submissionId = req.params.id;
 
-        const submission = db.prepare(`
+        const submissionResult = await dbQuery(`
             SELECT
                 s.*,
                 u.name as user_name,
@@ -119,7 +120,9 @@ router.get('/:id', authenticateToken, (req, res) => {
             LEFT JOIN feedback f ON s.id = f.submission_id
             LEFT JOIN users r ON f.reviewer_id = r.id
             WHERE s.id = ?
-        `).get(submissionId);
+        `, [submissionId]);
+
+        const submission = submissionResult.rows?.[0] || submissionResult;
 
         if (!submission) {
             return res.status(404).json({ error: 'Entrega no encontrada' });
@@ -147,7 +150,7 @@ router.post('/', authenticateToken, [
     body('activity_id').notEmpty().withMessage('ID de actividad requerido'),
     body('activity_title').notEmpty().withMessage('Título de actividad requerido'),
     body('content').isLength({ min: 10 }).withMessage('El contenido debe tener al menos 10 caracteres')
-], (req, res) => {
+], async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -155,26 +158,26 @@ router.post('/', authenticateToken, [
         }
 
         const { session_id, activity_id, activity_title, content } = req.body;
-        const db = getDb();
 
         const wordCount = countWords(content);
 
-        const result = db.prepare(`
+        const result = await dbQuery(`
             INSERT INTO submissions (user_id, session_id, activity_id, activity_title, content, word_count)
             VALUES (?, ?, ?, ?, ?, ?)
-        `).run(req.user.id, session_id || null, activity_id, activity_title, content, wordCount);
+            RETURNING id
+        `, [req.user.id, session_id || null, activity_id, activity_title, content, wordCount]);
 
-        const submissionId = result.lastInsertRowid;
+        const submissionId = result.rows?.[0]?.id || result.lastInsertRowid;
 
         // Notificar al admin
-        const admins = db.prepare('SELECT id FROM users WHERE role = ?').all('admin');
-        const insertNotification = db.prepare(`
-            INSERT INTO notifications (user_id, type, title, message)
-            VALUES (?, 'new_submission', 'Nueva entrega', ?)
-        `);
+        const adminsResult = await dbQuery('SELECT id FROM users WHERE role = ?', ['admin']);
+        const admins = adminsResult.rows || adminsResult;
 
         for (const admin of admins) {
-            insertNotification.run(admin.id, `${req.user.name} ha enviado: ${activity_title}`);
+            await dbQuery(`
+                INSERT INTO notifications (user_id, type, title, message)
+                VALUES (?, 'new_submission', 'Nueva entrega', ?)
+            `, [admin.id, `${req.user.name} ha enviado: ${activity_title}`]);
         }
 
         res.status(201).json({
@@ -201,18 +204,18 @@ router.post('/', authenticateToken, [
  */
 router.put('/:id', authenticateToken, [
     body('content').isLength({ min: 10 }).withMessage('El contenido debe tener al menos 10 caracteres')
-], (req, res) => {
+], async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const db = getDb();
         const submissionId = req.params.id;
 
         // Verificar que existe y es del usuario
-        const submission = db.prepare('SELECT * FROM submissions WHERE id = ?').get(submissionId);
+        const submissionResult = await dbQuery('SELECT * FROM submissions WHERE id = ?', [submissionId]);
+        const submission = submissionResult.rows?.[0] || submissionResult;
 
         if (!submission) {
             return res.status(404).json({ error: 'Entrega no encontrada' });
@@ -229,10 +232,10 @@ router.put('/:id', authenticateToken, [
         const { content } = req.body;
         const wordCount = countWords(content);
 
-        db.prepare(`
+        await dbQuery(`
             UPDATE submissions SET content = ?, word_count = ?, updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
-        `).run(content, wordCount, submissionId);
+        `, [content, wordCount, submissionId]);
 
         res.json({
             message: 'Entrega actualizada correctamente',
@@ -252,47 +255,49 @@ router.put('/:id', authenticateToken, [
 router.post('/:id/feedback', authenticateToken, requireAdmin, [
     body('feedback_text').notEmpty().withMessage('El feedback es requerido'),
     body('grade').optional().isString()
-], (req, res) => {
+], async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const db = getDb();
         const submissionId = req.params.id;
         const { feedback_text, grade, annotations } = req.body;
 
         // Verificar que la entrega existe
-        const submission = db.prepare('SELECT * FROM submissions WHERE id = ?').get(submissionId);
+        const submissionResult = await dbQuery('SELECT * FROM submissions WHERE id = ?', [submissionId]);
+        const submission = submissionResult.rows?.[0] || submissionResult;
+
         if (!submission) {
             return res.status(404).json({ error: 'Entrega no encontrada' });
         }
 
         // Insertar o actualizar feedback
-        const existingFeedback = db.prepare('SELECT id FROM feedback WHERE submission_id = ?').get(submissionId);
+        const existingFeedbackResult = await dbQuery('SELECT id FROM feedback WHERE submission_id = ?', [submissionId]);
+        const existingFeedback = existingFeedbackResult.rows?.[0] || existingFeedbackResult;
 
-        if (existingFeedback) {
-            db.prepare(`
+        if (existingFeedback && existingFeedback.id) {
+            await dbQuery(`
                 UPDATE feedback
                 SET feedback_text = ?, grade = ?, annotations = ?, reviewer_id = ?, updated_at = CURRENT_TIMESTAMP
                 WHERE submission_id = ?
-            `).run(feedback_text, grade || null, annotations || null, req.user.id, submissionId);
+            `, [feedback_text, grade || null, annotations || null, req.user.id, submissionId]);
         } else {
-            db.prepare(`
+            await dbQuery(`
                 INSERT INTO feedback (submission_id, reviewer_id, feedback_text, grade, annotations)
                 VALUES (?, ?, ?, ?, ?)
-            `).run(submissionId, req.user.id, feedback_text, grade || null, annotations || null);
+            `, [submissionId, req.user.id, feedback_text, grade || null, annotations || null]);
         }
 
         // Actualizar estado de la entrega
-        db.prepare('UPDATE submissions SET status = ? WHERE id = ?').run('reviewed', submissionId);
+        await dbQuery('UPDATE submissions SET status = ? WHERE id = ?', ['reviewed', submissionId]);
 
         // Notificar al estudiante
-        db.prepare(`
+        await dbQuery(`
             INSERT INTO notifications (user_id, type, title, message)
             VALUES (?, 'feedback', 'Tu entrega ha sido corregida', ?)
-        `).run(submission.user_id, `El profesor ha corregido tu entrega: ${submission.activity_title}`);
+        `, [submission.user_id, `El profesor ha corregido tu entrega: ${submission.activity_title}`]);
 
         res.json({
             message: 'Feedback añadido correctamente'
@@ -308,12 +313,12 @@ router.post('/:id/feedback', authenticateToken, requireAdmin, [
  * DELETE /api/submissions/:id
  * Eliminar entrega (solo admin o propietario si está pendiente)
  */
-router.delete('/:id', authenticateToken, (req, res) => {
+router.delete('/:id', authenticateToken, async (req, res) => {
     try {
-        const db = getDb();
         const submissionId = req.params.id;
 
-        const submission = db.prepare('SELECT * FROM submissions WHERE id = ?').get(submissionId);
+        const submissionResult = await dbQuery('SELECT * FROM submissions WHERE id = ?', [submissionId]);
+        const submission = submissionResult.rows?.[0] || submissionResult;
 
         if (!submission) {
             return res.status(404).json({ error: 'Entrega no encontrada' });
@@ -329,7 +334,7 @@ router.delete('/:id', authenticateToken, (req, res) => {
             }
         }
 
-        db.prepare('DELETE FROM submissions WHERE id = ?').run(submissionId);
+        await dbQuery('DELETE FROM submissions WHERE id = ?', [submissionId]);
 
         res.json({ message: 'Entrega eliminada correctamente' });
 
@@ -343,37 +348,38 @@ router.delete('/:id', authenticateToken, (req, res) => {
  * GET /api/submissions/stats/overview
  * Estadísticas de entregas (solo admin)
  */
-router.get('/stats/overview', authenticateToken, requireAdmin, (req, res) => {
+router.get('/stats/overview', authenticateToken, requireAdmin, async (req, res) => {
     try {
-        const db = getDb();
-
-        const stats = db.prepare(`
+        const statsResult = await dbQuery(`
             SELECT
                 COUNT(*) as total,
                 SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
                 SUM(CASE WHEN status = 'reviewed' THEN 1 ELSE 0 END) as reviewed,
                 AVG(word_count) as avg_word_count
             FROM submissions
-        `).get();
+        `);
+        const stats = statsResult.rows?.[0] || statsResult;
 
-        const bySession = db.prepare(`
+        const bySessionResult = await dbQuery(`
             SELECT
                 s.session_id,
                 cs.title as session_title,
                 COUNT(*) as count
             FROM submissions s
             LEFT JOIN course_sessions cs ON s.session_id = cs.id
-            GROUP BY s.session_id
+            GROUP BY s.session_id, cs.title
             ORDER BY s.session_id
-        `).all();
+        `);
+        const bySession = bySessionResult.rows || bySessionResult;
 
-        const recentActivity = db.prepare(`
+        const recentActivityResult = await dbQuery(`
             SELECT DATE(created_at) as date, COUNT(*) as count
             FROM submissions
             WHERE created_at >= date('now', '-30 days')
             GROUP BY DATE(created_at)
             ORDER BY date DESC
-        `).all();
+        `);
+        const recentActivity = recentActivityResult.rows || recentActivityResult;
 
         res.json({
             stats,
