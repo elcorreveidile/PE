@@ -76,7 +76,7 @@
 
     <script src="../js/app.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             const user = PE.Auth.getCurrentUser();
             if (!user) {
                 window.location.href = '../auth/login.html';
@@ -132,17 +132,17 @@
                 `).join('');
             }
 
-            renderSubmissions();
+            await renderSubmissions();
 
             document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
+                btn.addEventListener('click', async () => {
                     document.querySelectorAll('.filter-btn').forEach(b => {
                         b.classList.remove('active', 'btn-primary');
                         b.classList.add('btn-outline');
                     });
                     btn.classList.add('active', 'btn-primary');
                     btn.classList.remove('btn-outline');
-                    renderSubmissions(btn.dataset.filter);
+                    await renderSubmissions(btn.dataset.filter);
                 });
             });
         });
