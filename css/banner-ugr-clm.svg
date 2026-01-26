@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1067 100" width="1067" height="100">
+  <!-- Fondo -->
+  <rect width="1067" height="100" fill="#ffffff"/>
+
+  <!-- División vertical -->
+  <line x1="600" y1="0" x2="600" y2="100" stroke="#e0e0e0" stroke-width="1"/>
+
+  <!-- Lado izquierdo: Universidad de Granada -->
+  <g transform="translate(50, 50)">
+    <!-- Escudo simplificado UGR -->
+    <g transform="translate(-40, -30)">
+      <!-- Águila bicéfala estilizada -->
+      <path d="M30 20 L35 25 L40 20 M30 30 L35 25 L40 30" stroke="#1a365d" stroke-width="2" fill="none"/>
+      <ellipse cx="35" cy="35" rx="20" ry="25" fill="none" stroke="#1a365d" stroke-width="2"/>
+      <!-- Texto UGR -->
+      <text x="35" y="40" font-family="Georgia, serif" font-size="14" font-weight="bold" fill="#1a365d" text-anchor="middle">UGR</text>
+    </g>
+    <!-- Texto UNIVERSIDAD DE GRANADA -->
+    <text x="60" y="-5" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#1a365d">UNIVERSIDAD</text>
+    <text x="60" y="15" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#1a365d">DE GRANADA</text>
+    <text x="60" y="32" font-family="Arial, sans-serif" font-size="12" fill="#666">1531</text>
+  </g>
+
+  <!-- Lado derecho: Centro de Lenguas Modernas -->
+  <g transform="translate(650, 50)">
+    <!-- Logo CLM estilizado (león + m) -->
+    <g transform="translate(-40, -25)">
+      <!-- Cabeza de león estilizada -->
+      <circle cx="25" cy="25" r="20" fill="none" stroke="#c41e3a" stroke-width="2"/>
+      <text x="25" y="32" font-family="Georgia, serif" font-size="24" font-weight="bold" fill="#c41e3a" text-anchor="middle">CLM</text>
+    </g>
+    <!-- Texto CENTRO DE LENGUAS MODERNAS -->
+    <text x="60" y="-5" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#c41e3a">CENTRO DE</text>
+    <text x="60" y="15" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#c41e3a">LENGUAS</text>
+    <text x="60" y="32" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#c41e3a">MODERNAS</text>
+  </g>
+</svg>
