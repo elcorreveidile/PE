@@ -552,12 +552,14 @@ const Submissions = {
         if (CONFIG.USE_API) {
             try {
                 const response = await API.get('/submissions');
-                return response.data || [];
+                const data = response.data || [];
+                return Array.isArray(data) ? data : [];
             } catch {
                 return [];
             }
         }
-        return Utils.storage.get('submissions') || [];
+        const data = Utils.storage.get('submissions') || [];
+        return Array.isArray(data) ? data : [];
     },
 
     // Obtener entregas por usuario
@@ -565,13 +567,15 @@ const Submissions = {
         if (CONFIG.USE_API) {
             try {
                 const response = await API.get(`/submissions?userId=${userId}`);
-                return response.data || [];
+                const data = response.data || [];
+                return Array.isArray(data) ? data : [];
             } catch {
                 return [];
             }
         }
         const all = Utils.storage.get('submissions') || [];
-        return all.filter(s => s.userId === userId);
+        const allSubmissions = Array.isArray(all) ? all : [];
+        return allSubmissions.filter(s => s.userId === userId);
     },
 
     // Obtener entregas por sesión
@@ -579,13 +583,15 @@ const Submissions = {
         if (CONFIG.USE_API) {
             try {
                 const response = await API.get(`/submissions?sessionId=${sessionId}`);
-                return response.data || [];
+                const data = response.data || [];
+                return Array.isArray(data) ? data : [];
             } catch {
                 return [];
             }
         }
         const all = Utils.storage.get('submissions') || [];
-        return all.filter(s => s.sessionId === sessionId);
+        const allSubmissions = Array.isArray(all) ? all : [];
+        return allSubmissions.filter(s => s.sessionId === sessionId);
     },
 
     // Crear nueva entrega
@@ -683,8 +689,9 @@ const Submissions = {
             return API.delete(`/submissions/${submissionId}`);
         }
 
-        const submissions = Utils.storage.get('submissions') || [];
-        const filtered = submissions.filter(s => s.id !== submissionId);
+        const submissions = Utils.storage.get('submissions');
+        const allSubmissions = Array.isArray(submissions) ? submissions : [];
+        const filtered = allSubmissions.filter(s => s.id !== submissionId);
         Utils.storage.set('submissions', filtered);
         return { success: true };
     }
