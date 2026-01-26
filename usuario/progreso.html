@@ -154,7 +154,8 @@
             }
 
             // Obtener estadisticas
-            const submissions = await PE.Submissions.getByUser(user.id);
+            let submissions = await PE.Submissions.getByUser(user.id);
+            submissions = Array.isArray(submissions) ? submissions : [];
             const reviewed = submissions.filter(s => s.status === 'reviewed');
             const totalWords = submissions.reduce((sum, s) => sum + (s.wordCount || 0), 0);
 

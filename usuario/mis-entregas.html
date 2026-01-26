@@ -148,7 +148,8 @@
         });
 
         async function viewSubmission(id) {
-            const submissions = await PE.Submissions.getAll();
+            let submissions = await PE.Submissions.getAll();
+            submissions = Array.isArray(submissions) ? submissions : [];
             const s = submissions.find(sub => sub.id === id);
             if (s) {
                 PE.UI.showModal(s.activityTitle, `

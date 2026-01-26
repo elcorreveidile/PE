@@ -209,7 +209,8 @@
 
             const users = JSON.parse(localStorage.getItem('pe_c2_users') || '[]');
             const students = users.filter(u => u.role !== 'admin');
-            const submissions = await PE.Submissions.getAll();
+            let submissions = await PE.Submissions.getAll();
+            submissions = Array.isArray(submissions) ? submissions : [];
             const sessions = PE.CourseData.sessions;
             const progress = PE.CourseData.getCourseProgress();
 
@@ -307,7 +308,8 @@
         async function exportStats() {
             const users = JSON.parse(localStorage.getItem('pe_c2_users') || '[]');
             const students = users.filter(u => u.role !== 'admin');
-            const submissions = await PE.Submissions.getAll();
+            let submissions = await PE.Submissions.getAll();
+            submissions = Array.isArray(submissions) ? submissions : [];
             const progress = PE.CourseData.getCourseProgress();
 
             const report = {

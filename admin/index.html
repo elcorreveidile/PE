@@ -228,7 +228,9 @@
             // Obtener datos
             const users = JSON.parse(localStorage.getItem('pe_c2_users') || '[]');
             const students = users.filter(u => u.role !== 'admin');
-            const submissions = await PE.Submissions.getAll();
+            let submissions = await PE.Submissions.getAll();
+            // Asegurar que submissions sea un array
+            submissions = Array.isArray(submissions) ? submissions : [];
             const pending = submissions.filter(s => s.status === 'pending');
             const progress = PE.CourseData.getCourseProgress();
 
@@ -296,7 +298,8 @@
         });
 
         async function reviewSubmission(id) {
-            const submissions = await PE.Submissions.getAll();
+            let submissions = await PE.Submissions.getAll();
+            submissions = Array.isArray(submissions) ? submissions : [];
             const submission = submissions.find(s => s.id === id);
 
             if (submission) {
@@ -354,7 +357,8 @@
         }
 
         async function exportData() {
-            const submissions = await PE.Submissions.getAll();
+            let submissions = await PE.Submissions.getAll();
+            submissions = Array.isArray(submissions) ? submissions : [];
             const users = JSON.parse(localStorage.getItem('pe_c2_users') || '[]');
 
             const data = {

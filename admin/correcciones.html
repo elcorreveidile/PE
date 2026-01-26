@@ -109,7 +109,8 @@
                 return;
             }
 
-            const allSubmissions = await PE.Submissions.getAll();
+            let allSubmissions = await PE.Submissions.getAll();
+            allSubmissions = Array.isArray(allSubmissions) ? allSubmissions : [];
             const pending = allSubmissions.filter(s => s.status === 'pending');
             const reviewed = allSubmissions.filter(s => s.status === 'reviewed');
 
@@ -185,7 +186,8 @@
         });
 
         async function reviewSubmission(id) {
-            const submissions = await PE.Submissions.getAll();
+            let submissions = await PE.Submissions.getAll();
+            submissions = Array.isArray(submissions) ? submissions : [];
             const s = submissions.find(sub => sub.id === id);
 
             if (s) {

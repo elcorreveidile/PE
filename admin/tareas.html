@@ -126,7 +126,8 @@
                 return;
             }
 
-            const submissions = await PE.Submissions.getAll();
+            let submissions = await PE.Submissions.getAll();
+            submissions = Array.isArray(submissions) ? submissions : [];
             const sessions = PE.CourseData.sessions;
             const pending = submissions.filter(s => s.status === 'pending');
             const reviewed = submissions.filter(s => s.status === 'reviewed');
@@ -245,7 +246,8 @@
         });
 
         async function viewSubmission(id) {
-            const submissions = await PE.Submissions.getAll();
+            let submissions = await PE.Submissions.getAll();
+            submissions = Array.isArray(submissions) ? submissions : [];
             const s = submissions.find(sub => sub.id === id);
             if (s) {
                 PE.UI.showModal(s.activityTitle, `
@@ -274,7 +276,8 @@
         }
 
         async function exportSessionData() {
-            const submissions = await PE.Submissions.getAll();
+            let submissions = await PE.Submissions.getAll();
+            submissions = Array.isArray(submissions) ? submissions : [];
             const sessions = PE.CourseData.sessions;
 
             const data = sessions.map(session => {

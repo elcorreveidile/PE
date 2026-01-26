@@ -176,7 +176,8 @@
 
             // Obtener estadísticas
             const progress = PE.CourseData.getCourseProgress();
-            const submissions = await PE.Submissions.getByUser(user.id);
+            let submissions = await PE.Submissions.getByUser(user.id);
+            submissions = Array.isArray(submissions) ? submissions : [];
             const reviewed = submissions.filter(s => s.status === 'reviewed');
 
             document.getElementById('stat-sessions').textContent = progress.completed;

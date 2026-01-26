@@ -116,7 +116,8 @@
 
             const users = JSON.parse(localStorage.getItem('pe_c2_users') || '[]');
             const students = users.filter(u => u.role !== 'admin');
-            const submissions = await PE.Submissions.getAll();
+            let submissions = await PE.Submissions.getAll();
+            submissions = Array.isArray(submissions) ? submissions : [];
 
             document.getElementById('total-students').textContent = students.length + ' estudiantes';
 
@@ -222,7 +223,8 @@
         async function viewStudent(id) {
             const users = JSON.parse(localStorage.getItem('pe_c2_users') || '[]');
             const student = users.find(u => u.id === id);
-            const allSubmissions = await PE.Submissions.getAll();
+            let allSubmissions = await PE.Submissions.getAll();
+            allSubmissions = Array.isArray(allSubmissions) ? allSubmissions : [];
             const submissions = allSubmissions.filter(s => s.userId === id);
 
             if (student) {
