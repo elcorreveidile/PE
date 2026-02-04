@@ -1,8 +1,1 @@
-{
-  "rewrites": [
-    {
-      "source": "/:path*",
-      "destination": "/api/index.js"
-    }
-  ]
-}
+404: Not Found

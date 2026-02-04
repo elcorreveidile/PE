@@ -565,15 +565,15 @@ const CourseData = {
         { id: 16, date: '2026-04-07', day: 'Martes', title: 'Bienvenida post-vacaciones: Puesta al día social y lingüística', theme: 6, content: [16] },
         { id: 17, date: '2026-04-09', day: 'Jueves', title: 'La entrevista: Estructura y tipos (Entrevistas de trabajo, a expertos)', theme: 6, content: [17] },
         { id: 18, date: '2026-04-14', day: 'Martes', title: 'Estrategias de interacción: Preguntas abiertas y seguir el hilo', theme: 7, content: [18] },
-        { id: 19, date: '2026-04-16', day: 'Jueves', title: 'El estilo indirecto: Transmitir mensajes y opiniones de otros', theme: 9, content: [19] },
-        { id: 20, date: '2026-04-21', day: 'Martes', title: 'Estrategias de influencia: Aconsejar, sugerir y advertir', theme: 11, content: [20] },
-        { id: 21, date: '2026-04-23', day: 'Jueves', title: 'Lenguaje persuasivo: Insistir en una petición y gestionar conflictos', theme: 12, content: [21] },
-        { id: 22, date: '2026-04-28', day: 'Martes', title: 'La Conferencia (I): Apertura, captar atención y presentar la idea central', theme: 8, content: [22] },
-        { id: 23, date: '2026-04-30', day: 'Jueves', title: 'La Conferencia (II): Desarrollo, énfasis en detalles y cierre efectivo', theme: 8, content: [23] },
+        { id: 19, date: '2026-04-16', day: 'Jueves', title: 'El estilo indirecto: Transmitir mensajes y opiniones de otros', theme: 7, content: [19] },
+        { id: 20, date: '2026-04-21', day: 'Martes', title: 'Estrategias de influencia: Aconsejar, sugerir y advertir', theme: 8, content: [20] },
+        { id: 21, date: '2026-04-23', day: 'Jueves', title: 'Lenguaje persuasivo: Insistir en una petición y gestionar conflictos', theme: 8, content: [21] },
+        { id: 22, date: '2026-04-28', day: 'Martes', title: 'La Conferencia (I): Apertura, captar atención y presentar la idea central', theme: 9, content: [22] },
+        { id: 23, date: '2026-04-30', day: 'Jueves', title: 'La Conferencia (II): Desarrollo, énfasis en detalles y cierre efectivo', theme: 9, content: [23] },
         { id: 24, date: '2026-05-05', day: 'Martes', title: 'TALLER: Safari fotográfico (I)', theme: 'taller', workshop: 3 },
         { id: 25, date: '2026-05-07', day: 'Jueves', title: 'TALLER: Granada 2031 (I)', theme: 'taller', workshop: 4 },
         { id: 26, date: '2026-05-12', day: 'Martes', title: 'Crítica cinematográfica', theme: 10, content: [3, 4] },
-        { id: 27, date: '2026-05-14', day: 'Jueves', title: 'Última clase: Presentaciones finales de proyectos y despedida', theme: 13, content: [25] },
+        { id: 27, date: '2026-05-14', day: 'Jueves', title: 'Última clase: Presentaciones finales y despedida', theme: 11, content: [25] },
     ],
 
     // Contenidos del curso
@@ -612,15 +612,12 @@ const CourseData = {
         { id: 3, title: 'Textos creativos', file: 'tema-03-creativos.html' },
         { id: 4, title: 'Textos de opinión', file: 'tema-04-opinion.html' },
         { id: 5, title: 'Textos expositivos', file: 'tema-05-expositivos.html' },
-        { id: 6, title: 'Preparar una entrevista', file: 'tema-06-entrevista.html' },
-        { id: 7, title: 'Interacción y seguimiento', file: 'tema-07-proscontras.html' },
-        { id: 8, title: 'La conferencia', file: 'tema-08-presentacion.html' },
-        { id: 9, title: 'Estilo indirecto', file: 'tema-09-foros.html' },
+        { id: 6, title: 'Entrevistas', file: 'tema-06-entrevista.html' },
+        { id: 7, title: 'Interacción y estilo indirecto', file: 'tema-07-proscontras.html' },
+        { id: 8, title: 'Lenguaje persuasivo', file: 'tema-08-presentacion.html' },
+        { id: 9, title: 'Conferencias', file: 'tema-09-foros.html' },
         { id: 10, title: 'Crítica cinematográfica', file: 'tema-10-critica.html' },
-        { id: 11, title: 'Estrategias de influencia', file: 'tema-11-periodisticos.html' },
-        { id: 12, title: 'Lenguaje persuasivo', file: 'tema-12-resumenes.html' },
-        { id: 13, title: 'Proyecto final', file: 'tema-13-articulos.html' },
-        { id: 14, title: 'Descripción visual', file: 'tema-14-descripcion.html' },
+        { id: 11, title: 'Presentaciones finales', file: 'tema-11-periodisticos.html' },
     ],
 
     // Talleres
@@ -962,13 +959,6 @@ const Activities = {
         const container = document.getElementById(containerId);
         if (!container) return;
 
-        const normalizeValue = (value) => value
-            .toString()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .toLowerCase()
-            .trim();
-
         let html = text;
         blanks.forEach((blank, i) => {
             html = html.replace(`[${i + 1}]`,
@@ -990,8 +980,8 @@ const Activities = {
         container.querySelector('#fill-check').addEventListener('click', () => {
             let correct = 0;
             container.querySelectorAll('.fill-blank-input').forEach(input => {
-                const answer = normalizeValue(input.dataset.answer);
-                const value = normalizeValue(input.value);
+                const answer = input.dataset.answer.toLowerCase().trim();
+                const value = input.value.toLowerCase().trim();
 
                 input.classList.remove('correct', 'incorrect');
                 if (value === answer) {

@@ -1,12 +1,11 @@
 /**
  * Rutas de autenticación
- * Compatible con SQLite y PostgreSQL
  */
 
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { body, validationResult } = require('express-validator');
-const { getDb, query } = require('../database/db');
+const { getDb } = require('../database/db');
 const { generateToken, authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
@@ -29,10 +28,11 @@ router.post('/register', [
         }
 
         const { email, password, name, level, motivation } = req.body;
+        const db = getDb();
 
         // Verificar si el email ya existe
-        const existingUser = await query('SELECT id FROM users WHERE email = ?', [email]);
-        if (existingUser.rows && existingUser.rows.length > 0) {
+        const existingUser = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+        if (existingUser) {
             return res.status(400).json({ error: 'Este email ya está registrado' });
         }
 
@@ -40,22 +40,21 @@ router.post('/register', [
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Insertar usuario
-        const result = await query(`
+        const result = db.prepare(`
             INSERT INTO users (email, password, name, level, motivation)
             VALUES (?, ?, ?, ?, ?)
-            RETURNING id
-        `, [email, hashedPassword, name, level || 'C2', motivation || null]);
+        `).run(email, hashedPassword, name, level || 'C2', motivation || null);
 
-        const userId = result.rows?.[0]?.id || result.lastInsertRowid;
+        const userId = result.lastInsertRowid;
 
         // Generar token
         const token = generateToken(userId);
 
         // Crear notificación de bienvenida
-        await query(`
+        db.prepare(`
             INSERT INTO notifications (user_id, type, title, message)
-            VALUES (?, 'welcome', 'Bienvenido/a al curso', 'Te has registrado correctamente en el curso de Producción Escrita C2. El curso comienza el 3 de febrero de 2026.')
-        `, [userId]);
+            VALUES (?, 'welcome', 'Bienvenido/a al curso', 'Te has registrado correctamente en el curso de Producción Escrita C2. El curso comienza el 2 de febrero de 2026.')
+        `).run(userId);
 
         res.status(201).json({
             message: 'Usuario registrado correctamente',
@@ -90,10 +89,10 @@ router.post('/login', [
         }
 
         const { email, password } = req.body;
+        const db = getDb();
 
         // Buscar usuario
-        const userResult = await query('SELECT * FROM users WHERE email = ?', [email]);
-        const user = userResult.rows?.[0] || userResult;
+        const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
 
         if (!user) {
             return res.status(401).json({ error: 'Email o contraseña incorrectos' });
@@ -110,7 +109,7 @@ router.post('/login', [
         }
 
         // Actualizar último login
-        await query('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?', [user.id]);
+        db.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?').run(user.id);
 
         // Generar token
         const token = generateToken(user.id);
@@ -137,28 +136,25 @@ router.post('/login', [
  * GET /api/auth/me
  * Obtener usuario actual
  */
-router.get('/me', authenticateToken, async (req, res) => {
+router.get('/me', authenticateToken, (req, res) => {
     try {
-        const userResult = await query(`
+        const db = getDb();
+        const user = db.prepare(`
             SELECT id, email, name, role, level, motivation, created_at, last_login
             FROM users WHERE id = ?
-        `, [req.user.id]);
-
-        const user = userResult.rows?.[0] || userResult;
+        `).get(req.user.id);
 
         if (!user) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
 
         // Contar entregas y notificaciones no leídas
-        const statsResult = await query(`
+        const stats = db.prepare(`
             SELECT
                 (SELECT COUNT(*) FROM submissions WHERE user_id = ?) as submissions_count,
                 (SELECT COUNT(*) FROM submissions WHERE user_id = ? AND status = 'reviewed') as reviewed_count,
                 (SELECT COUNT(*) FROM notifications WHERE user_id = ? AND read = 0) as unread_notifications
-        `, [req.user.id, req.user.id, req.user.id]);
-
-        const stats = statsResult.rows?.[0] || statsResult;
+        `).get(req.user.id, req.user.id, req.user.id);
 
         res.json({
             ...user,
@@ -186,10 +182,10 @@ router.put('/password', authenticateToken, [
         }
 
         const { currentPassword, newPassword } = req.body;
+        const db = getDb();
 
         // Obtener usuario con contraseña
-        const userResult = await query('SELECT password FROM users WHERE id = ?', [req.user.id]);
-        const user = userResult.rows?.[0] || userResult;
+        const user = db.prepare('SELECT password FROM users WHERE id = ?').get(req.user.id);
 
         // Verificar contraseña actual
         const validPassword = await bcrypt.compare(currentPassword, user.password);
@@ -201,7 +197,7 @@ router.put('/password', authenticateToken, [
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
         // Actualizar contraseña
-        await query('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, req.user.id]);
+        db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hashedPassword, req.user.id);
 
         res.json({ message: 'Contraseña actualizada correctamente' });
 
@@ -218,7 +214,7 @@ router.put('/password', authenticateToken, [
 router.put('/profile', authenticateToken, [
     body('name').optional().trim().isLength({ min: 2 }).withMessage('Nombre inválido'),
     body('motivation').optional().trim()
-], async (req, res) => {
+], (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -226,6 +222,7 @@ router.put('/profile', authenticateToken, [
         }
 
         const { name, motivation } = req.body;
+        const db = getDb();
 
         const updates = [];
         const params = [];
@@ -244,7 +241,7 @@ router.put('/profile', authenticateToken, [
         }
 
         params.push(req.user.id);
-        await query(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, params);
+        db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).run(...params);
 
         res.json({ message: 'Perfil actualizado correctamente' });
 

@@ -23,76 +23,52 @@ const app = express();
 // Configuración
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
+const IS_TEST = NODE_ENV === 'test';
 
 // Middleware de seguridad
 app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// CORS - permitir frontend (con soporte de comodines)
-const defaultOrigins = [
-    'http://localhost:3000',
-    'http://localhost:5500',
-    'http://127.0.0.1:5500',
-    'https://elcorreveidile.github.io'
-];
-
-const allowedOrigins = process.env.CORS_ORIGIN
-    ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim()).filter(Boolean)
-    : defaultOrigins;
-
-const matchesOrigin = (origin, allowed) => {
-    if (!allowed) return false;
-    if (allowed === '*') return true;
-    if (allowed.includes('*')) {
-        const escaped = allowed.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
-        return new RegExp(`^${escaped}$`).test(origin);
-    }
-    return allowed === origin;
-};
-
-const isAllowedOrigin = (origin) => {
-    if (!origin) return true; // requests sin origen (SSR, curl, etc.)
-    return allowedOrigins.some(allowed => matchesOrigin(origin, allowed));
-};
-
+// CORS - permitir frontend
 const corsOptions = {
-    origin: (origin, callback) => {
-        if (isAllowedOrigin(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [
+        'http://localhost:3000',
+        'http://localhost:5500',
+        'http://127.0.0.1:5500',
+        'https://elcorreveidile.github.io'
+    ],
     credentials: true,
     optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
 
-// Rate limiting
-const limiter = rateLimit({
-    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutos
-    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // 100 peticiones por ventana
-    message: {
-        success: false,
-        error: 'Demasiadas peticiones. Intenta de nuevo más tarde.'
-    },
-    standardHeaders: true,
-    legacyHeaders: false
-});
-app.use('/api/', limiter);
+// Rate limiting (deshabilitado en tests para evitar handles abiertos)
+if (!IS_TEST) {
+    const limiter = rateLimit({
+        windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutos
+        max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // 100 peticiones por ventana
+        message: {
+            success: false,
+            error: 'Demasiadas peticiones. Intenta de nuevo más tarde.'
+        },
+        standardHeaders: true,
+        legacyHeaders: false
+    });
+    app.use('/api/', limiter);
 
-// Rate limiting más estricto para autenticación
-const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutos
-    max: 10, // 10 intentos
-    message: {
-        success: false,
-        error: 'Demasiados intentos de inicio de sesión. Intenta de nuevo en 15 minutos.'
-    }
-});
-app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/register', authLimiter);
+    // Rate limiting más estricto para autenticación
+    const authLimiter = rateLimit({
+        windowMs: 15 * 60 * 1000, // 15 minutos
+        max: 10, // 10 intentos
+        message: {
+            success: false,
+            error: 'Demasiados intentos de inicio de sesión. Intenta de nuevo en 15 minutos.'
+        }
+    });
+    app.use('/api/auth/login', authLimiter);
+    app.use('/api/auth/register', authLimiter);
+}
 
 // Logging
 if (NODE_ENV === 'development') {
@@ -189,9 +165,10 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Iniciar servidor
-app.listen(PORT, () => {
-    console.log(`
+// Iniciar servidor solo si se ejecuta directamente (evita escuchar durante tests)
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`
 ╔════════════════════════════════════════════════════════╗
 ║   Producción Escrita C2 - API Backend                  ║
 ║   Centro de Lenguas Modernas - UGR                     ║
@@ -200,7 +177,8 @@ app.listen(PORT, () => {
 ║   Entorno: ${NODE_ENV.padEnd(44)}║
 ║   Fecha: ${new Date().toLocaleString('es-ES').padEnd(46)}║
 ╚════════════════════════════════════════════════════════╝
-    `);
-});
+        `);
+    });
+}
 
 module.exports = app;

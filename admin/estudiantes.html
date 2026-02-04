@@ -22,7 +22,6 @@
     </style>
 </head>
 <body>
-
     <header class="header admin-header">
         <div class="header-main">
             <div class="container">
@@ -118,7 +117,6 @@
             const students = users.filter(u => u.role !== 'admin');
             let submissions = await PE.Submissions.getAll();
             submissions = Array.isArray(submissions) ? submissions : [];
-
             document.getElementById('total-students').textContent = students.length + ' estudiantes';
 
             function renderStudents(filter = {}) {
@@ -223,10 +221,9 @@
         async function viewStudent(id) {
             const users = JSON.parse(localStorage.getItem('pe_c2_users') || '[]');
             const student = users.find(u => u.id === id);
-            let allSubmissions = await PE.Submissions.getAll();
-            allSubmissions = Array.isArray(allSubmissions) ? allSubmissions : [];
-            const submissions = allSubmissions.filter(s => s.userId === id);
-
+            let submissions = await PE.Submissions.getAll();
+            submissions = Array.isArray(submissions) ? submissions : [];
+            submissions = submissions.filter(s => s.userId === id);
             if (student) {
                 const submissionsList = submissions.length === 0
                     ? '<p class="text-secondary">No hay entregas registradas.</p>'

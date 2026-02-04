@@ -27,7 +27,6 @@
     </style>
 </head>
 <body>
-
     <header class="header admin-header">
         <div class="header-main">
             <div class="container">
@@ -228,12 +227,11 @@
             // Progreso del curso
             document.getElementById('course-progress').textContent = progress.percentage + '%';
             document.getElementById('bar-sessions').style.width = progress.percentage + '%';
-            document.getElementById('val-sessions').textContent = progress.completed + '/' + progress.total;
+            document.getElementById('val-sessions').textContent = progress.completed + '/27';
 
-            const totalThemes = PE.CourseData.themes.length;
-            const themesCompleted = Math.round((progress.completed / progress.total) * totalThemes);
-            document.getElementById('bar-themes').style.width = Math.round(themesCompleted / totalThemes * 100) + '%';
-            document.getElementById('val-themes').textContent = themesCompleted + '/' + totalThemes;
+            const themesCompleted = Math.floor(progress.completed / 2);
+            document.getElementById('bar-themes').style.width = Math.round(themesCompleted / 14 * 100) + '%';
+            document.getElementById('val-themes').textContent = themesCompleted + '/14';
 
             const workshopsCompleted = sessions.filter(s => s.workshop && new Date(s.date) < new Date()).length;
             document.getElementById('bar-workshops').style.width = Math.round(workshopsCompleted / 4 * 100) + '%';
@@ -248,7 +246,7 @@
 
             // Entregas por sesion
             const maxSubmissions = Math.max(...sessions.map(s => submissions.filter(sub => sub.sessionId == s.id).length), 1);
-            document.getElementById('sessions-chart').innerHTML = sessions.slice(0, 16).map(session => {
+            document.getElementById('sessions-chart').innerHTML = sessions.map(session => {
                 const count = submissions.filter(s => s.sessionId == session.id).length;
                 const width = (count / maxSubmissions) * 100;
                 return `

@@ -144,7 +144,7 @@
 
     <script src="../js/app.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             const user = PE.Auth.getCurrentUser();
             if (!user) {
                 const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
@@ -153,7 +153,8 @@
             }
 
             // Obtener estadisticas
-            const submissions = PE.Submissions.getByUser(user.id);
+            let submissions = await PE.Submissions.getByUser(user.id);
+            submissions = Array.isArray(submissions) ? submissions : [];
             const reviewed = submissions.filter(s => s.status === 'reviewed');
             const totalWords = submissions.reduce((sum, s) => sum + (s.wordCount || 0), 0);
 
@@ -172,9 +173,8 @@
 
             // Temas del curso
             const themes = PE.CourseData.themes;
-            const themesCompleted = Math.round((courseProgress.completed / courseProgress.total) * themes.length);
             const themesHtml = themes.map((theme, index) => {
-                const isCompleted = index < themesCompleted;
+                const isCompleted = index < Math.floor(courseProgress.completed / 2);
                 return `
                     <div style="display: flex; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
                         <span style="width: 30px; height: 30px; border-radius: 50%; background: ${isCompleted ? 'var(--success-color)' : 'var(--bg-light)'}; display: flex; align-items: center; justify-content: center; margin-right: 1rem; color: ${isCompleted ? 'white' : 'var(--text-secondary)'}; font-size: 0.85rem;">

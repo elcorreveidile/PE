@@ -1,12 +1,11 @@
 /**
  * Rutas de usuarios (admin)
- * Compatible con SQLite y PostgreSQL
  */
 
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { body, validationResult } = require('express-validator');
-const { query: dbQuery } = require('../database/db');
+const { getDb } = require('../database/db');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
@@ -15,8 +14,9 @@ const router = express.Router();
  * GET /api/users
  * Listar usuarios (solo admin)
  */
-router.get('/', authenticateToken, requireAdmin, async (req, res) => {
+router.get('/', authenticateToken, requireAdmin, (req, res) => {
     try {
+        const db = getDb();
         const { role, active } = req.query;
 
         let whereClause = [];
@@ -34,7 +34,7 @@ router.get('/', authenticateToken, requireAdmin, async (req, res) => {
 
         const whereSQL = whereClause.length > 0 ? 'WHERE ' + whereClause.join(' AND ') : '';
 
-        const usersResult = await dbQuery(`
+        const users = db.prepare(`
             SELECT
                 u.id, u.email, u.name, u.role, u.level, u.active, u.created_at, u.last_login,
                 (SELECT COUNT(*) FROM submissions WHERE user_id = u.id) as submissions_count,
@@ -42,9 +42,8 @@ router.get('/', authenticateToken, requireAdmin, async (req, res) => {
             FROM users u
             ${whereSQL}
             ORDER BY u.created_at DESC
-        `, params);
+        `).all(...params);
 
-        const users = usersResult.rows || usersResult;
         res.json(users);
 
     } catch (error) {
@@ -57,38 +56,33 @@ router.get('/', authenticateToken, requireAdmin, async (req, res) => {
  * GET /api/users/:id
  * Obtener usuario específico (solo admin)
  */
-router.get('/:id', authenticateToken, requireAdmin, async (req, res) => {
+router.get('/:id', authenticateToken, requireAdmin, (req, res) => {
     try {
+        const db = getDb();
         const userId = req.params.id;
 
-        const userResult = await dbQuery(`
+        const user = db.prepare(`
             SELECT id, email, name, role, level, motivation, active, created_at, last_login
             FROM users WHERE id = ?
-        `, [userId]);
-
-        const user = userResult.rows?.[0] || userResult;
+        `).get(userId);
 
         if (!user) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
 
         // Obtener entregas del usuario
-        const submissionsResult = await dbQuery(`
+        const submissions = db.prepare(`
             SELECT s.*, f.grade
             FROM submissions s
             LEFT JOIN feedback f ON s.id = f.submission_id
             WHERE s.user_id = ?
             ORDER BY s.created_at DESC
-        `, [userId]);
-
-        const submissions = submissionsResult.rows || submissionsResult;
+        `).all(userId);
 
         // Obtener progreso
-        const progressResult = await dbQuery(`
+        const progress = db.prepare(`
             SELECT * FROM student_progress WHERE user_id = ?
-        `, [userId]);
-
-        const progress = progressResult.rows || progressResult;
+        `).all(userId);
 
         res.json({
             ...user,
@@ -111,20 +105,19 @@ router.put('/:id', authenticateToken, requireAdmin, [
     body('level').optional().isString(),
     body('role').optional().isIn(['student', 'admin']),
     body('active').optional().isBoolean()
-], async (req, res) => {
+], (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
         }
 
+        const db = getDb();
         const userId = req.params.id;
         const { name, level, role, active } = req.body;
 
         // Verificar que el usuario existe
-        const userResult = await dbQuery('SELECT id FROM users WHERE id = ?', [userId]);
-        const user = userResult.rows?.[0] || userResult;
-
+        const user = db.prepare('SELECT id FROM users WHERE id = ?').get(userId);
         if (!user) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
@@ -142,7 +135,7 @@ router.put('/:id', authenticateToken, requireAdmin, [
         }
 
         params.push(userId);
-        await dbQuery(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, params);
+        db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).run(...params);
 
         res.json({ message: 'Usuario actualizado correctamente' });
 
@@ -165,18 +158,17 @@ router.put('/:id/password', authenticateToken, requireAdmin, [
             return res.status(400).json({ errors: errors.array() });
         }
 
+        const db = getDb();
         const userId = req.params.id;
         const { password } = req.body;
 
-        const userResult = await dbQuery('SELECT id FROM users WHERE id = ?', [userId]);
-        const user = userResult.rows?.[0] || userResult;
-
+        const user = db.prepare('SELECT id FROM users WHERE id = ?').get(userId);
         if (!user) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        await dbQuery('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, userId]);
+        db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hashedPassword, userId);
 
         res.json({ message: 'Contraseña actualizada correctamente' });
 
@@ -190,8 +182,9 @@ router.put('/:id/password', authenticateToken, requireAdmin, [
  * DELETE /api/users/:id
  * Eliminar usuario (solo admin)
  */
-router.delete('/:id', authenticateToken, requireAdmin, async (req, res) => {
+router.delete('/:id', authenticateToken, requireAdmin, (req, res) => {
     try {
+        const db = getDb();
         const userId = req.params.id;
 
         // No permitir que admin se elimine a sí mismo
@@ -199,14 +192,12 @@ router.delete('/:id', authenticateToken, requireAdmin, async (req, res) => {
             return res.status(400).json({ error: 'No puedes eliminarte a ti mismo' });
         }
 
-        const userResult = await dbQuery('SELECT id FROM users WHERE id = ?', [userId]);
-        const user = userResult.rows?.[0] || userResult;
-
+        const user = db.prepare('SELECT id FROM users WHERE id = ?').get(userId);
         if (!user) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
 
-        await dbQuery('DELETE FROM users WHERE id = ?', [userId]);
+        db.prepare('DELETE FROM users WHERE id = ?').run(userId);
 
         res.json({ message: 'Usuario eliminado correctamente' });
 
@@ -220,34 +211,33 @@ router.delete('/:id', authenticateToken, requireAdmin, async (req, res) => {
  * GET /api/users/stats/overview
  * Estadísticas de usuarios (solo admin)
  */
-router.get('/stats/overview', authenticateToken, requireAdmin, async (req, res) => {
+router.get('/stats/overview', authenticateToken, requireAdmin, (req, res) => {
     try {
-        const statsResult = await dbQuery(`
+        const db = getDb();
+
+        const stats = db.prepare(`
             SELECT
                 COUNT(*) as total,
                 SUM(CASE WHEN role = 'student' THEN 1 ELSE 0 END) as students,
                 SUM(CASE WHEN role = 'admin' THEN 1 ELSE 0 END) as admins,
                 SUM(CASE WHEN active = 1 THEN 1 ELSE 0 END) as active
             FROM users
-        `);
-        const stats = statsResult.rows?.[0] || statsResult;
+        `).get();
 
-        const byLevelResult = await dbQuery(`
+        const byLevel = db.prepare(`
             SELECT level, COUNT(*) as count
             FROM users
             WHERE role = 'student'
             GROUP BY level
-        `);
-        const byLevel = byLevelResult.rows || byLevelResult;
+        `).all();
 
-        const recentRegistrationsResult = await dbQuery(`
+        const recentRegistrations = db.prepare(`
             SELECT DATE(created_at) as date, COUNT(*) as count
             FROM users
             WHERE created_at >= date('now', '-30 days')
             GROUP BY DATE(created_at)
             ORDER BY date DESC
-        `);
-        const recentRegistrations = recentRegistrationsResult.rows || recentRegistrationsResult;
+        `).all();
 
         res.json({
             stats,

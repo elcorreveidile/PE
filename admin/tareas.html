@@ -18,7 +18,6 @@
     </style>
 </head>
 <body>
-
     <header class="header admin-header">
         <div class="header-main">
             <div class="container">
@@ -127,6 +126,7 @@
             }
 
             let submissions = await PE.Submissions.getAll();
+
             submissions = Array.isArray(submissions) ? submissions : [];
             const sessions = PE.CourseData.sessions;
             const pending = submissions.filter(s => s.status === 'pending');

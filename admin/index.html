@@ -59,7 +59,6 @@
     </style>
 </head>
 <body>
-
     <!-- Header Admin -->
     <header class="header admin-header">
         <div class="header-main">
@@ -229,7 +228,6 @@
             const users = JSON.parse(localStorage.getItem('pe_c2_users') || '[]');
             const students = users.filter(u => u.role !== 'admin');
             let submissions = await PE.Submissions.getAll();
-            // Asegurar que submissions sea un array
             submissions = Array.isArray(submissions) ? submissions : [];
             const pending = submissions.filter(s => s.status === 'pending');
             const progress = PE.CourseData.getCourseProgress();
