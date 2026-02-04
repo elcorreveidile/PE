@@ -54,7 +54,7 @@ router.post('/register', [
         // Crear notificación de bienvenida
         await query(`
             INSERT INTO notifications (user_id, type, title, message)
-            VALUES (?, 'welcome', 'Bienvenido/a al curso', 'Te has registrado correctamente en el curso de Producción Escrita C2. El curso comienza el 2 de febrero de 2026.')
+            VALUES (?, 'welcome', 'Bienvenido/a al curso', 'Te has registrado correctamente en el curso de Producción Escrita C2. El curso comienza el 3 de febrero de 2026.')
         `, [userId]);
 
         res.status(201).json({

@@ -14,159 +14,9 @@ const CONFIG = {
     API_URL: localStorage.getItem('pe_c2_api_url') || '',
     // Si está vacío, usa localStorage como fallback
     USE_API: false, // Se actualiza automáticamente si la API responde
-    COURSE_START: new Date('2026-02-02'),
+    COURSE_START: new Date('2026-02-03'),
     COURSE_END: new Date('2026-05-21'),
-    SESSION_DAYS: [1, 3], // Lunes = 1, Miércoles = 3
-};
-
-// ==========================================================================
-// Lazy Loading System
-// ==========================================================================
-
-const LazyLoader = {
-    // Inicializar lazy loading nativo con fallback
-    init() {
-        // Si el navegador soporta loading="lazy", configurar todas las imágenes
-        if ('loading' in HTMLImageElement.prototype) {
-            // El navegador soporta lazy loading nativo
-            this.setupNativeLazyLoading();
-        } else {
-            // Fallback con Intersection Observer
-            this.setupIntersectionObserver();
-        }
-    },
-
-    setupNativeLazyLoading() {
-        // Añadir loading="lazy" a todas las imágenes sin el atributo
-        const images = document.querySelectorAll('img:not([loading])');
-        images.forEach(img => {
-            img.loading = 'lazy';
-        });
-    },
-
-    setupIntersectionObserver() {
-        if (!('IntersectionObserver' in window)) return;
-
-        const imageObserver = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const img = entry.target;
-                    const src = img.dataset.src;
-
-                    if (src) {
-                        img.src = src;
-                        img.onload = () => img.classList.add('loaded');
-                        observer.unobserve(img);
-                    }
-                }
-            });
-        }, {
-            rootMargin: '50px 0px',
-            threshold: 0.01
-        });
-
-        // Observar imágenes con data-src
-        const lazyImages = document.querySelectorAll('img[data-src]');
-        lazyImages.forEach(img => imageObserver.observe(img));
-    },
-
-    // Método para añadir dinámicamente una imagen con lazy loading
-    loadImage(src, alt = '', className = '') {
-        const img = document.createElement('img');
-        img.alt = alt;
-        if (className) img.className = className;
-
-        if ('loading' in HTMLImageElement.prototype) {
-            img.loading = 'lazy';
-            img.src = src;
-        } else {
-            img.dataset.src = src;
-            this.setupIntersectionObserver();
-        }
-
-        return img;
-    }
-};
-
-// ==========================================================================
-// Skeleton Screen System
-// ==========================================================================
-
-const Skeleton = {
-    // Crear un skeleton de texto
-    text(lines = 3) {
-        let html = '';
-        for (let i = 0; i < lines; i++) {
-            html += '<div class="skeleton skeleton-text"></div>';
-        }
-        return html;
-    },
-
-    // Crear un skeleton de título
-    title() {
-        return '<div class="skeleton skeleton-title"></div>';
-    },
-
-    // Crear un skeleton de card completo
-    card() {
-        return `
-            <div class="skeleton-card">
-                <div class="skeleton skeleton-title"></div>
-                <div class="skeleton skeleton-text"></div>
-                <div class="skeleton skeleton-text"></div>
-                <div class="skeleton skeleton-text"></div>
-            </div>
-        `;
-    },
-
-    // Crear un skeleton de botón
-    button() {
-        return '<div class="skeleton skeleton-button"></div>';
-    },
-
-    // Crear un skeleton de imagen
-    image() {
-        return '<div class="skeleton skeleton-image"></div>';
-    },
-
-    // Crear un skeleton de avatar
-    avatar() {
-        return '<div class="skeleton skeleton-avatar"></div>';
-    },
-
-    // Crear un skeleton de stat
-    stat() {
-        return `
-            <div class="skeleton skeleton-stat">
-                <div class="skeleton skeleton-stat-value"></div>
-                <div class="skeleton skeleton-stat-label"></div>
-            </div>
-        `;
-    },
-
-    // Envolver contenido con skeleton mientras carga
-    wrap(content, skeletonContent) {
-        return `
-            <div class="loading-container">
-                ${skeletonContent}
-                <div class="content" style="display: none;">
-                    ${content}
-                </div>
-            </div>
-        `;
-    },
-
-    // Mostrar contenido y ocultar skeleton
-    reveal(container) {
-        const loadingContainer = container.closest('.loading-container');
-        if (loadingContainer) {
-            loadingContainer.classList.add('loaded');
-            const content = loadingContainer.querySelector('.content');
-            if (content) {
-                content.style.display = '';
-            }
-        }
-    }
+    SESSION_DAYS: [2, 4], // Martes = 2, Jueves = 4
 };
 
 // Estado global de la aplicación
@@ -552,14 +402,12 @@ const Submissions = {
         if (CONFIG.USE_API) {
             try {
                 const response = await API.get('/submissions');
-                const data = response.data || [];
-                return Array.isArray(data) ? data : [];
+                return response.data || [];
             } catch {
                 return [];
             }
         }
-        const data = Utils.storage.get('submissions') || [];
-        return Array.isArray(data) ? data : [];
+        return Utils.storage.get('submissions') || [];
     },
 
     // Obtener entregas por usuario
@@ -567,15 +415,13 @@ const Submissions = {
         if (CONFIG.USE_API) {
             try {
                 const response = await API.get(`/submissions?userId=${userId}`);
-                const data = response.data || [];
-                return Array.isArray(data) ? data : [];
+                return response.data || [];
             } catch {
                 return [];
             }
         }
         const all = Utils.storage.get('submissions') || [];
-        const allSubmissions = Array.isArray(all) ? all : [];
-        return allSubmissions.filter(s => s.userId === userId);
+        return all.filter(s => s.userId === userId);
     },
 
     // Obtener entregas por sesión
@@ -583,15 +429,13 @@ const Submissions = {
         if (CONFIG.USE_API) {
             try {
                 const response = await API.get(`/submissions?sessionId=${sessionId}`);
-                const data = response.data || [];
-                return Array.isArray(data) ? data : [];
+                return response.data || [];
             } catch {
                 return [];
             }
         }
         const all = Utils.storage.get('submissions') || [];
-        const allSubmissions = Array.isArray(all) ? all : [];
-        return allSubmissions.filter(s => s.sessionId === sessionId);
+        return all.filter(s => s.sessionId === sessionId);
     },
 
     // Crear nueva entrega
@@ -689,9 +533,8 @@ const Submissions = {
             return API.delete(`/submissions/${submissionId}`);
         }
 
-        const submissions = Utils.storage.get('submissions');
-        const allSubmissions = Array.isArray(submissions) ? submissions : [];
-        const filtered = allSubmissions.filter(s => s.id !== submissionId);
+        const submissions = Utils.storage.get('submissions') || [];
+        const filtered = submissions.filter(s => s.id !== submissionId);
         Utils.storage.set('submissions', filtered);
         return { success: true };
     }
@@ -704,38 +547,33 @@ const Submissions = {
 const CourseData = {
     // Información de las sesiones
     sessions: [
-        { id: 1, date: '2026-02-02', day: 'Lunes', title: 'Introducción al curso y diagnóstico', theme: 1, content: [1] },
-        { id: 2, date: '2026-02-04', day: 'Miércoles', title: 'El proceso de escribir: planificación', theme: 1, content: [1] },
-        { id: 3, date: '2026-02-09', day: 'Lunes', title: 'Escribir un perfil personal', theme: 1, content: [1, 2] },
-        { id: 4, date: '2026-02-11', day: 'Miércoles', title: 'Escribir un perfil profesional', theme: 1, content: [2] },
-        { id: 5, date: '2026-02-16', day: 'Lunes', title: 'Cartas formales: estructura y fórmulas', theme: 2, content: [2, 3] },
-        { id: 6, date: '2026-02-18', day: 'Miércoles', title: 'Cartas de solicitud y reclamación', theme: 2, content: [3] },
-        { id: 7, date: '2026-02-23', day: 'Lunes', title: 'Textos creativos: descripción de sensaciones', theme: 3, content: [4] },
-        { id: 8, date: '2026-02-25', day: 'Miércoles', title: 'Valoraciones artísticas', theme: 3, content: [4, 5] },
-        { id: 9, date: '2026-03-02', day: 'Lunes', title: 'TALLER: Mini serie web (I)', theme: 'taller', workshop: 1 },
-        { id: 10, date: '2026-03-04', day: 'Miércoles', title: 'Textos de opinión: argumentación', theme: 4, content: [5, 6] },
-        { id: 11, date: '2026-03-09', day: 'Lunes', title: 'Conectores y marcadores discursivos', theme: 4, content: [6] },
-        { id: 12, date: '2026-03-11', day: 'Miércoles', title: 'Coherencia y cohesión textual', theme: 4, content: [6] },
-        { id: 13, date: '2026-03-16', day: 'Lunes', title: 'Textos expositivos: ser wikipedista', theme: 5, content: [7, 8] },
-        { id: 14, date: '2026-03-18', day: 'Miércoles', title: 'Precisión léxica: nominalización', theme: 5, content: [7] },
-        { id: 15, date: '2026-03-23', day: 'Lunes', title: 'TALLER: Olvidos de Granada (I)', theme: 'taller', workshop: 2 },
-        { id: 16, date: '2026-03-25', day: 'Miércoles', title: 'Preparar una entrevista', theme: 6, content: [7, 8] },
-        { id: 17, date: '2026-03-30', day: 'Lunes', title: 'Vocabulario especializado', theme: 6, content: [8] },
-        { id: 18, date: '2026-04-01', day: 'Miércoles', title: 'Pros y contras en textos académicos', theme: 7, content: [6, 11] },
-        { id: 19, date: '2026-04-06', day: 'Lunes', title: 'Lenguaje académico (I)', theme: 7, content: [11] },
-        { id: 20, date: '2026-04-08', day: 'Miércoles', title: 'TALLER: Safari fotográfico (I)', theme: 'taller', workshop: 3 },
-        { id: 21, date: '2026-04-13', day: 'Lunes', title: 'Presentaciones especializadas', theme: 8, content: [8, 11] },
-        { id: 22, date: '2026-04-15', day: 'Miércoles', title: 'Colocaciones e idiomatismos', theme: 8, content: [9] },
-        { id: 23, date: '2026-04-20', day: 'Lunes', title: 'Participación en foros', theme: 9, content: [9, 10] },
-        { id: 24, date: '2026-04-22', day: 'Miércoles', title: 'Variedades léxicas y registros', theme: 9, content: [10] },
-        { id: 25, date: '2026-04-27', day: 'Lunes', title: 'TALLER: Granada 2031 (I)', theme: 'taller', workshop: 4 },
-        { id: 26, date: '2026-04-29', day: 'Miércoles', title: 'Crítica cinematográfica', theme: 10, content: [3, 4] },
-        { id: 27, date: '2026-05-04', day: 'Lunes', title: 'Textos periodísticos', theme: 11, content: [2, 8] },
-        { id: 28, date: '2026-05-06', day: 'Miércoles', title: 'Lenguaje académico (II)', theme: 11, content: [11, 12] },
-        { id: 29, date: '2026-05-11', day: 'Lunes', title: 'Resúmenes y síntesis', theme: 12, content: [12, 13] },
-        { id: 30, date: '2026-05-13', day: 'Miércoles', title: 'Recursos para escribir y citación', theme: 12, content: [13, 15] },
-        { id: 31, date: '2026-05-18', day: 'Lunes', title: 'Cuestiones ortográficas y formato', theme: 13, content: [14] },
-        { id: 32, date: '2026-05-20', day: 'Miércoles', title: 'Repaso general y preparación examen', theme: 14, content: [14] },
+        { id: 1, date: '2026-02-03', day: 'Martes', title: 'Introducción al curso y diagnóstico', theme: 1, content: [1] },
+        { id: 2, date: '2026-02-05', day: 'Jueves', title: 'El proceso de escribir: planificación', theme: 1, content: [1] },
+        { id: 3, date: '2026-02-10', day: 'Martes', title: 'Escribir un perfil personal', theme: 1, content: [1, 2] },
+        { id: 4, date: '2026-02-12', day: 'Jueves', title: 'Escribir un perfil profesional', theme: 1, content: [2] },
+        { id: 5, date: '2026-02-17', day: 'Martes', title: 'Cartas formales: estructura y fórmulas', theme: 2, content: [2, 3] },
+        { id: 6, date: '2026-02-19', day: 'Jueves', title: 'Cartas de solicitud y reclamación', theme: 2, content: [3] },
+        { id: 7, date: '2026-02-24', day: 'Martes', title: 'Textos creativos: descripción de sensaciones', theme: 3, content: [4] },
+        { id: 8, date: '2026-02-26', day: 'Jueves', title: 'Valoraciones artísticas', theme: 3, content: [4, 5] },
+        { id: 9, date: '2026-03-03', day: 'Martes', title: 'TALLER: Mini serie web (I)', theme: 'taller', workshop: 1 },
+        { id: 10, date: '2026-03-05', day: 'Jueves', title: 'Textos de opinión: argumentación', theme: 4, content: [5, 6] },
+        { id: 11, date: '2026-03-10', day: 'Martes', title: 'Conectores y marcadores discursivos', theme: 4, content: [6] },
+        { id: 12, date: '2026-03-12', day: 'Jueves', title: 'Coherencia y cohesión textual', theme: 4, content: [6] },
+        { id: 13, date: '2026-03-17', day: 'Martes', title: 'Textos expositivos: ser wikipedista', theme: 5, content: [7, 8] },
+        { id: 14, date: '2026-03-19', day: 'Jueves', title: 'Precisión léxica: nominalización', theme: 5, content: [7] },
+        { id: 15, date: '2026-03-24', day: 'Martes', title: 'TALLER: Olvidos de Granada (I)', theme: 'taller', workshop: 2 },
+        { id: 16, date: '2026-04-07', day: 'Martes', title: 'Bienvenida post-vacaciones: Puesta al día social y lingüística', theme: 6, content: [16] },
+        { id: 17, date: '2026-04-09', day: 'Jueves', title: 'La entrevista: Estructura y tipos (Entrevistas de trabajo, a expertos)', theme: 6, content: [17] },
+        { id: 18, date: '2026-04-14', day: 'Martes', title: 'Estrategias de interacción: Preguntas abiertas y seguir el hilo', theme: 7, content: [18] },
+        { id: 19, date: '2026-04-16', day: 'Jueves', title: 'El estilo indirecto: Transmitir mensajes y opiniones de otros', theme: 9, content: [19] },
+        { id: 20, date: '2026-04-21', day: 'Martes', title: 'Estrategias de influencia: Aconsejar, sugerir y advertir', theme: 11, content: [20] },
+        { id: 21, date: '2026-04-23', day: 'Jueves', title: 'Lenguaje persuasivo: Insistir en una petición y gestionar conflictos', theme: 12, content: [21] },
+        { id: 22, date: '2026-04-28', day: 'Martes', title: 'La Conferencia (I): Apertura, captar atención y presentar la idea central', theme: 8, content: [22] },
+        { id: 23, date: '2026-04-30', day: 'Jueves', title: 'La Conferencia (II): Desarrollo, énfasis en detalles y cierre efectivo', theme: 8, content: [23] },
+        { id: 24, date: '2026-05-05', day: 'Martes', title: 'TALLER: Safari fotográfico (I)', theme: 'taller', workshop: 3 },
+        { id: 25, date: '2026-05-07', day: 'Jueves', title: 'TALLER: Granada 2031 (I)', theme: 'taller', workshop: 4 },
+        { id: 26, date: '2026-05-12', day: 'Martes', title: 'Crítica cinematográfica', theme: 10, content: [3, 4] },
+        { id: 27, date: '2026-05-14', day: 'Jueves', title: 'Última clase: Presentaciones finales de proyectos y despedida', theme: 13, content: [25] },
     ],
 
     // Contenidos del curso
@@ -755,6 +593,16 @@ const CourseData = {
         { id: 13, title: 'Recursos para escribir: diccionarios, páginas en la red, corpus textuales' },
         { id: 14, title: 'Cuestiones ortográficas, acentuación y formato' },
         { id: 15, title: 'Formas de citación en textos académicos' },
+        { id: 16, title: 'Puesta al día social y lingüística' },
+        { id: 17, title: 'Entrevistas: estructura y tipos' },
+        { id: 18, title: 'Interacción: preguntas abiertas y seguimiento' },
+        { id: 19, title: 'Estilo indirecto: transmitir mensajes y opiniones' },
+        { id: 20, title: 'Estrategias de influencia: aconsejar, sugerir y advertir' },
+        { id: 21, title: 'Lenguaje persuasivo y gestión de conflictos' },
+        { id: 22, title: 'Conferencia: apertura y presentación de la idea central' },
+        { id: 23, title: 'Conferencia: desarrollo, énfasis y cierre' },
+        { id: 24, title: 'Descripción visual: safari fotográfico' },
+        { id: 25, title: 'Presentaciones finales y despedida' },
     ],
 
     // Temas del curso
@@ -765,14 +613,14 @@ const CourseData = {
         { id: 4, title: 'Textos de opinión', file: 'tema-04-opinion.html' },
         { id: 5, title: 'Textos expositivos', file: 'tema-05-expositivos.html' },
         { id: 6, title: 'Preparar una entrevista', file: 'tema-06-entrevista.html' },
-        { id: 7, title: 'Pros y contras académicos', file: 'tema-07-proscontras.html' },
-        { id: 8, title: 'Presentaciones especializadas', file: 'tema-08-presentacion.html' },
-        { id: 9, title: 'Participación en foros', file: 'tema-09-foros.html' },
+        { id: 7, title: 'Interacción y seguimiento', file: 'tema-07-proscontras.html' },
+        { id: 8, title: 'La conferencia', file: 'tema-08-presentacion.html' },
+        { id: 9, title: 'Estilo indirecto', file: 'tema-09-foros.html' },
         { id: 10, title: 'Crítica cinematográfica', file: 'tema-10-critica.html' },
-        { id: 11, title: 'Textos periodísticos', file: 'tema-11-periodisticos.html' },
-        { id: 12, title: 'Resúmenes', file: 'tema-12-resumenes.html' },
-        { id: 13, title: 'Artículos de opinión', file: 'tema-13-articulos.html' },
-        { id: 14, title: 'La descripción', file: 'tema-14-descripcion.html' },
+        { id: 11, title: 'Estrategias de influencia', file: 'tema-11-periodisticos.html' },
+        { id: 12, title: 'Lenguaje persuasivo', file: 'tema-12-resumenes.html' },
+        { id: 13, title: 'Proyecto final', file: 'tema-13-articulos.html' },
+        { id: 14, title: 'Descripción visual', file: 'tema-14-descripcion.html' },
     ],
 
     // Talleres
@@ -1114,6 +962,13 @@ const Activities = {
         const container = document.getElementById(containerId);
         if (!container) return;
 
+        const normalizeValue = (value) => value
+            .toString()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .trim();
+
         let html = text;
         blanks.forEach((blank, i) => {
             html = html.replace(`[${i + 1}]`,
@@ -1135,8 +990,8 @@ const Activities = {
         container.querySelector('#fill-check').addEventListener('click', () => {
             let correct = 0;
             container.querySelectorAll('.fill-blank-input').forEach(input => {
-                const answer = input.dataset.answer.toLowerCase().trim();
-                const value = input.value.toLowerCase().trim();
+                const answer = normalizeValue(input.dataset.answer);
+                const value = normalizeValue(input.value);
 
                 input.classList.remove('correct', 'incorrect');
                 if (value === answer) {
@@ -1367,21 +1222,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log('Producción Escrita C2 - Modo localStorage (sin backend)');
     }
 
-    // Inicializar animaciones de scroll
-    ScrollReveal.init();
-
-    // Inicializar lazy loading de imágenes
-    LazyLoader.init();
-
     // Menú móvil
     const menuToggle = document.getElementById('menu-toggle');
     const navMain = document.getElementById('nav-main');
 
     if (menuToggle && navMain) {
         menuToggle.addEventListener('click', () => {
-            const isActive = navMain.classList.toggle('active');
-            // Actualizar atributo ARIA para accesibilidad
-            menuToggle.setAttribute('aria-expanded', isActive);
+            navMain.classList.toggle('active');
         });
     }
 
@@ -1389,9 +1236,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.addEventListener('click', (e) => {
         if (navMain && !navMain.contains(e.target) && !menuToggle?.contains(e.target)) {
             navMain.classList.remove('active');
-            if (menuToggle) {
-                menuToggle.setAttribute('aria-expanded', 'false');
-            }
         }
     });
 
@@ -1448,71 +1292,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // ==========================================================================
-// Scroll Reveal System
-// ==========================================================================
-
-const ScrollReveal = {
-    observer: null,
-
-    init() {
-        // Verificar soporte de Intersection Observer
-        if (!('IntersectionObserver' in window)) {
-            // Fallback para navegadores antiguos
-            this.fallbackInit();
-            return;
-        }
-
-        // Crear el observer
-        this.observer = new IntersectionObserver(
-            (entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('is-visible');
-                        // Opcional: dejar de observar después de animar
-                        this.observer.unobserve(entry.target);
-                    }
-                });
-            },
-            {
-                root: null, // viewport
-                rootMargin: '0px 0px -50px 0px', // activar un poco antes
-                threshold: 0.1 // activar cuando 10% del elemento es visible
-            }
-        );
-
-        // Observar todos los elementos con clase scroll-reveal
-        const revealElements = document.querySelectorAll('.scroll-reveal');
-        revealElements.forEach(el => this.observer.observe(el));
-    },
-
-    // Fallback simple para navegadores sin Intersection Observer
-    fallbackInit() {
-        const revealElements = document.querySelectorAll('.scroll-reveal');
-        const checkVisibility = () => {
-            revealElements.forEach(el => {
-                const rect = el.getBoundingClientRect();
-                const isVisible = rect.top < window.innerHeight - 100;
-                if (isVisible) {
-                    el.classList.add('is-visible');
-                }
-            });
-        };
-
-        // Verificar al cargar y al hacer scroll
-        checkVisibility();
-        window.addEventListener('scroll', Utils.debounce(checkVisibility, 100));
-    },
-
-    // Método para añadir dinámicamente elementos
-    observe(element) {
-        if (this.observer) {
-            element.classList.add('scroll-reveal');
-            this.observer.observe(element);
-        }
-    }
-};
-
-// ==========================================================================
 // Configuración de API (para uso desde consola)
 // ==========================================================================
 
@@ -1550,8 +1329,5 @@ window.PE = {
     Forms,
     Utils,
     API,
-    APIConfig,
-    ScrollReveal,
-    LazyLoader,
-    Skeleton
+    APIConfig
 };
