@@ -1,6 +1,6 @@
 /**
  * Producción Escrita C2 - Backend API
- * Servidor Express con SQLite (desarrollo) y PostgreSQL (producción)
+ * Servidor Express con SQLite
  */
 
 require('dotenv').config();
@@ -29,14 +29,41 @@ app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// CORS - permitir frontend
+// CORS - permitir frontend (con soporte de comodines)
+const defaultOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5500',
+    'http://127.0.0.1:5500',
+    'https://elcorreveidile.github.io'
+];
+
+const allowedOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim()).filter(Boolean)
+    : defaultOrigins;
+
+const matchesOrigin = (origin, allowed) => {
+    if (!allowed) return false;
+    if (allowed === '*') return true;
+    if (allowed.includes('*')) {
+        const escaped = allowed.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
+        return new RegExp(`^${escaped}$`).test(origin);
+    }
+    return allowed === origin;
+};
+
+const isAllowedOrigin = (origin) => {
+    if (!origin) return true; // requests sin origen (SSR, curl, etc.)
+    return allowedOrigins.some(allowed => matchesOrigin(origin, allowed));
+};
+
 const corsOptions = {
-    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [
-        'http://localhost:3000',
-        'http://localhost:5500',
-        'http://127.0.0.1:5500',
-        'https://elcorreveidile.github.io'
-    ],
+    origin: (origin, callback) => {
+        if (isAllowedOrigin(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
     optionsSuccessStatus: 200
 };
@@ -103,10 +130,10 @@ app.get('/api/course', (req, res) => {
             professor: 'Javier Benítez Láinez',
             email: 'benitezl@go.ugr.es',
             year: '2025-2026',
-            sessions: 32,
+            sessions: 27,
             duration: '90 minutos',
-            schedule: 'Lunes y Miércoles',
-            startDate: '2026-02-02',
+            schedule: 'Martes y Jueves',
+            startDate: '2026-02-03',
             endDate: '2026-05-21'
         }
     });

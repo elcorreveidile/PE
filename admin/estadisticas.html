@@ -109,7 +109,7 @@
                                         <div class="chart-container">
                                             <div class="chart-bar" id="bar-sessions" style="width: 0%;"></div>
                                         </div>
-                                        <span class="chart-value" id="val-sessions">0/32</span>
+                                        <span class="chart-value" id="val-sessions">0/27</span>
                                     </div>
                                     <div class="chart-row">
                                         <span class="chart-label">Temas</span>
@@ -228,11 +228,12 @@
             // Progreso del curso
             document.getElementById('course-progress').textContent = progress.percentage + '%';
             document.getElementById('bar-sessions').style.width = progress.percentage + '%';
-            document.getElementById('val-sessions').textContent = progress.completed + '/32';
+            document.getElementById('val-sessions').textContent = progress.completed + '/' + progress.total;
 
-            const themesCompleted = Math.floor(progress.completed / 2);
-            document.getElementById('bar-themes').style.width = Math.round(themesCompleted / 14 * 100) + '%';
-            document.getElementById('val-themes').textContent = themesCompleted + '/14';
+            const totalThemes = PE.CourseData.themes.length;
+            const themesCompleted = Math.round((progress.completed / progress.total) * totalThemes);
+            document.getElementById('bar-themes').style.width = Math.round(themesCompleted / totalThemes * 100) + '%';
+            document.getElementById('val-themes').textContent = themesCompleted + '/' + totalThemes;
 
             const workshopsCompleted = sessions.filter(s => s.workshop && new Date(s.date) < new Date()).length;
             document.getElementById('bar-workshops').style.width = Math.round(workshopsCompleted / 4 * 100) + '%';
