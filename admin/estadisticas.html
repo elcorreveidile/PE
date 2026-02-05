@@ -115,7 +115,7 @@
                                         <div class="chart-container">
                                             <div class="chart-bar" id="bar-themes" style="width: 0%; background: var(--success-color);"></div>
                                         </div>
-                                        <span class="chart-value" id="val-themes">0/14</span>
+                                        <span class="chart-value" id="val-themes">0/11</span>
                                     </div>
                                     <div class="chart-row">
                                         <span class="chart-label">Talleres</span>
@@ -231,8 +231,8 @@
             document.getElementById('val-sessions').textContent = progress.completed + '/27';
 
             const themesCompleted = Math.floor(progress.completed / 2);
-            document.getElementById('bar-themes').style.width = Math.round(themesCompleted / 14 * 100) + '%';
-            document.getElementById('val-themes').textContent = themesCompleted + '/14';
+            document.getElementById('bar-themes').style.width = Math.round(themesCompleted / 11 * 100) + '%';
+            document.getElementById('val-themes').textContent = themesCompleted + '/11';
 
             const workshopsCompleted = sessions.filter(s => {
                 const sessionDate = PE.CourseData.getSessionDate ? PE.CourseData.getSessionDate(s.date) : new Date(s.date);
