@@ -53,6 +53,62 @@ router.get('/', authenticateToken, requireAdmin, (req, res) => {
 });
 
 /**
+ * POST /api/users
+ * Crear usuario (solo admin)
+ */
+router.post('/', authenticateToken, requireAdmin, [
+    body('email').isEmail().normalizeEmail().withMessage('Email inválido'),
+    body('password').isLength({ min: 6 }).withMessage('La contraseña debe tener al menos 6 caracteres'),
+    body('name').trim().isLength({ min: 2 }).withMessage('El nombre debe tener al menos 2 caracteres'),
+    body('role').optional().isIn(['student', 'admin']).withMessage('Rol inválido'),
+    body('level').optional().isString(),
+    body('active').optional().isBoolean()
+], async (req, res) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const db = getDb();
+        const { email, password, name, role = 'student', level, active } = req.body;
+
+        const existingUser = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+        if (existingUser) {
+            return res.status(400).json({ error: 'Este email ya está registrado' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const result = db.prepare(`
+            INSERT INTO users (email, password, name, role, level, active)
+            VALUES (?, ?, ?, ?, ?, ?)
+        `).run(
+            email,
+            hashedPassword,
+            name,
+            role,
+            level || 'C2',
+            active === undefined ? 1 : (active ? 1 : 0)
+        );
+
+        const userId = result.lastInsertRowid;
+
+        res.status(201).json({
+            id: userId,
+            email,
+            name,
+            role,
+            level: level || 'C2',
+            active: active === undefined ? 1 : (active ? 1 : 0)
+        });
+    } catch (error) {
+        console.error('Error al crear usuario:', error);
+        res.status(500).json({ error: 'Error al crear usuario' });
+    }
+});
+
+/**
  * GET /api/users/:id
  * Obtener usuario específico (solo admin)
  */

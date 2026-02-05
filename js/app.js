@@ -11,7 +11,10 @@
 const CONFIG = {
     STORAGE_PREFIX: 'pe_c2_',
     // URL del backend API - cambiar en producción
-    API_URL: localStorage.getItem('pe_c2_api_url') || '',
+    API_URL: localStorage.getItem('pe_c2_api_url') ||
+        ((typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin !== 'null')
+            ? window.location.origin
+            : ''),
     // Si está vacío, usa localStorage como fallback
     USE_API: false, // Se actualiza automáticamente si la API responde
     // Código de inscripción (solo para modo localStorage)
@@ -38,6 +41,8 @@ const AppState = {
 // ==========================================================================
 
 const API = {
+    _availabilityPromise: null,
+
     // Verificar si la API está disponible
     async checkAvailability() {
         if (!CONFIG.API_URL) return false;
@@ -52,6 +57,19 @@ const API = {
             CONFIG.USE_API = false;
             return false;
         }
+    },
+
+    async ensureAvailability() {
+        if (CONFIG.USE_API) return true;
+        if (!CONFIG.API_URL) return false;
+
+        if (!this._availabilityPromise) {
+            this._availabilityPromise = this.checkAvailability();
+        }
+
+        const available = await this._availabilityPromise;
+        this._availabilityPromise = null;
+        return available;
     },
 
     // Hacer petición a la API
@@ -76,7 +94,10 @@ const API = {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || 'Error en la petición');
+                const validationMessage = Array.isArray(data?.errors) && data.errors.length > 0
+                    ? data.errors[0].msg
+                    : null;
+                throw new Error(data.error || data.message || validationMessage || 'Error en la petición');
             }
 
             return data;
@@ -227,13 +248,23 @@ const Auth = {
 
     // Registrar usuario
     async register(userData) {
+        await API.ensureAvailability();
         if (CONFIG.USE_API) {
-            try {
-                const response = await API.post('/auth/register', userData);
-                return response.data;
-            } catch (error) {
-                throw error;
+            const response = await API.post('/auth/register', userData);
+            const user = response.user || response.data || response;
+
+            if (response.token) {
+                AppState.token = response.token;
+                Utils.storage.set('token', response.token);
             }
+
+            if (user) {
+                Utils.storage.set('currentUser', user);
+                AppState.user = user;
+                AppState.isAdmin = user.role === 'admin';
+            }
+
+            return user;
         }
 
         // Fallback localStorage
@@ -267,24 +298,23 @@ const Auth = {
 
     // Iniciar sesión
     async login(email, password) {
+        await API.ensureAvailability();
         if (CONFIG.USE_API) {
-            try {
-                const response = await API.post('/auth/login', { email, password });
+            const response = await API.post('/auth/login', { email, password });
 
-                // Guardar token
+            const user = response.user || response.data || response;
+            if (response.token) {
                 AppState.token = response.token;
                 Utils.storage.set('token', response.token);
+            }
 
-                // Guardar usuario
-                const user = response.data;
+            if (user) {
                 Utils.storage.set('currentUser', user);
                 AppState.user = user;
                 AppState.isAdmin = user.role === 'admin';
-
-                return user;
-            } catch (error) {
-                throw error;
             }
+
+            return user;
         }
 
         // Fallback localStorage
@@ -330,11 +360,12 @@ const Auth = {
             AppState.isAdmin = user.role === 'admin';
 
             // Si hay API y token, verificar que el token sigue siendo válido
+            await API.ensureAvailability();
             if (CONFIG.USE_API && token) {
                 try {
                     const response = await API.get('/auth/me');
-                    AppState.user = response.data;
-                    Utils.storage.set('currentUser', response.data);
+                    AppState.user = response;
+                    Utils.storage.set('currentUser', response);
                 } catch {
                     // Token inválido, limpiar sesión
                     this.logout();
@@ -357,11 +388,13 @@ const Auth = {
 
     // Actualizar perfil
     async updateProfile(data) {
+        await API.ensureAvailability();
         if (CONFIG.USE_API) {
-            const response = await API.put('/auth/profile', data);
-            AppState.user = response.data;
-            Utils.storage.set('currentUser', response.data);
-            return response.data;
+            await API.put('/auth/profile', data);
+            const updated = await API.get('/auth/me');
+            AppState.user = updated;
+            Utils.storage.set('currentUser', updated);
+            return updated;
         }
 
         // Fallback localStorage
@@ -380,6 +413,7 @@ const Auth = {
 
     // Cambiar contraseña
     async changePassword(currentPassword, newPassword) {
+        await API.ensureAvailability();
         if (CONFIG.USE_API) {
             return API.put('/auth/password', { currentPassword, newPassword });
         }
@@ -401,12 +435,34 @@ const Auth = {
 // ==========================================================================
 
 const Submissions = {
+    normalize(submission) {
+        if (!submission || typeof submission !== 'object') return submission;
+
+        return {
+            ...submission,
+            userId: submission.user_id ?? submission.userId,
+            userName: submission.user_name ?? submission.userName,
+            userEmail: submission.user_email ?? submission.userEmail,
+            sessionId: submission.session_id ?? submission.sessionId,
+            activityId: submission.activity_id ?? submission.activityId,
+            activityTitle: submission.activity_title ?? submission.activityTitle,
+            wordCount: submission.word_count ?? submission.wordCount,
+            feedback: submission.feedback_text ?? submission.feedback,
+            feedbackDate: submission.feedback_date ?? submission.feedbackDate,
+            reviewerName: submission.reviewer_name ?? submission.reviewerName,
+            createdAt: submission.created_at ?? submission.createdAt,
+            updatedAt: submission.updated_at ?? submission.updatedAt,
+            reviewedAt: submission.reviewed_at ?? submission.reviewedAt
+        };
+    },
     // Obtener todas las entregas
     async getAll() {
+        await API.ensureAvailability();
         if (CONFIG.USE_API) {
             try {
                 const response = await API.get('/submissions');
-                return response.data || [];
+                const submissions = response.submissions || response.data || response || [];
+                return Array.isArray(submissions) ? submissions.map(this.normalize) : [];
             } catch {
                 return [];
             }
@@ -416,10 +472,12 @@ const Submissions = {
 
     // Obtener entregas por usuario
     async getByUser(userId) {
+        await API.ensureAvailability();
         if (CONFIG.USE_API) {
             try {
-                const response = await API.get(`/submissions?userId=${userId}`);
-                return response.data || [];
+                const response = await API.get(`/submissions?user_id=${userId}`);
+                const submissions = response.submissions || response.data || response || [];
+                return Array.isArray(submissions) ? submissions.map(this.normalize) : [];
             } catch {
                 return [];
             }
@@ -430,10 +488,12 @@ const Submissions = {
 
     // Obtener entregas por sesión
     async getBySession(sessionId) {
+        await API.ensureAvailability();
         if (CONFIG.USE_API) {
             try {
-                const response = await API.get(`/submissions?sessionId=${sessionId}`);
-                return response.data || [];
+                const response = await API.get(`/submissions?session_id=${sessionId}`);
+                const submissions = response.submissions || response.data || response || [];
+                return Array.isArray(submissions) ? submissions.map(this.normalize) : [];
             } catch {
                 return [];
             }
@@ -444,14 +504,16 @@ const Submissions = {
 
     // Crear nueva entrega
     async create(submissionData) {
+        await API.ensureAvailability();
         if (CONFIG.USE_API) {
             const response = await API.post('/submissions', {
-                sessionId: submissionData.sessionId,
-                activityId: submissionData.activityId,
-                activityTitle: submissionData.activityTitle,
+                session_id: submissionData.sessionId,
+                activity_id: submissionData.activityId,
+                activity_title: submissionData.activityTitle,
                 content: submissionData.content
             });
-            return response.data;
+            const created = response.submission || response.data || response;
+            return this.normalize(created);
         }
 
         // Fallback localStorage
@@ -485,9 +547,12 @@ const Submissions = {
 
     // Actualizar entrega
     async update(submissionId, updates) {
+        await API.ensureAvailability();
         if (CONFIG.USE_API) {
-            const response = await API.put(`/submissions/${submissionId}`, updates);
-            return response.data;
+            const response = await API.put(`/submissions/${submissionId}`, {
+                content: updates.content
+            });
+            return response.data || response;
         }
 
         // Fallback localStorage
@@ -515,12 +580,13 @@ const Submissions = {
 
     // Añadir retroalimentación (profesor)
     async addFeedback(submissionId, feedback, grade) {
+        await API.ensureAvailability();
         if (CONFIG.USE_API) {
             const response = await API.post(`/submissions/${submissionId}/feedback`, {
-                feedback,
+                feedback_text: feedback,
                 grade
             });
-            return response.data;
+            return response.data || response;
         }
 
         return this.update(submissionId, {
@@ -533,6 +599,7 @@ const Submissions = {
 
     // Eliminar entrega
     async delete(submissionId) {
+        await API.ensureAvailability();
         if (CONFIG.USE_API) {
             return API.delete(`/submissions/${submissionId}`);
         }

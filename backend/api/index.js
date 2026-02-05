@@ -1,1 +1,3 @@
-404: Not Found
+const app = require('../src/app');
+
+module.exports = app;
