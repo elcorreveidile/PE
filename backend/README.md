@@ -53,6 +53,9 @@ CORS_ORIGIN=http://localhost:5500,https://elcorreveidile.github.io
 # Rate limiting
 RATE_LIMIT_WINDOW_MS=900000
 RATE_LIMIT_MAX_REQUESTS=100
+
+# Código de inscripción (si se define, será obligatorio para registrarse)
+REGISTRATION_CODE=
 ```
 
 ## Endpoints de la API

@@ -14,6 +14,8 @@ const CONFIG = {
     API_URL: localStorage.getItem('pe_c2_api_url') || '',
     // Si está vacío, usa localStorage como fallback
     USE_API: false, // Se actualiza automáticamente si la API responde
+    // Código de inscripción (solo para modo localStorage)
+    REGISTRATION_CODE: localStorage.getItem('pe_c2_registration_code') || '',
     COURSE_START: new Date('2026-02-03'),
     COURSE_END: new Date('2026-05-21'),
     SESSION_DAYS: [2, 4], // Martes = 2, Jueves = 4
@@ -1106,6 +1108,7 @@ const Forms = {
 
         const name = data.get('name')?.trim();
         const email = data.get('email')?.trim();
+        const registrationCode = data.get('registrationCode')?.trim();
         const password = data.get('password');
         const confirmPassword = data.get('confirmPassword');
         const level = data.get('level');
@@ -1116,6 +1119,12 @@ const Forms = {
 
         if (!email || !Utils.isValidEmail(email)) {
             errors.push('Introduce un email válido');
+        }
+
+        if (!registrationCode) {
+            errors.push('Introduce el código de inscripción');
+        } else if (!CONFIG.USE_API && CONFIG.REGISTRATION_CODE && registrationCode !== CONFIG.REGISTRATION_CODE) {
+            errors.push('El código de inscripción es incorrecto');
         }
 
         if (!password || password.length < 6) {
@@ -1130,7 +1139,7 @@ const Forms = {
             errors.push('Selecciona tu nivel');
         }
 
-        return { valid: errors.length === 0, errors, data: { name, email, password, level } };
+        return { valid: errors.length === 0, errors, data: { name, email, password, level, registrationCode } };
     },
 
     // Manejar envío de formulario de registro

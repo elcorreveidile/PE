@@ -27,8 +27,19 @@ router.post('/register', [
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { email, password, name, level, motivation } = req.body;
+        const { email, password, name, level, motivation, registrationCode } = req.body;
         const db = getDb();
+
+        const requiredCode = process.env.REGISTRATION_CODE;
+        if (requiredCode) {
+            const providedCode = (registrationCode || '').trim();
+            if (!providedCode) {
+                return res.status(400).json({ error: 'Código de inscripción requerido' });
+            }
+            if (providedCode !== requiredCode) {
+                return res.status(403).json({ error: 'Código de inscripción incorrecto' });
+            }
+        }
 
         // Verificar si el email ya existe
         const existingUser = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
