@@ -59,7 +59,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api/[...path].js"
+      "destination": "/api/index.js"
     }
   ]
 }
