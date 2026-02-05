@@ -1,6 +1,6 @@
 # app.yaml para Fly.io
 app = "produccion-escrita-c2-api"
-primary_region = "mad"
+primary_region = "fra"
 
 [build]
   dockerfile = "Dockerfile"
