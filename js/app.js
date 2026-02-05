@@ -359,17 +359,25 @@ const Auth = {
         await API.ensureAvailability();
         if (CONFIG.USE_API) {
             const response = await API.post('/auth/login', { email, password });
+            console.log('🔐 Login response:', response);
 
             const user = response.user || response.data || response;
+            console.log('👤 User:', user);
+            console.log('🎫 Token:', response.token);
+
             if (response.token) {
                 AppState.token = response.token;
+                console.log('💾 Guardando token en localStorage...');
                 Utils.storage.set('token', response.token);
+                console.log('✅ Token guardado. Verificación:', localStorage.getItem('pe_c2_token'));
             }
 
             if (user) {
+                console.log('💾 Guardando user en localStorage...');
                 Utils.storage.set('currentUser', user);
                 AppState.user = user;
                 AppState.isAdmin = user.role === 'admin';
+                console.log('✅ User guardado. Verificación:', localStorage.getItem('pe_c2_currentUser'));
             }
 
             return user;
