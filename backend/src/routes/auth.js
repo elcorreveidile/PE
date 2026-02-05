@@ -111,7 +111,7 @@ router.post('/login', [
             return res.status(401).json({ error: 'Email o contraseña incorrectos' });
         }
 
-        await query('UPDATE users SET "lastLogin" = CURRENT_TIMESTAMP WHERE id = $1', [user.id]);
+        await query('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1', [user.id]);
 
         const token = generateToken(user.id);
 
