@@ -1,7 +1,5 @@
 {
   "version": 2,
-  "buildCommand": "echo 'No build needed - static site'",
-  "outputDirectory": ".",
   "cleanUrls": true,
   "trailingSlash": false,
   "headers": [
@@ -58,23 +56,18 @@
       ]
     }
   ],
-  "builds": [
-    {
-      "src": "api/index.js",
-      "use": "@vercel/node",
-      "config": {
-        "runtime": "nodejs20.x"
-      }
-    },
-    {
-      "src": "**/*",
-      "use": "@vercel/static"
+  "functions": {
+    "api/index.js": {
+      "runtime": "nodejs20.x"
     }
-  ],
+  },
   "routes": [
     {
       "src": "/api/(.*)",
       "dest": "/api/index.js"
+    },
+    {
+      "handle": "filesystem"
     },
     {
       "src": "/(.*)",
