@@ -1,0 +1,25 @@
+services:
+  # Tipo de servicio: Web Service
+  - type: web
+
+    # Nombre del servicio
+    name: produccion-escrita-c2-api
+
+    # Entorno de ejecución
+    env: node
+
+    # Configuración de construcción
+    buildCommand: cd backend && npm install
+
+    # Comando de inicio
+    startCommand: cd backend && npm start
+
+    # Variables de entorno (se configuran en el dashboard de Render)
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+
+    # Configuración de health check
+    healthCheckPath: /api/health
