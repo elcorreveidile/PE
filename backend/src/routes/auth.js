@@ -47,7 +47,7 @@ router.post('/register', [
         const hashedPassword = await bcrypt.hash(password, 10);
         const now = new Date();
         const insertResult = await query(
-            `INSERT INTO users (email, password, name, level, motivation, created_at, updated_at)
+            `INSERT INTO users (email, password, name, level, motivation, "createdAt", "updatedAt")
              VALUES ($1, $2, $3, $4, $5, $6, $7)
              RETURNING id`,
             [email, hashedPassword, name, level || 'C2', motivation || null, now, now]
@@ -111,7 +111,7 @@ router.post('/login', [
             return res.status(401).json({ error: 'Email o contraseña incorrectos' });
         }
 
-        await query('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1', [user.id]);
+        await query('UPDATE users SET "lastLogin" = CURRENT_TIMESTAMP WHERE id = $1', [user.id]);
 
         const token = generateToken(user.id);
 
