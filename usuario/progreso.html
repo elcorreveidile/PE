@@ -160,6 +160,7 @@
 
             // Calcular sesiones completadas (basado en fecha actual)
             const courseProgress = PE.CourseData.getCourseProgress();
+            const today = PE.CourseData.getTodayDate ? PE.CourseData.getTodayDate() : new Date();
 
             // Actualizar estadisticas
             document.getElementById('stat-sessions').textContent = courseProgress.completed;
@@ -191,7 +192,8 @@
             const workshops = PE.CourseData.workshops;
             const workshopsHtml = workshops.map((workshop, index) => {
                 const workshopSession = PE.CourseData.sessions.find(s => s.workshop === workshop.id);
-                const isCompleted = workshopSession && new Date(workshopSession.date) < new Date();
+                const workshopDate = workshopSession ? (PE.CourseData.getSessionDate ? PE.CourseData.getSessionDate(workshopSession.date) : new Date(workshopSession.date)) : null;
+                const isCompleted = workshopDate && workshopDate < today;
                 const hasSubmission = submissions.some(s => s.activityId && s.activityId.includes('taller'));
                 return `
                     <div style="display: flex; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">

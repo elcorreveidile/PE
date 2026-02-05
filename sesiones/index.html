@@ -113,6 +113,7 @@
             
             const sessions = PE.CourseData.sessions;
             const progress = PE.CourseData.getCourseProgress();
+            const today = PE.CourseData.getTodayDate ? PE.CourseData.getTodayDate() : new Date();
 
             // Actualizar progreso
             document.getElementById('course-progress').style.width = progress.percentage + '%';
@@ -137,7 +138,8 @@
                 }
 
                 container.innerHTML = filteredSessions.map(session => {
-                    const isPast = new Date(session.date) < new Date();
+                    const sessionDate = PE.CourseData.getSessionDate ? PE.CourseData.getSessionDate(session.date) : new Date(session.date);
+                    const isPast = sessionDate < today;
                     const isCurrent = session.id === PE.CourseData.getCurrentSession().id;
                     const isWorkshop = session.theme === 'taller';
 

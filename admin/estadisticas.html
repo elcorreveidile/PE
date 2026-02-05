@@ -212,6 +212,7 @@
             submissions = Array.isArray(submissions) ? submissions : [];
             const sessions = PE.CourseData.sessions;
             const progress = PE.CourseData.getCourseProgress();
+            const today = PE.CourseData.getTodayDate ? PE.CourseData.getTodayDate() : new Date();
 
             const reviewed = submissions.filter(s => s.status === 'reviewed');
             const pending = submissions.filter(s => s.status === 'pending');
@@ -233,7 +234,10 @@
             document.getElementById('bar-themes').style.width = Math.round(themesCompleted / 14 * 100) + '%';
             document.getElementById('val-themes').textContent = themesCompleted + '/14';
 
-            const workshopsCompleted = sessions.filter(s => s.workshop && new Date(s.date) < new Date()).length;
+            const workshopsCompleted = sessions.filter(s => {
+                const sessionDate = PE.CourseData.getSessionDate ? PE.CourseData.getSessionDate(s.date) : new Date(s.date);
+                return s.workshop && sessionDate < today;
+            }).length;
             document.getElementById('bar-workshops').style.width = Math.round(workshopsCompleted / 4 * 100) + '%';
             document.getElementById('val-workshops').textContent = workshopsCompleted + '/4';
 

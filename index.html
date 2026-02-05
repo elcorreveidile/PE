@@ -45,7 +45,7 @@
                         <a href="sesiones/index.html">Sesiones</a>
                         <div class="dropdown-menu">
                             <a href="sesiones/index.html">Todas las sesiones</a>
-                            <a href="sesiones/sesion-01.html">Sesión actual</a>
+                            <a href="sesiones/sesion-01.html" data-current-session-link>Sesión actual</a>
                             <a href="calendario.html">Calendario</a>
                         </div>
                     </div>
@@ -505,7 +505,7 @@
                     </div>
                 </div>
                 <div class="card-footer">
-                    <a href="sesiones/sesion-01.html" class="btn btn-primary">Ver sesión completa</a>
+                    <a href="sesiones/sesion-01.html" class="btn btn-primary" data-current-session-link>Ver sesión completa</a>
                     <a href="calendario.html" class="btn btn-outline">Ver calendario</a>
                 </div>
             </div>
@@ -610,5 +610,16 @@
 
     <!-- JavaScript -->
     <script src="js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+            const current = PE.CourseData.getCurrentSession();
+            const href = `${basePath}/sesiones/sesion-${String(current.id).padStart(2, '0')}.html`;
+
+            document.querySelectorAll('[data-current-session-link]').forEach(link => {
+                link.setAttribute('href', href);
+            });
+        });
+    </script>
 </body>
 </html>

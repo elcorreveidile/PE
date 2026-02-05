@@ -528,5 +528,14 @@
             event.target.classList.add('active');
         }
     </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+            document.querySelectorAll('a[href^="materiales/"], a[href^="plantillas/"]').forEach(link => {
+                const href = link.getAttribute('href');
+                link.setAttribute('href', `${basePath}/recursos/${href}`);
+            });
+        });
+    </script>
 </body>
 </html>

@@ -628,29 +628,47 @@ const CourseData = {
         { id: 4, title: 'Granada 2031, Capital Cultural', file: 'taller-04-granada2031.html' },
     ],
 
-    // Obtener sesión actual
-    getCurrentSession() {
+    // Parsear fecha local (evita desfases por zona horaria)
+    getSessionDate(dateStr) {
+        const [year, month, day] = dateStr.split('-').map(Number);
+        return new Date(year, month - 1, day);
+    },
+
+    getTodayDate() {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
+        return today;
+    },
 
-        for (let i = 0; i < this.sessions.length; i++) {
-            const sessionDate = new Date(this.sessions[i].date);
-            sessionDate.setHours(0, 0, 0, 0);
+    // Obtener sesión actual
+    getCurrentSession() {
+        const today = this.getTodayDate();
 
-            if (sessionDate >= today) {
-                return this.sessions[i];
-            }
+        const exact = this.sessions.find(session => this.getSessionDate(session.date).getTime() === today.getTime());
+        if (exact) {
+            return exact;
         }
+
+        const firstDate = this.getSessionDate(this.sessions[0].date);
+        if (today < firstDate) {
+            return this.sessions[0];
+        }
+
+        const upcoming = this.sessions.find(session => this.getSessionDate(session.date) > today);
+        if (upcoming) {
+            return upcoming;
+        }
+
         return this.sessions[this.sessions.length - 1];
     },
 
     // Obtener progreso del curso
     getCourseProgress() {
-        const today = new Date();
+        const today = this.getTodayDate();
         let completed = 0;
 
         this.sessions.forEach(session => {
-            if (new Date(session.date) < today) {
+            if (this.getSessionDate(session.date) < today) {
                 completed++;
             }
         });

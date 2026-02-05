@@ -217,6 +217,15 @@
     <script src="../js/app.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
+            const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+            document.querySelectorAll('a[href$=".html"]').forEach(link => {
+                const href = link.getAttribute('href');
+                if (!href || href.startsWith('http') || href.startsWith('/') || href.startsWith('../')) {
+                    return;
+                }
+                link.setAttribute('href', `${basePath}/admin/${href}`);
+            });
+
             // Verificar autenticación de admin
             const user = PE.Auth.getCurrentUser();
             if (!user || user.role !== 'admin') {
