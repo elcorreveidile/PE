@@ -45,11 +45,12 @@ router.post('/register', [
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
+        const now = new Date();
         const insertResult = await query(
-            `INSERT INTO users (email, password, name, level, motivation)
-             VALUES ($1, $2, $3, $4, $5)
+            `INSERT INTO users (email, password, name, level, motivation, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
              RETURNING id`,
-            [email, hashedPassword, name, level || 'C2', motivation || null]
+            [email, hashedPassword, name, level || 'C2', motivation || null, now, now]
         );
 
         const userId = insertResult.rows[0].id;
