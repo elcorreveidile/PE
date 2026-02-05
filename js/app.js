@@ -13,6 +13,15 @@ function normalizeApiUrl(raw) {
     const trimmed = raw.trim();
     if (!trimmed || trimmed === 'null' || trimmed === 'undefined') return '';
 
+    try {
+        if (/^https?:\/\//i.test(trimmed)) {
+            const url = new URL(trimmed);
+            return url.origin;
+        }
+    } catch {
+        // ignore parse errors, fallback below
+    }
+
     let normalized = trimmed.replace(/\/+$/, '');
     if (normalized.endsWith('/api')) {
         normalized = normalized.slice(0, -4);
@@ -30,13 +39,15 @@ const CONFIG = (() => {
     const protocol = (typeof window !== 'undefined' && window.location) ? window.location.protocol : '';
     const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || protocol === 'file:';
 
+    const resolvedOrigin = normalizeApiUrl((typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin !== 'null')
+        ? window.location.origin
+        : '');
+    const storedApiUrl = normalizeApiUrl(localStorage.getItem('pe_c2_api_url'));
+
     return {
         STORAGE_PREFIX: 'pe_c2_',
         // URL del backend API - cambiar en producción
-        API_URL: normalizeApiUrl(localStorage.getItem('pe_c2_api_url')) ||
-            normalizeApiUrl((typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin !== 'null')
-                ? window.location.origin
-                : ''),
+        API_URL: (!isLocal ? resolvedOrigin : (storedApiUrl || resolvedOrigin)),
         // En producción forzamos API para evitar datos inconsistentes
         ENFORCE_API: !isLocal,
         // Si está vacío, usa localStorage como fallback (solo en local)
