@@ -1,11 +1,10 @@
 /**
  * Rutas de entregas (submissions)
- * Compatible con SQLite y PostgreSQL
  */
 
 const express = require('express');
-const { body, query, validationResult } = require('express-validator');
-const { query: dbQuery } = require('../database/db');
+const { body, query: queryValidator, validationResult } = require('express-validator');
+const { query } = require('../database/db');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
@@ -22,75 +21,75 @@ function countWords(text) {
  * Obtener entregas (estudiante: las suyas, admin: todas)
  */
 router.get('/', authenticateToken, [
-    query('status').optional().isIn(['pending', 'reviewed', 'all']),
-    query('session_id').optional().isInt(),
-    query('user_id').optional().isInt(),
-    query('limit').optional().isInt({ min: 1, max: 100 }),
-    query('offset').optional().isInt({ min: 0 })
+    queryValidator('status').optional().isIn(['pending', 'reviewed', 'all']),
+    queryValidator('session_id').optional().isInt(),
+    queryValidator('user_id').optional().isInt(),
+    queryValidator('limit').optional().isInt({ min: 1, max: 100 }),
+    queryValidator('offset').optional().isInt({ min: 0 })
 ], async (req, res) => {
     try {
         const { status, session_id, user_id, limit = 50, offset = 0 } = req.query;
 
-        let whereClause = [];
-        let params = [];
+        const whereClause = [];
+        const params = [];
 
-        // Si no es admin, solo puede ver sus propias entregas
         if (req.user.role !== 'admin') {
-            whereClause.push('s.user_id = ?');
             params.push(req.user.id);
+            whereClause.push(`s.user_id = $${params.length}`);
         } else if (user_id) {
-            whereClause.push('s.user_id = ?');
-            params.push(user_id);
+            params.push(parseInt(user_id, 10));
+            whereClause.push(`s.user_id = $${params.length}`);
         }
 
         if (status && status !== 'all') {
-            whereClause.push('s.status = ?');
             params.push(status);
+            whereClause.push(`s.status = $${params.length}`);
         }
 
         if (session_id) {
-            whereClause.push('s.session_id = ?');
-            params.push(session_id);
+            params.push(parseInt(session_id, 10));
+            whereClause.push(`s.session_id = $${params.length}`);
         }
 
-        const whereSQL = whereClause.length > 0 ? 'WHERE ' + whereClause.join(' AND ') : '';
+        const whereSQL = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
 
-        // Contar total
-        const countSQL = `SELECT COUNT(*) as total FROM submissions s ${whereSQL}`;
-        const countResult = await dbQuery(countSQL, params);
-        const total = countResult.rows?.[0]?.total || countResult.total;
+        const countResult = await query(
+            `SELECT COUNT(*)::int as total FROM submissions s ${whereSQL}`,
+            params
+        );
+        const total = countResult.rows[0]?.total || 0;
 
-        // Obtener entregas con información de usuario y feedback
-        const sql = `
-            SELECT
+        params.push(parseInt(limit, 10));
+        const limitIndex = params.length;
+        params.push(parseInt(offset, 10));
+        const offsetIndex = params.length;
+
+        const submissionsResult = await query(
+            `SELECT
                 s.*,
                 u.name as user_name,
                 u.email as user_email,
                 f.feedback_text,
                 f.grade,
                 f.created_at as feedback_date
-            FROM submissions s
-            LEFT JOIN users u ON s.user_id = u.id
-            LEFT JOIN feedback f ON s.id = f.submission_id
-            ${whereSQL}
-            ORDER BY s.created_at DESC
-            LIMIT ? OFFSET ?
-        `;
-
-        params.push(parseInt(limit), parseInt(offset));
-        const submissionsResult = await dbQuery(sql, params);
-        const submissions = submissionsResult.rows || submissionsResult;
+             FROM submissions s
+             LEFT JOIN users u ON s.user_id = u.id
+             LEFT JOIN feedback f ON s.id = f.submission_id
+             ${whereSQL}
+             ORDER BY s.created_at DESC
+             LIMIT $${limitIndex} OFFSET $${offsetIndex}`,
+            params
+        );
 
         res.json({
-            submissions,
+            submissions: submissionsResult.rows,
             pagination: {
                 total,
-                limit: parseInt(limit),
-                offset: parseInt(offset),
-                hasMore: (parseInt(offset) + submissions.length) < total
+                limit: parseInt(limit, 10),
+                offset: parseInt(offset, 10),
+                hasMore: (parseInt(offset, 10) + submissionsResult.rows.length) < total
             }
         });
-
     } catch (error) {
         console.error('Error al obtener entregas:', error);
         res.status(500).json({ error: 'Error al obtener entregas' });
@@ -105,8 +104,8 @@ router.get('/:id', authenticateToken, async (req, res) => {
     try {
         const submissionId = req.params.id;
 
-        const submissionResult = await dbQuery(`
-            SELECT
+        const submissionResult = await query(
+            `SELECT
                 s.*,
                 u.name as user_name,
                 u.email as user_email,
@@ -115,26 +114,25 @@ router.get('/:id', authenticateToken, async (req, res) => {
                 f.annotations,
                 f.created_at as feedback_date,
                 r.name as reviewer_name
-            FROM submissions s
-            LEFT JOIN users u ON s.user_id = u.id
-            LEFT JOIN feedback f ON s.id = f.submission_id
-            LEFT JOIN users r ON f.reviewer_id = r.id
-            WHERE s.id = ?
-        `, [submissionId]);
+             FROM submissions s
+             LEFT JOIN users u ON s.user_id = u.id
+             LEFT JOIN feedback f ON s.id = f.submission_id
+             LEFT JOIN users r ON f.reviewer_id = r.id
+             WHERE s.id = $1`,
+            [submissionId]
+        );
 
-        const submission = submissionResult.rows?.[0] || submissionResult;
+        const submission = submissionResult.rows[0];
 
         if (!submission) {
             return res.status(404).json({ error: 'Entrega no encontrada' });
         }
 
-        // Verificar permisos: admin o propietario
         if (req.user.role !== 'admin' && submission.user_id !== req.user.id) {
             return res.status(403).json({ error: 'No tienes permiso para ver esta entrega' });
         }
 
         res.json(submission);
-
     } catch (error) {
         console.error('Error al obtener entrega:', error);
         res.status(500).json({ error: 'Error al obtener entrega' });
@@ -158,40 +156,28 @@ router.post('/', authenticateToken, [
         }
 
         const { session_id, activity_id, activity_title, content } = req.body;
-
         const wordCount = countWords(content);
 
-        const result = await dbQuery(`
-            INSERT INTO submissions (user_id, session_id, activity_id, activity_title, content, word_count)
-            VALUES (?, ?, ?, ?, ?, ?)
-            RETURNING id
-        `, [req.user.id, session_id || null, activity_id, activity_title, content, wordCount]);
+        const insertResult = await query(
+            `INSERT INTO submissions (user_id, session_id, activity_id, activity_title, content, word_count)
+             VALUES ($1, $2, $3, $4, $5, $6)
+             RETURNING id, activity_id, activity_title, word_count, status, created_at`,
+            [req.user.id, session_id || null, activity_id, activity_title, content, wordCount]
+        );
 
-        const submissionId = result.rows?.[0]?.id || result.lastInsertRowid;
+        const submission = insertResult.rows[0];
 
-        // Notificar al admin
-        const adminsResult = await dbQuery('SELECT id FROM users WHERE role = ?', ['admin']);
-        const admins = adminsResult.rows || adminsResult;
+        const adminsResult = await query("SELECT id FROM users WHERE role = 'admin'");
+        const insertNotificationText = `INSERT INTO notifications (user_id, type, title, message) VALUES ($1, 'new_submission', 'Nueva entrega', $2)`;
 
-        for (const admin of admins) {
-            await dbQuery(`
-                INSERT INTO notifications (user_id, type, title, message)
-                VALUES (?, 'new_submission', 'Nueva entrega', ?)
-            `, [admin.id, `${req.user.name} ha enviado: ${activity_title}`]);
+        for (const admin of adminsResult.rows) {
+            await query(insertNotificationText, [admin.id, `${req.user.name} ha enviado: ${activity_title}`]);
         }
 
         res.status(201).json({
             message: 'Entrega realizada correctamente',
-            submission: {
-                id: submissionId,
-                activity_id,
-                activity_title,
-                word_count: wordCount,
-                status: 'pending',
-                created_at: new Date().toISOString()
-            }
+            submission
         });
-
     } catch (error) {
         console.error('Error al crear entrega:', error);
         res.status(500).json({ error: 'Error al realizar la entrega' });
@@ -213,9 +199,8 @@ router.put('/:id', authenticateToken, [
 
         const submissionId = req.params.id;
 
-        // Verificar que existe y es del usuario
-        const submissionResult = await dbQuery('SELECT * FROM submissions WHERE id = ?', [submissionId]);
-        const submission = submissionResult.rows?.[0] || submissionResult;
+        const submissionResult = await query('SELECT * FROM submissions WHERE id = $1', [submissionId]);
+        const submission = submissionResult.rows[0];
 
         if (!submission) {
             return res.status(404).json({ error: 'Entrega no encontrada' });
@@ -232,16 +217,15 @@ router.put('/:id', authenticateToken, [
         const { content } = req.body;
         const wordCount = countWords(content);
 
-        await dbQuery(`
-            UPDATE submissions SET content = ?, word_count = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        `, [content, wordCount, submissionId]);
+        await query(
+            'UPDATE submissions SET content = $1, word_count = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3',
+            [content, wordCount, submissionId]
+        );
 
         res.json({
             message: 'Entrega actualizada correctamente',
             word_count: wordCount
         });
-
     } catch (error) {
         console.error('Error al actualizar entrega:', error);
         res.status(500).json({ error: 'Error al actualizar entrega' });
@@ -265,44 +249,38 @@ router.post('/:id/feedback', authenticateToken, requireAdmin, [
         const submissionId = req.params.id;
         const { feedback_text, grade, annotations } = req.body;
 
-        // Verificar que la entrega existe
-        const submissionResult = await dbQuery('SELECT * FROM submissions WHERE id = ?', [submissionId]);
-        const submission = submissionResult.rows?.[0] || submissionResult;
-
+        const submissionResult = await query('SELECT * FROM submissions WHERE id = $1', [submissionId]);
+        const submission = submissionResult.rows[0];
         if (!submission) {
             return res.status(404).json({ error: 'Entrega no encontrada' });
         }
 
-        // Insertar o actualizar feedback
-        const existingFeedbackResult = await dbQuery('SELECT id FROM feedback WHERE submission_id = ?', [submissionId]);
-        const existingFeedback = existingFeedbackResult.rows?.[0] || existingFeedbackResult;
+        const existingFeedback = await query('SELECT id FROM feedback WHERE submission_id = $1', [submissionId]);
 
-        if (existingFeedback && existingFeedback.id) {
-            await dbQuery(`
-                UPDATE feedback
-                SET feedback_text = ?, grade = ?, annotations = ?, reviewer_id = ?, updated_at = CURRENT_TIMESTAMP
-                WHERE submission_id = ?
-            `, [feedback_text, grade || null, annotations || null, req.user.id, submissionId]);
+        if (existingFeedback.rows[0]) {
+            await query(
+                `UPDATE feedback
+                 SET feedback_text = $1, grade = $2, annotations = $3, reviewer_id = $4, updated_at = CURRENT_TIMESTAMP
+                 WHERE submission_id = $5`,
+                [feedback_text, grade || null, annotations || null, req.user.id, submissionId]
+            );
         } else {
-            await dbQuery(`
-                INSERT INTO feedback (submission_id, reviewer_id, feedback_text, grade, annotations)
-                VALUES (?, ?, ?, ?, ?)
-            `, [submissionId, req.user.id, feedback_text, grade || null, annotations || null]);
+            await query(
+                `INSERT INTO feedback (submission_id, reviewer_id, feedback_text, grade, annotations)
+                 VALUES ($1, $2, $3, $4, $5)`,
+                [submissionId, req.user.id, feedback_text, grade || null, annotations || null]
+            );
         }
 
-        // Actualizar estado de la entrega
-        await dbQuery('UPDATE submissions SET status = ? WHERE id = ?', ['reviewed', submissionId]);
+        await query('UPDATE submissions SET status = $1 WHERE id = $2', ['reviewed', submissionId]);
 
-        // Notificar al estudiante
-        await dbQuery(`
-            INSERT INTO notifications (user_id, type, title, message)
-            VALUES (?, 'feedback', 'Tu entrega ha sido corregida', ?)
-        `, [submission.user_id, `El profesor ha corregido tu entrega: ${submission.activity_title}`]);
+        await query(
+            `INSERT INTO notifications (user_id, type, title, message)
+             VALUES ($1, 'feedback', 'Tu entrega ha sido corregida', $2)`,
+            [submission.user_id, `El profesor ha corregido tu entrega: ${submission.activity_title}`]
+        );
 
-        res.json({
-            message: 'Feedback añadido correctamente'
-        });
-
+        res.json({ message: 'Feedback añadido correctamente' });
     } catch (error) {
         console.error('Error al añadir feedback:', error);
         res.status(500).json({ error: 'Error al añadir feedback' });
@@ -317,14 +295,13 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     try {
         const submissionId = req.params.id;
 
-        const submissionResult = await dbQuery('SELECT * FROM submissions WHERE id = ?', [submissionId]);
-        const submission = submissionResult.rows?.[0] || submissionResult;
+        const submissionResult = await query('SELECT * FROM submissions WHERE id = $1', [submissionId]);
+        const submission = submissionResult.rows[0];
 
         if (!submission) {
             return res.status(404).json({ error: 'Entrega no encontrada' });
         }
 
-        // Admin puede eliminar cualquiera, usuario solo las suyas si están pendientes
         if (req.user.role !== 'admin') {
             if (submission.user_id !== req.user.id) {
                 return res.status(403).json({ error: 'No puedes eliminar esta entrega' });
@@ -334,10 +311,9 @@ router.delete('/:id', authenticateToken, async (req, res) => {
             }
         }
 
-        await dbQuery('DELETE FROM submissions WHERE id = ?', [submissionId]);
+        await query('DELETE FROM submissions WHERE id = $1', [submissionId]);
 
         res.json({ message: 'Entrega eliminada correctamente' });
-
     } catch (error) {
         console.error('Error al eliminar entrega:', error);
         res.status(500).json({ error: 'Error al eliminar entrega' });
@@ -350,43 +326,39 @@ router.delete('/:id', authenticateToken, async (req, res) => {
  */
 router.get('/stats/overview', authenticateToken, requireAdmin, async (req, res) => {
     try {
-        const statsResult = await dbQuery(`
-            SELECT
-                COUNT(*) as total,
-                SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
-                SUM(CASE WHEN status = 'reviewed' THEN 1 ELSE 0 END) as reviewed,
-                AVG(word_count) as avg_word_count
-            FROM submissions
-        `);
-        const stats = statsResult.rows?.[0] || statsResult;
+        const statsResult = await query(
+            `SELECT
+                COUNT(*)::int as total,
+                SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END)::int as pending,
+                SUM(CASE WHEN status = 'reviewed' THEN 1 ELSE 0 END)::int as reviewed,
+                AVG(word_count)::float as avg_word_count
+             FROM submissions`
+        );
 
-        const bySessionResult = await dbQuery(`
-            SELECT
+        const bySessionResult = await query(
+            `SELECT
                 s.session_id,
                 cs.title as session_title,
-                COUNT(*) as count
-            FROM submissions s
-            LEFT JOIN course_sessions cs ON s.session_id = cs.id
-            GROUP BY s.session_id, cs.title
-            ORDER BY s.session_id
-        `);
-        const bySession = bySessionResult.rows || bySessionResult;
+                COUNT(*)::int as count
+             FROM submissions s
+             LEFT JOIN course_sessions cs ON s.session_id = cs.id
+             GROUP BY s.session_id, cs.title
+             ORDER BY s.session_id`
+        );
 
-        const recentActivityResult = await dbQuery(`
-            SELECT DATE(created_at) as date, COUNT(*) as count
-            FROM submissions
-            WHERE created_at >= date('now', '-30 days')
-            GROUP BY DATE(created_at)
-            ORDER BY date DESC
-        `);
-        const recentActivity = recentActivityResult.rows || recentActivityResult;
+        const recentResult = await query(
+            `SELECT DATE(created_at) as date, COUNT(*)::int as count
+             FROM submissions
+             WHERE created_at >= CURRENT_DATE - INTERVAL '30 days'
+             GROUP BY DATE(created_at)
+             ORDER BY date DESC`
+        );
 
         res.json({
-            stats,
-            bySession,
-            recentActivity
+            stats: statsResult.rows[0],
+            bySession: bySessionResult.rows,
+            recentActivity: recentResult.rows
         });
-
     } catch (error) {
         console.error('Error al obtener estadísticas:', error);
         res.status(500).json({ error: 'Error al obtener estadísticas' });

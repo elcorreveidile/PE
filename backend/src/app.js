@@ -1,6 +1,6 @@
 /**
  * Producción Escrita C2 - Backend API
- * Servidor Express con SQLite (desarrollo) y PostgreSQL (producción)
+ * Servidor Express con SQLite
  */
 
 require('dotenv').config();
@@ -23,6 +23,7 @@ const app = express();
 // Configuración
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
+const IS_TEST = NODE_ENV === 'test';
 
 // Middleware de seguridad
 app.use(helmet({
@@ -42,30 +43,32 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-// Rate limiting
-const limiter = rateLimit({
-    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutos
-    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // 100 peticiones por ventana
-    message: {
-        success: false,
-        error: 'Demasiadas peticiones. Intenta de nuevo más tarde.'
-    },
-    standardHeaders: true,
-    legacyHeaders: false
-});
-app.use('/api/', limiter);
+// Rate limiting (deshabilitado en tests para evitar handles abiertos)
+if (!IS_TEST) {
+    const limiter = rateLimit({
+        windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutos
+        max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // 100 peticiones por ventana
+        message: {
+            success: false,
+            error: 'Demasiadas peticiones. Intenta de nuevo más tarde.'
+        },
+        standardHeaders: true,
+        legacyHeaders: false
+    });
+    app.use('/api/', limiter);
 
-// Rate limiting más estricto para autenticación
-const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutos
-    max: 10, // 10 intentos
-    message: {
-        success: false,
-        error: 'Demasiados intentos de inicio de sesión. Intenta de nuevo en 15 minutos.'
-    }
-});
-app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/register', authLimiter);
+    // Rate limiting más estricto para autenticación
+    const authLimiter = rateLimit({
+        windowMs: 15 * 60 * 1000, // 15 minutos
+        max: 10, // 10 intentos
+        message: {
+            success: false,
+            error: 'Demasiados intentos de inicio de sesión. Intenta de nuevo en 15 minutos.'
+        }
+    });
+    app.use('/api/auth/login', authLimiter);
+    app.use('/api/auth/register', authLimiter);
+}
 
 // Logging
 if (NODE_ENV === 'development') {
@@ -103,10 +106,10 @@ app.get('/api/course', (req, res) => {
             professor: 'Javier Benítez Láinez',
             email: 'benitezl@go.ugr.es',
             year: '2025-2026',
-            sessions: 32,
+            sessions: 27,
             duration: '90 minutos',
-            schedule: 'Lunes y Miércoles',
-            startDate: '2026-02-02',
+            schedule: 'Martes y Jueves',
+            startDate: '2026-02-03',
             endDate: '2026-05-21'
         }
     });
@@ -162,9 +165,10 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Iniciar servidor
-app.listen(PORT, () => {
-    console.log(`
+// Iniciar servidor solo si se ejecuta directamente (evita escuchar durante tests)
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`
 ╔════════════════════════════════════════════════════════╗
 ║   Producción Escrita C2 - API Backend                  ║
 ║   Centro de Lenguas Modernas - UGR                     ║
@@ -173,7 +177,8 @@ app.listen(PORT, () => {
 ║   Entorno: ${NODE_ENV.padEnd(44)}║
 ║   Fecha: ${new Date().toLocaleString('es-ES').padEnd(46)}║
 ╚════════════════════════════════════════════════════════╝
-    `);
-});
+        `);
+    });
+}
 
 module.exports = app;

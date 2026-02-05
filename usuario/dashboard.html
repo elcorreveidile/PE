@@ -11,7 +11,6 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
 </head>
 <body>
-
     <!-- Header -->
     <header class="header">
         <div class="header-main">
@@ -139,7 +138,7 @@
                             <div class="alert alert-info">
                                 <div class="alert-content">
                                     <strong>Bienvenido/a al curso</strong>
-                                    <p style="margin: 0.5rem 0 0;">El curso comienza el lunes 2 de febrero de 2026. Prepara un texto breve en español para la primera sesión.</p>
+                                    <p style="margin: 0.5rem 0 0;">El curso comienza el martes 3 de febrero de 2026. Prepara un texto breve en español para la primera sesión.</p>
                                 </div>
                             </div>
                         </div>
@@ -246,7 +245,8 @@
         });
 
         async function viewSubmission(id) {
-            const submissions = await PE.Submissions.getAll();
+            let submissions = await PE.Submissions.getAll();
+            submissions = Array.isArray(submissions) ? submissions : [];
             const submission = submissions.find(s => s.id === id);
 
             if (submission) {

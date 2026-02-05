@@ -14,7 +14,6 @@
     </style>
 </head>
 <body>
-
     <header class="header admin-header">
         <div class="header-main">
             <div class="container">
@@ -110,6 +109,7 @@
             }
 
             let allSubmissions = await PE.Submissions.getAll();
+
             allSubmissions = Array.isArray(allSubmissions) ? allSubmissions : [];
             const pending = allSubmissions.filter(s => s.status === 'pending');
             const reviewed = allSubmissions.filter(s => s.status === 'reviewed');
@@ -118,7 +118,7 @@
             document.getElementById('stat-pending').textContent = pending.length;
             document.getElementById('stat-reviewed').textContent = reviewed.length;
 
-            function renderSubmissions(filter = 'pending') {
+            async function renderSubmissions(filter = 'pending') {
                 let submissions = allSubmissions;
                 if (filter === 'pending') submissions = pending;
                 else if (filter === 'reviewed') submissions = reviewed;

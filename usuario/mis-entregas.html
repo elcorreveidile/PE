@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="../css/styles.css">
 </head>
 <body>
-
     <header class="header">
         <div class="header-main">
             <div class="container">
@@ -85,7 +84,7 @@
 
             async function renderSubmissions(filter = 'all') {
                 let submissions = await PE.Submissions.getByUser(user.id);
-
+                submissions = Array.isArray(submissions) ? submissions : [];
                 if (filter === 'pending') {
                     submissions = submissions.filter(s => s.status === 'pending');
                 } else if (filter === 'reviewed') {
@@ -132,17 +131,17 @@
                 `).join('');
             }
 
-            await renderSubmissions();
+            renderSubmissions();
 
             document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.addEventListener('click', async () => {
+                btn.addEventListener('click', () => {
                     document.querySelectorAll('.filter-btn').forEach(b => {
                         b.classList.remove('active', 'btn-primary');
                         b.classList.add('btn-outline');
                     });
                     btn.classList.add('active', 'btn-primary');
                     btn.classList.remove('btn-outline');
-                    await renderSubmissions(btn.dataset.filter);
+                    renderSubmissions(btn.dataset.filter);
                 });
             });
         });
