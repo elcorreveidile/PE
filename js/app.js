@@ -25,23 +25,31 @@ function normalizeApiUrl(raw) {
     return normalized;
 }
 
-const CONFIG = {
-    STORAGE_PREFIX: 'pe_c2_',
-    // URL del backend API - cambiar en producción
-    API_URL: normalizeApiUrl(localStorage.getItem('pe_c2_api_url')) ||
-        normalizeApiUrl((typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin !== 'null')
-            ? window.location.origin
-            : ''),
-    // Si está vacío, usa localStorage como fallback
-    USE_API: false, // Se actualiza automáticamente si la API responde
-    // Código de inscripción (solo para modo localStorage)
-    REGISTRATION_CODE: (typeof window !== 'undefined' && window.PE_CONFIG && window.PE_CONFIG.registrationCode)
-        ? window.PE_CONFIG.registrationCode
-        : (localStorage.getItem('pe_c2_registration_code') || ''),
-    COURSE_START: new Date('2026-02-03'),
-    COURSE_END: new Date('2026-05-21'),
-    SESSION_DAYS: [2, 4], // Martes = 2, Jueves = 4
-};
+const CONFIG = (() => {
+    const hostname = (typeof window !== 'undefined' && window.location) ? window.location.hostname : '';
+    const protocol = (typeof window !== 'undefined' && window.location) ? window.location.protocol : '';
+    const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || protocol === 'file:';
+
+    return {
+        STORAGE_PREFIX: 'pe_c2_',
+        // URL del backend API - cambiar en producción
+        API_URL: normalizeApiUrl(localStorage.getItem('pe_c2_api_url')) ||
+            normalizeApiUrl((typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin !== 'null')
+                ? window.location.origin
+                : ''),
+        // En producción forzamos API para evitar datos inconsistentes
+        ENFORCE_API: !isLocal,
+        // Si está vacío, usa localStorage como fallback (solo en local)
+        USE_API: false, // Se actualiza automáticamente si la API responde
+        // Código de inscripción (solo para modo localStorage)
+        REGISTRATION_CODE: (typeof window !== 'undefined' && window.PE_CONFIG && window.PE_CONFIG.registrationCode)
+            ? window.PE_CONFIG.registrationCode
+            : (localStorage.getItem('pe_c2_registration_code') || ''),
+        COURSE_START: new Date('2026-02-03'),
+        COURSE_END: new Date('2026-05-21'),
+        SESSION_DAYS: [2, 4], // Martes = 2, Jueves = 4
+    };
+})();
 
 // Estado global de la aplicación
 const AppState = {
@@ -86,6 +94,9 @@ const API = {
 
         const available = await this._availabilityPromise;
         this._availabilityPromise = null;
+        if (CONFIG.ENFORCE_API && !available) {
+            throw new Error('Backend no disponible. No se puede usar el modo local en producción.');
+        }
         return available;
     },
 
@@ -248,7 +259,7 @@ const Auth = {
         }
 
         // Inicializar usuarios demo en localStorage si no hay API
-        if (!CONFIG.USE_API && !Utils.storage.get('users')) {
+        if (!CONFIG.ENFORCE_API && !CONFIG.USE_API && !Utils.storage.get('users')) {
             Utils.storage.set('users', [
                 {
                     id: 'admin1',
@@ -290,6 +301,10 @@ const Auth = {
             }
 
             return user;
+        }
+
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('El backend no está disponible. No se permite el registro en modo local en producción.');
         }
 
         // Fallback localStorage
@@ -340,6 +355,10 @@ const Auth = {
             }
 
             return user;
+        }
+
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('El backend no está disponible. No se permite el inicio de sesión en modo local en producción.');
         }
 
         // Fallback localStorage
@@ -422,6 +441,10 @@ const Auth = {
             return updated;
         }
 
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('El backend no está disponible. No se permiten cambios de perfil en modo local en producción.');
+        }
+
         // Fallback localStorage
         const users = Utils.storage.get('users') || [];
         const index = users.findIndex(u => u.id === AppState.user.id);
@@ -441,6 +464,10 @@ const Auth = {
         await API.ensureAvailability();
         if (CONFIG.USE_API) {
             return API.put('/auth/password', { currentPassword, newPassword });
+        }
+
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('El backend no está disponible. No se permite cambiar contraseña en modo local en producción.');
         }
 
         // Fallback localStorage
@@ -492,6 +519,9 @@ const Submissions = {
                 return [];
             }
         }
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('Backend no disponible. No se permite usar entregas en modo local en producción.');
+        }
         return Utils.storage.get('submissions') || [];
     },
 
@@ -506,6 +536,9 @@ const Submissions = {
             } catch {
                 return [];
             }
+        }
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('Backend no disponible. No se permiten consultas locales en producción.');
         }
         const all = Utils.storage.get('submissions') || [];
         return all.filter(s => s.userId === userId);
@@ -523,6 +556,9 @@ const Submissions = {
                 return [];
             }
         }
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('Backend no disponible. No se permiten consultas locales en producción.');
+        }
         const all = Utils.storage.get('submissions') || [];
         return all.filter(s => s.sessionId === sessionId);
     },
@@ -539,6 +575,10 @@ const Submissions = {
             });
             const created = response.submission || response.data || response;
             return this.normalize(created);
+        }
+
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('Backend no disponible. No se permiten entregas en modo local en producción.');
         }
 
         // Fallback localStorage
@@ -580,6 +620,10 @@ const Submissions = {
             return response.data || response;
         }
 
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('Backend no disponible. No se permite editar entregas en modo local en producción.');
+        }
+
         // Fallback localStorage
         return new Promise((resolve, reject) => {
             setTimeout(() => {
@@ -614,6 +658,10 @@ const Submissions = {
             return response.data || response;
         }
 
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('Backend no disponible. No se permite corregir en modo local en producción.');
+        }
+
         return this.update(submissionId, {
             feedback,
             grade,
@@ -627,6 +675,10 @@ const Submissions = {
         await API.ensureAvailability();
         if (CONFIG.USE_API) {
             return API.delete(`/submissions/${submissionId}`);
+        }
+
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('Backend no disponible. No se permite borrar entregas en modo local en producción.');
         }
 
         const submissions = Utils.storage.get('submissions') || [];
@@ -814,6 +866,23 @@ const UI = {
         `;
         document.body.appendChild(container);
         return container;
+    },
+
+    showBlockingError(message) {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay active';
+        overlay.innerHTML = `
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 class="modal-title">Conexión no disponible</h3>
+                </div>
+                <div class="modal-body">
+                    <p>${message}</p>
+                    <p>Actualiza la página cuando el backend esté activo.</p>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
     },
 
     // Mostrar modal
@@ -1320,6 +1389,11 @@ const Forms = {
 document.addEventListener('DOMContentLoaded', async () => {
     // Verificar disponibilidad de la API
     await API.checkAvailability();
+
+    if (CONFIG.ENFORCE_API && !CONFIG.USE_API) {
+        UI.showBlockingError('El backend está desconectado. En producción no se permite usar almacenamiento local para evitar datos inconsistentes.');
+        return;
+    }
 
     // Inicializar autenticación
     Auth.init();
