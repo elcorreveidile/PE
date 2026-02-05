@@ -18,7 +18,8 @@ router.post('/register', [
     body('email').isEmail().normalizeEmail().withMessage('Email invalido'),
     body('password').isLength({ min: 6 }).withMessage('La contrasena debe tener al menos 6 caracteres'),
     body('name').trim().isLength({ min: 2 }).withMessage('El nombre debe tener al menos 2 caracteres'),
-    body('level').optional().isIn(['C2-8', 'C2-9', 'C2']).withMessage('Nivel invalido')
+    body('level').optional().isIn(['C2-8', 'C2-9', 'C2']).withMessage('Nivel invalido'),
+    body('registration_code').notEmpty().withMessage('Codigo de registro requerido')
 ], async (req, res) => {
     try {
         // Validar entrada
@@ -27,7 +28,13 @@ router.post('/register', [
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { email, password, name, level, motivation } = req.body;
+        const { email, password, name, level, motivation, registration_code } = req.body;
+
+        // Verificar codigo de registro
+        const validCode = process.env.REGISTRATION_CODE || 'PIO7-2026-CLM';
+        if (registration_code !== validCode) {
+            return res.status(400).json({ error: 'Codigo de registro invalido' });
+        }
 
         // Verificar si el email ya existe
         const existingUser = await query('SELECT id FROM users WHERE email = $1', [email]);
