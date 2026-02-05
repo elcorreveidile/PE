@@ -275,5 +275,19 @@
     </footer>
 
     <script src="../js/app.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+            document.querySelectorAll('.card-footer a').forEach(link => {
+                const href = link.getAttribute('href');
+                if (!href || href.startsWith('http')) {
+                    return;
+                }
+                const file = href.split('/').pop();
+                link.setAttribute('href', `${basePath}/temas/${file}`);
+            });
+        });
+    </script>
 </body>
 </html>
