@@ -17,11 +17,11 @@ if (!connectionString) {
     process.exit(1);
 }
 
-const schema = (process.env.PG_SCHEMA || 'public').trim();
-const schemaIsValid = /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(schema);
+const schemaName = (process.env.PG_SCHEMA || 'public').trim();
+const schemaIsValid = /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(schemaName);
 
 if (!schemaIsValid) {
-    console.error(`PG_SCHEMA inválido: "${schema}"`);
+    console.error(`PG_SCHEMA inválido: "${schemaName}"`);
     process.exit(1);
 }
 
@@ -64,17 +64,17 @@ async function init() {
     const client = await pool.connect();
     try {
         const schemaPath = path.join(__dirname, 'schema-postgres.sql');
-        const schema = fs.readFileSync(schemaPath, 'utf8');
+        const schemaSql = fs.readFileSync(schemaPath, 'utf8');
 
-        if (schema !== 'public') {
-            console.log(`Creando schema "${schema}" si no existe...`);
-            await client.query(`CREATE SCHEMA IF NOT EXISTS ${schema}`);
+        if (schemaName !== 'public') {
+            console.log(`Creando schema "${schemaName}" si no existe...`);
+            await client.query(`CREATE SCHEMA IF NOT EXISTS ${schemaName}`);
         }
 
-        await client.query(`SET search_path TO ${schema}`);
+        await client.query(`SET search_path TO ${schemaName}`);
 
         console.log('Ejecutando esquema SQL...');
-        await client.query(schema);
+        await client.query(schemaSql);
         console.log('Esquema aplicado correctamente.');
 
         console.log('Insertando sesiones del curso...');
