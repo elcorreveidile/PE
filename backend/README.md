@@ -4,8 +4,9 @@ API REST para el curso de Producción Escrita C2 del Centro de Lenguas Modernas 
 
 ## Requisitos
 
-- Node.js 18 o superior
+- Node.js 20.x
 - npm o yarn
+- PostgreSQL (Neon/Vercel Postgres, etc.)
 
 ## Instalación
 
@@ -22,7 +23,7 @@ cp .env.example .env
 # Editar .env con tus valores
 nano .env
 
-# Inicializar base de datos
+# Inicializar base de datos (PostgreSQL)
 npm run init-db
 
 # Iniciar servidor en desarrollo
@@ -46,6 +47,10 @@ JWT_SECRET=tu_clave_secreta_muy_larga_y_segura
 
 # Tiempo de expiración del token
 JWT_EXPIRES_IN=7d
+
+# Base de datos (PostgreSQL)
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DATABASE?sslmode=require
+PG_SCHEMA=pe_c2
 
 # Orígenes permitidos para CORS (separados por coma)
 CORS_ORIGIN=http://localhost:5500,https://elcorreveidile.github.io
@@ -167,14 +172,15 @@ docker run -p 3000:3000 --env-file .env pe-c2-api
 
 ## Usuarios por defecto
 
-Al inicializar la base de datos se crean:
+Al inicializar la base de datos se crea el **admin** definido en variables de entorno.
 
-| Email | Contraseña | Rol |
-|-------|------------|-----|
-| `benitezl@go.ugr.es` | `admin123` | admin |
-| `estudiante@ejemplo.com` | `estudiante123` | student |
+Si quieres un usuario demo, define `CREATE_DEMO_USER=true` antes de ejecutar `npm run init-db`.
 
-**Importante:** Cambiar las contraseñas en producción.
+## Usar un schema separado en la misma base de datos
+
+Si quieres compartir la base de datos con otro proyecto, define `PG_SCHEMA` (ej. `pe_c2`).
+El script `npm run init-db` creará ese schema y todas las tablas dentro.
+La API usará automáticamente ese schema en cada conexión.
 
 ## Estructura del proyecto
 
@@ -183,16 +189,15 @@ backend/
 ├── src/
 │   ├── app.js              # Servidor Express
 │   ├── database/
-│   │   ├── db.js           # Conexión SQLite
-│   │   ├── schema.sql      # Esquema de la base de datos
-│   │   └── init.js         # Script de inicialización
+│   │   ├── db.js           # Conexión PostgreSQL
+│   │   ├── schema-postgres.sql # Esquema de la base de datos
+│   │   └── init-postgres.js    # Script de inicialización
 │   ├── middleware/
 │   │   └── auth.js         # Autenticación JWT
 │   └── routes/
 │       ├── auth.js         # Rutas de autenticación
 │       ├── users.js        # Rutas de usuarios
 │       └── submissions.js  # Rutas de entregas
-├── data/                   # Base de datos SQLite (generada)
 ├── .env.example            # Ejemplo de configuración
 ├── package.json
 └── README.md
