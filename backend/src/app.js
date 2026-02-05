@@ -48,6 +48,11 @@ const corsOptions = {
             return callback(null, true);
         }
 
+        // Permitir localhost y 127.0.0.1 en cualquier puerto (desarrollo)
+        if (origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1')) {
+            return callback(null, true);
+        }
+
         // Permitir todos los subdominios de vercel.app
         if (origin.endsWith('.vercel.app') || origin === 'https://vercel.app') {
             return callback(null, true);
