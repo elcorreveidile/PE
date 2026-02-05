@@ -15,7 +15,9 @@ const CONFIG = {
     // Si está vacío, usa localStorage como fallback
     USE_API: false, // Se actualiza automáticamente si la API responde
     // Código de inscripción (solo para modo localStorage)
-    REGISTRATION_CODE: localStorage.getItem('pe_c2_registration_code') || '',
+    REGISTRATION_CODE: (typeof window !== 'undefined' && window.PE_CONFIG && window.PE_CONFIG.registrationCode)
+        ? window.PE_CONFIG.registrationCode
+        : (localStorage.getItem('pe_c2_registration_code') || ''),
     COURSE_START: new Date('2026-02-03'),
     COURSE_END: new Date('2026-05-21'),
     SESSION_DAYS: [2, 4], // Martes = 2, Jueves = 4
