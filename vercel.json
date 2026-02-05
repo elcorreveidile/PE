@@ -56,9 +56,11 @@
       ]
     }
   ],
-  "functions": {
-    "api/[...path].js": {
-      "runtime": "nodejs20.x"
-    }
-  }
+  "builds": [
+    { "src": "api/[...path].js", "use": "@vercel/node@3" },
+    { "src": "**/*", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "^/api/(.*)$", "dest": "api/[...path].js" }
+  ]
 }
