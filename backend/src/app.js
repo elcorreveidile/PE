@@ -31,13 +31,35 @@ app.use(helmet({
 }));
 
 // CORS - permitir frontend
+const allowedOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [
+    'http://localhost:3000',
+    'http://localhost:5500',
+    'http://127.0.0.1:5500',
+    'https://elcorreveidile.github.io'
+];
+
 const corsOptions = {
-    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [
-        'http://localhost:3000',
-        'http://localhost:5500',
-        'http://127.0.0.1:5500',
-        'https://elcorreveidile.github.io'
-    ],
+    origin: function (origin, callback) {
+        // Permitir peticiones sin origin (mobile apps, curl, etc.)
+        if (!origin) return callback(null, true);
+
+        // Verificar si el origen está en la lista permitida
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            return callback(null, true);
+        }
+
+        // Permitir todos los subdominios de vercel.app
+        if (origin.endsWith('.vercel.app') || origin === 'https://vercel.app') {
+            return callback(null, true);
+        }
+
+        // Permitir todos los subdominios de cognoscencia.com
+        if (origin.endsWith('.cognoscencia.com') || origin === 'https://cognoscencia.com') {
+            return callback(null, true);
+        }
+
+        callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
     optionsSuccessStatus: 200
 };
