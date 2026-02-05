@@ -44,10 +44,18 @@ const CONFIG = (() => {
         : '');
     const storedApiUrl = normalizeApiUrl(localStorage.getItem('pe_c2_api_url'));
 
+    // URL de la API en Render (o tu backend desplegado)
+    // Para cambiar la URL del backend, puedes:
+    // 1. Añadir <script>window.PE_CONFIG = { API_URL: 'https://tu-api.onrender.com' }</script> antes de cargar este script
+    // 2. O cambiar manualmente la URL aquí
+    const productionApiUrl = (typeof window !== 'undefined' && window.PE_CONFIG && window.PE_CONFIG.API_URL)
+        ? window.PE_CONFIG.API_URL
+        : storedApiUrl;
+
     return {
         STORAGE_PREFIX: 'pe_c2_',
-        // URL del backend API - cambiar en producción
-        API_URL: (!isLocal ? resolvedOrigin : (storedApiUrl || resolvedOrigin)),
+        // URL del backend API - usa productionApiUrl si está configurado, sino el origin actual
+        API_URL: (!isLocal ? (productionApiUrl || resolvedOrigin) : (storedApiUrl || resolvedOrigin)),
         // En producción forzamos API para evitar datos inconsistentes
         ENFORCE_API: !isLocal,
         // Si está vacío, usa localStorage como fallback (solo en local)
