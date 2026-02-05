@@ -44,13 +44,12 @@ const CONFIG = (() => {
         : '');
     const storedApiUrl = normalizeApiUrl(localStorage.getItem('pe_c2_api_url'));
 
-    // URL de la API en Render (o tu backend desplegado)
-    // Para cambiar la URL del backend, puedes:
-    // 1. Añadir <script>window.PE_CONFIG = { API_URL: 'https://tu-api.onrender.com' }</script> antes de cargar este script
-    // 2. O cambiar manualmente la URL aquí
+    // URL de la API en Fly.io
+    // Fallback: usar window.PE_CONFIG si existe, sino usar localStorage, sino usar URL por defecto
+    const defaultApiUrl = 'https://produccion-escrita-c2-api.fly.dev';
     const productionApiUrl = (typeof window !== 'undefined' && window.PE_CONFIG && window.PE_CONFIG.API_URL)
         ? window.PE_CONFIG.API_URL
-        : storedApiUrl;
+        : (storedApiUrl || defaultApiUrl);
 
     return {
         STORAGE_PREFIX: 'pe_c2_',
