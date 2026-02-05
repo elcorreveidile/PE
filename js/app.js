@@ -424,6 +424,10 @@ const Auth = {
         const user = Utils.storage.get('currentUser');
         const token = Utils.storage.get('token');
 
+        console.log('🔍 checkSession - User:', user);
+        console.log('🔍 checkSession - Token:', token ? 'EXISTS' : 'NULL');
+        console.log('🔍 checkSession - USE_API:', CONFIG.USE_API);
+
         if (user) {
             AppState.user = user;
             AppState.token = token;
@@ -433,10 +437,14 @@ const Auth = {
             await API.ensureAvailability();
             if (CONFIG.USE_API && token) {
                 try {
+                    console.log('📡 Llamando a /auth/me...');
                     const response = await API.get('/auth/me');
+                    console.log('✅ /auth/me response:', response);
                     AppState.user = response;
                     Utils.storage.set('currentUser', response);
-                } catch {
+                } catch (error) {
+                    console.error('❌ Error en /auth/me:', error);
+                    console.error('❌ Error details:', error.message);
                     // Token inválido, limpiar sesión
                     this.logout();
                     return null;
