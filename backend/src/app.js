@@ -167,13 +167,13 @@ app.use((err, req, res, next) => {
 
 // Iniciar servidor solo si se ejecuta directamente (evita escuchar durante tests)
 if (require.main === module) {
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
         console.log(`
 ╔════════════════════════════════════════════════════════╗
 ║   Producción Escrita C2 - API Backend                  ║
 ║   Centro de Lenguas Modernas - UGR                     ║
 ╠════════════════════════════════════════════════════════╣
-║   Servidor iniciado en: http://localhost:${PORT}          ║
+║   Servidor iniciado en: http://0.0.0.0:${PORT}          ║
 ║   Entorno: ${NODE_ENV.padEnd(44)}║
 ║   Fecha: ${new Date().toLocaleString('es-ES').padEnd(46)}║
 ╚════════════════════════════════════════════════════════╝
