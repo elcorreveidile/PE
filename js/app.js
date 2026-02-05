@@ -8,11 +8,28 @@
 // Configuración y Estado Global
 // ==========================================================================
 
+function normalizeApiUrl(raw) {
+    if (!raw || typeof raw !== 'string') return '';
+    const trimmed = raw.trim();
+    if (!trimmed || trimmed === 'null' || trimmed === 'undefined') return '';
+
+    let normalized = trimmed.replace(/\/+$/, '');
+    if (normalized.endsWith('/api')) {
+        normalized = normalized.slice(0, -4);
+    }
+
+    if (!/^https?:\/\//i.test(normalized) && !normalized.startsWith('/')) {
+        return '';
+    }
+
+    return normalized;
+}
+
 const CONFIG = {
     STORAGE_PREFIX: 'pe_c2_',
     // URL del backend API - cambiar en producción
-    API_URL: localStorage.getItem('pe_c2_api_url') ||
-        ((typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin !== 'null')
+    API_URL: normalizeApiUrl(localStorage.getItem('pe_c2_api_url')) ||
+        normalizeApiUrl((typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin !== 'null')
             ? window.location.origin
             : ''),
     // Si está vacío, usa localStorage como fallback
@@ -91,7 +108,15 @@ const API = {
                 headers
             });
 
-            const data = await response.json();
+            const text = await response.text();
+            let data = {};
+            if (text) {
+                try {
+                    data = JSON.parse(text);
+                } catch {
+                    data = { error: text };
+                }
+            }
 
             if (!response.ok) {
                 const validationMessage = Array.isArray(data?.errors) && data.errors.length > 0
@@ -1384,8 +1409,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 const APIConfig = {
     // Configurar URL del backend
     setUrl(url) {
-        localStorage.setItem('pe_c2_api_url', url);
-        CONFIG.API_URL = url;
+        const normalized = normalizeApiUrl(url);
+        if (!normalized) {
+            console.warn('URL de API inválida:', url);
+            return;
+        }
+        localStorage.setItem('pe_c2_api_url', normalized);
+        CONFIG.API_URL = normalized;
         console.log('URL de API configurada:', url);
         console.log('Recarga la página para aplicar los cambios.');
     },
