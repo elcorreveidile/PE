@@ -1,1 +1,8 @@
-404: Not Found
+{
+  "rewrites": [
+    {
+      "source": "/:path*",
+      "destination": "/api/index.js"
+    }
+  ]
+}
