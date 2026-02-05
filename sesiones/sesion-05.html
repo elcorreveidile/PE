@@ -244,22 +244,22 @@
             
             // Quiz de activación
             PE.Activities.initQuiz('quiz-activacion', [
-                {
-                    question: '¿Qué elementos son importantes en Fórmulas de tratamiento?',
-                    options: ['Solo la gramática', 'Solo el vocabulario', 'Gramática, vocabulario y organización', 'Ninguno de los anteriores'],
-                    correct: 2
-                },
-                {
-                    question: '¿Cuál es el objetivo principal de esta sesión?',
-                    options: ['Memorizar reglas', 'Practicar la producción escrita', 'Leer textos', 'Hacer ejercicios orales'],
-                    correct: 1
-                }
-            ]);
+                            {
+                                question: '¿Qué parte debe aparecer al inicio de una carta formal?',
+                                options: ['Despedida', 'Saludo y motivo', 'Anexos', 'Firma'],
+                                correct: 1
+                            },
+                            {
+                                question: '¿Qué tratamiento es adecuado en una carta formal?',
+                                options: ['Tú', 'Usted', 'Vosotros', 'Apodos'],
+                                correct: 1
+                            }
+                        ]);
 
             // Completar espacios
             PE.Activities.initFillBlanks('fill-blanks-practice', 
-                'Para escribir un buen texto es necesario [1] las ideas antes de empezar. Luego debemos [2] el borrador y finalmente [3] el texto.',
-                ['planificar', 'redactar', 'revisar']
+                'En una carta formal, [1] el saludo, [2] el motivo y [3] la petición con cortesía.',
+                ['incluimos', 'explicamos', 'formulamos']
             );
 
             // Editor de texto

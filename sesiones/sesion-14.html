@@ -244,22 +244,22 @@
             
             // Quiz de activación
             PE.Activities.initQuiz('quiz-activacion', [
-                {
-                    question: '¿Qué elementos son importantes en Nominalización?',
-                    options: ['Solo la gramática', 'Solo el vocabulario', 'Gramática, vocabulario y organización', 'Ninguno de los anteriores'],
-                    correct: 2
-                },
-                {
-                    question: '¿Cuál es el objetivo principal de esta sesión?',
-                    options: ['Memorizar reglas', 'Practicar la producción escrita', 'Leer textos', 'Hacer ejercicios orales'],
-                    correct: 1
-                }
-            ]);
+                            {
+                                question: '¿Para qué sirve la nominalización?',
+                                options: ['Hacer el texto informal', 'Dar tono académico', 'Eliminar ideas', 'Simplificar en exceso'],
+                                correct: 1
+                            },
+                            {
+                                question: '¿Cuál es una nominalización correcta?',
+                                options: ['Analizar a análisis', 'Correr a corría', 'Mirar a mira', 'Ser a fue'],
+                                correct: 0
+                            }
+                        ]);
 
             // Completar espacios
             PE.Activities.initFillBlanks('fill-blanks-practice', 
-                'Para escribir un buen texto es necesario [1] las ideas antes de empezar. Luego debemos [2] el borrador y finalmente [3] el texto.',
-                ['planificar', 'redactar', 'revisar']
+                'Para un tono académico, [1] verbos en sustantivos, [2] tecnicismos y [3] precisión.',
+                ['convertimos', 'empleamos', 'ganamos']
             );
 
             // Editor de texto

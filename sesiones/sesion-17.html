@@ -244,22 +244,22 @@
             
             // Quiz de activación
             PE.Activities.initQuiz('quiz-activacion', [
-                {
-                    question: '¿Qué elementos son importantes en Léxico técnico?',
-                    options: ['Solo la gramática', 'Solo el vocabulario', 'Gramática, vocabulario y organización', 'Ninguno de los anteriores'],
-                    correct: 2
-                },
-                {
-                    question: '¿Cuál es el objetivo principal de esta sesión?',
-                    options: ['Memorizar reglas', 'Practicar la producción escrita', 'Leer textos', 'Hacer ejercicios orales'],
-                    correct: 1
-                }
-            ]);
+                            {
+                                question: '¿Qué parte abre una entrevista?',
+                                options: ['Conclusión', 'Presentación y contexto', 'Crítica', 'Resumen final'],
+                                correct: 1
+                            },
+                            {
+                                question: '¿Qué tipo de pregunta profundiza?',
+                                options: ['Cerrada', 'Abierta', 'Retórica', 'Ambigua'],
+                                correct: 1
+                            }
+                        ]);
 
             // Completar espacios
             PE.Activities.initFillBlanks('fill-blanks-practice', 
-                'Para escribir un buen texto es necesario [1] las ideas antes de empezar. Luego debemos [2] el borrador y finalmente [3] el texto.',
-                ['planificar', 'redactar', 'revisar']
+                'Para preparar una entrevista, [1] objetivos, [2] preguntas clave y [3] orden.',
+                ['definimos', 'redactamos', 'planificamos']
             );
 
             // Editor de texto

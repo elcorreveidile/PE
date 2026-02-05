@@ -246,22 +246,22 @@
             
             // Quiz de activación
             PE.Activities.initQuiz('quiz-activacion', [
-                {
-                    question: '¿Qué elementos son importantes en Estrategias de planificación?',
-                    options: ['Solo la gramática', 'Solo el vocabulario', 'Gramática, vocabulario y organización', 'Ninguno de los anteriores'],
-                    correct: 2
-                },
-                {
-                    question: '¿Cuál es el objetivo principal de esta sesión?',
-                    options: ['Memorizar reglas', 'Practicar la producción escrita', 'Leer textos', 'Hacer ejercicios orales'],
-                    correct: 1
-                }
-            ]);
+                            {
+                                question: '¿Cuál es el primer paso al planificar un texto?',
+                                options: ['Revisar el borrador', 'Delimitar propósito y destinatario', 'Publicar sin editar', 'Corregir la ortografía'],
+                                correct: 1
+                            },
+                            {
+                                question: '¿Qué función cumple un esquema previo?',
+                                options: ['Decorar el texto', 'Ordenar argumentos y ejemplos', 'Cambiar el registro', 'Eliminar ideas'],
+                                correct: 1
+                            }
+                        ]);
 
             // Completar espacios
             PE.Activities.initFillBlanks('fill-blanks-practice', 
-                'Para escribir un buen texto es necesario [1] las ideas antes de empezar. Luego debemos [2] el borrador y finalmente [3] el texto.',
-                ['planificar', 'redactar', 'revisar']
+                'Antes de escribir, [1] el objetivo, [2] ideas clave y [3] el orden del texto.',
+                ['definimos', 'reunimos', 'organizamos']
             );
 
             // Editor de texto

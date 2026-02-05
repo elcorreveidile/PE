@@ -244,22 +244,22 @@
             
             // Quiz de activación
             PE.Activities.initQuiz('quiz-activacion', [
-                {
-                    question: '¿Qué elementos son importantes en Perfiles en LinkedIn y CV?',
-                    options: ['Solo la gramática', 'Solo el vocabulario', 'Gramática, vocabulario y organización', 'Ninguno de los anteriores'],
-                    correct: 2
-                },
-                {
-                    question: '¿Cuál es el objetivo principal de esta sesión?',
-                    options: ['Memorizar reglas', 'Practicar la producción escrita', 'Leer textos', 'Hacer ejercicios orales'],
-                    correct: 1
-                }
-            ]);
+                            {
+                                question: '¿Qué elemento es clave en un perfil profesional?',
+                                options: ['Opiniones sin pruebas', 'Logros y competencias', 'Chistes', 'Jerga informal'],
+                                correct: 1
+                            },
+                            {
+                                question: '¿Qué registro conviene en un perfil profesional?',
+                                options: ['Informal', 'Formal claro y directo', 'Vulgar', 'Poético'],
+                                correct: 1
+                            }
+                        ]);
 
             // Completar espacios
             PE.Activities.initFillBlanks('fill-blanks-practice', 
-                'Para escribir un buen texto es necesario [1] las ideas antes de empezar. Luego debemos [2] el borrador y finalmente [3] el texto.',
-                ['planificar', 'redactar', 'revisar']
+                'En el perfil profesional, [1] el puesto, [2] competencias y [3] resultados medibles.',
+                ['presentamos', 'describimos', 'resaltamos']
             );
 
             // Editor de texto

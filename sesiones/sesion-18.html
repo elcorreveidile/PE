@@ -244,22 +244,22 @@
             
             // Quiz de activación
             PE.Activities.initQuiz('quiz-activacion', [
-                {
-                    question: '¿Qué elementos son importantes en Estructura argumentativa?',
-                    options: ['Solo la gramática', 'Solo el vocabulario', 'Gramática, vocabulario y organización', 'Ninguno de los anteriores'],
-                    correct: 2
-                },
-                {
-                    question: '¿Cuál es el objetivo principal de esta sesión?',
-                    options: ['Memorizar reglas', 'Practicar la producción escrita', 'Leer textos', 'Hacer ejercicios orales'],
-                    correct: 1
-                }
-            ]);
+                            {
+                                question: '¿Qué favorece mantener el hilo de una conversación?',
+                                options: ['Preguntas abiertas', 'Cambios bruscos', 'Monólogos', 'Silencio total'],
+                                correct: 0
+                            },
+                            {
+                                question: '¿Qué sirve para profundizar en una respuesta?',
+                                options: ['Paráfrasis y seguimiento', 'Cambiar de tema', 'Eliminar detalles', 'Responder por otro'],
+                                correct: 0
+                            }
+                        ]);
 
             // Completar espacios
             PE.Activities.initFillBlanks('fill-blanks-practice', 
-                'Para escribir un buen texto es necesario [1] las ideas antes de empezar. Luego debemos [2] el borrador y finalmente [3] el texto.',
-                ['planificar', 'redactar', 'revisar']
+                'Para interactuar, [1] preguntas abiertas, [2] repreguntas y [3] escucha activa.',
+                ['planteamos', 'formulamos', 'practicamos']
             );
 
             // Editor de texto

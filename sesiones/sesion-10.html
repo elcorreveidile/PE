@@ -244,22 +244,22 @@
             
             // Quiz de activación
             PE.Activities.initQuiz('quiz-activacion', [
-                {
-                    question: '¿Qué elementos son importantes en Conectores argumentativos?',
-                    options: ['Solo la gramática', 'Solo el vocabulario', 'Gramática, vocabulario y organización', 'Ninguno de los anteriores'],
-                    correct: 2
-                },
-                {
-                    question: '¿Cuál es el objetivo principal de esta sesión?',
-                    options: ['Memorizar reglas', 'Practicar la producción escrita', 'Leer textos', 'Hacer ejercicios orales'],
-                    correct: 1
-                }
-            ]);
+                            {
+                                question: '¿Qué es la tesis en un texto de opinión?',
+                                options: ['Un ejemplo', 'La postura central', 'Una conclusión ajena', 'Una definición técnica'],
+                                correct: 1
+                            },
+                            {
+                                question: '¿Qué orden ayuda a argumentar mejor?',
+                                options: ['Aleatorio', 'Argumento y evidencia', 'Repetir ideas', 'Copiar sin citar'],
+                                correct: 1
+                            }
+                        ]);
 
             // Completar espacios
             PE.Activities.initFillBlanks('fill-blanks-practice', 
-                'Para escribir un buen texto es necesario [1] las ideas antes de empezar. Luego debemos [2] el borrador y finalmente [3] el texto.',
-                ['planificar', 'redactar', 'revisar']
+                'En un texto de opinión, [1] la tesis, [2] argumentos y [3] evidencia.',
+                ['formulamos', 'desarrollamos', 'sustentamos']
             );
 
             // Editor de texto

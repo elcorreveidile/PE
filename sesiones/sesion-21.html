@@ -244,22 +244,22 @@
             
             // Quiz de activación
             PE.Activities.initQuiz('quiz-activacion', [
-                {
-                    question: '¿Qué elementos son importantes en Textos de divulgación?',
-                    options: ['Solo la gramática', 'Solo el vocabulario', 'Gramática, vocabulario y organización', 'Ninguno de los anteriores'],
-                    correct: 2
-                },
-                {
-                    question: '¿Cuál es el objetivo principal de esta sesión?',
-                    options: ['Memorizar reglas', 'Practicar la producción escrita', 'Leer textos', 'Hacer ejercicios orales'],
-                    correct: 1
-                }
-            ]);
+                            {
+                                question: '¿Qué ayuda a persuadir?',
+                                options: ['Datos y ejemplos', 'Contradicciones', 'Desorden', 'Ambigüedad'],
+                                correct: 0
+                            },
+                            {
+                                question: '¿Qué estrategia gestiona conflictos?',
+                                options: ['Insistir sin escuchar', 'Reformular y negociar', 'Ignorar', 'Amenazar'],
+                                correct: 1
+                            }
+                        ]);
 
             // Completar espacios
             PE.Activities.initFillBlanks('fill-blanks-practice', 
-                'Para escribir un buen texto es necesario [1] las ideas antes de empezar. Luego debemos [2] el borrador y finalmente [3] el texto.',
-                ['planificar', 'redactar', 'revisar']
+                'En un texto persuasivo, [1] necesidades, [2] beneficios y [3] un cierre claro.',
+                ['identificamos', 'destacamos', 'proponemos']
             );
 
             // Editor de texto

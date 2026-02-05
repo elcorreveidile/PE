@@ -244,22 +244,22 @@
             
             // Quiz de activación
             PE.Activities.initQuiz('quiz-activacion', [
-                {
-                    question: '¿Qué elementos son importantes en Marcadores del discurso?',
-                    options: ['Solo la gramática', 'Solo el vocabulario', 'Gramática, vocabulario y organización', 'Ninguno de los anteriores'],
-                    correct: 2
-                },
-                {
-                    question: '¿Cuál es el objetivo principal de esta sesión?',
-                    options: ['Memorizar reglas', 'Practicar la producción escrita', 'Leer textos', 'Hacer ejercicios orales'],
-                    correct: 1
-                }
-            ]);
+                            {
+                                question: '¿Cómo se logra la cohesión en un texto?',
+                                options: ['Repetir sin control', 'Referencias y conectores', 'Chistes', 'Citas al azar'],
+                                correct: 1
+                            },
+                            {
+                                question: '¿Qué implica la coherencia?',
+                                options: ['Contradicciones', 'Unidad temática', 'Listas aisladas', 'Cambios bruscos'],
+                                correct: 1
+                            }
+                        ]);
 
             // Completar espacios
             PE.Activities.initFillBlanks('fill-blanks-practice', 
-                'Para escribir un buen texto es necesario [1] las ideas antes de empezar. Luego debemos [2] el borrador y finalmente [3] el texto.',
-                ['planificar', 'redactar', 'revisar']
+                'Un texto cohesionado [1] referencias, [2] conectores y [3] progresión.',
+                ['usa', 'incorpora', 'mantiene']
             );
 
             // Editor de texto

@@ -244,22 +244,22 @@
             
             // Quiz de activación
             PE.Activities.initQuiz('quiz-activacion', [
-                {
-                    question: '¿Qué elementos son importantes en Peticiones formales?',
-                    options: ['Solo la gramática', 'Solo el vocabulario', 'Gramática, vocabulario y organización', 'Ninguno de los anteriores'],
-                    correct: 2
-                },
-                {
-                    question: '¿Cuál es el objetivo principal de esta sesión?',
-                    options: ['Memorizar reglas', 'Practicar la producción escrita', 'Leer textos', 'Hacer ejercicios orales'],
-                    correct: 1
-                }
-            ]);
+                            {
+                                question: '¿Qué tono debe tener una reclamación efectiva?',
+                                options: ['Agresivo', 'Claro y respetuoso', 'Humorístico', 'Indiferente'],
+                                correct: 1
+                            },
+                            {
+                                question: '¿Qué conviene aportar en una solicitud o reclamación?',
+                                options: ['Opiniones', 'Hechos y documentos', 'Solo emociones', 'Amenazas'],
+                                correct: 1
+                            }
+                        ]);
 
             // Completar espacios
             PE.Activities.initFillBlanks('fill-blanks-practice', 
-                'Para escribir un buen texto es necesario [1] las ideas antes de empezar. Luego debemos [2] el borrador y finalmente [3] el texto.',
-                ['planificar', 'redactar', 'revisar']
+                'Al reclamar, [1] el problema, [2] pruebas y [3] la solución solicitada.',
+                ['describimos', 'adjuntamos', 'proponemos']
             );
 
             // Editor de texto

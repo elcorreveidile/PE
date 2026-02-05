@@ -244,22 +244,22 @@
             
             // Quiz de activación
             PE.Activities.initQuiz('quiz-activacion', [
-                {
-                    question: '¿Qué elementos son importantes en Reseñas y críticas?',
-                    options: ['Solo la gramática', 'Solo el vocabulario', 'Gramática, vocabulario y organización', 'Ninguno de los anteriores'],
-                    correct: 2
-                },
-                {
-                    question: '¿Cuál es el objetivo principal de esta sesión?',
-                    options: ['Memorizar reglas', 'Practicar la producción escrita', 'Leer textos', 'Hacer ejercicios orales'],
-                    correct: 1
-                }
-            ]);
+                            {
+                                question: '¿Qué debe incluir una crítica cinematográfica?',
+                                options: ['Resumen y valoración argumentada', 'Solo spoiler', 'Datos técnicos sin opinión', 'Publicidad'],
+                                correct: 0
+                            },
+                            {
+                                question: '¿Qué recurso ayuda a valorar una obra?',
+                                options: ['Adjetivos valorativos', 'Frases incompletas', 'Repeticiones', 'Mayúsculas'],
+                                correct: 0
+                            }
+                        ]);
 
             // Completar espacios
             PE.Activities.initFillBlanks('fill-blanks-practice', 
-                'Para escribir un buen texto es necesario [1] las ideas antes de empezar. Luego debemos [2] el borrador y finalmente [3] el texto.',
-                ['planificar', 'redactar', 'revisar']
+                'En una crítica, [1] la obra, [2] argumentos y [3] recomendación.',
+                ['presentamos', 'sustentamos', 'cerramos']
             );
 
             // Editor de texto

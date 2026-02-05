@@ -242,22 +242,22 @@
             
             // Quiz de activación
             PE.Activities.initQuiz('quiz-activacion', [
-                {
-                    question: '¿Qué debe incluir la apertura de una presentación?',
-                    options: ['Solo el tema', 'Tema y objetivo', 'Solo bibliografía', 'Solo agradecimientos'],
-                    correct: 1
-                },
-                {
-                    question: '¿Para qué sirve el cierre?',
-                    options: ['Introducir el tema', 'Recapitular y cerrar con un mensaje clave', 'Añadir nuevos datos', 'Cambiar de tema'],
-                    correct: 1
-                }
-            ]);
+                            {
+                                question: '¿Qué debe incluir la apertura de la presentación final?',
+                                options: ['Solo bibliografía', 'Tema y objetivo', 'Solo agradecimientos', 'Nada'],
+                                correct: 1
+                            },
+                            {
+                                question: '¿Qué logra un buen cierre?',
+                                options: ['Abrir debate sin fin', 'Recapitular y dejar idea clave', 'Agregar datos nuevos', 'Cambiar de tema'],
+                                correct: 1
+                            }
+                        ]);
 
             // Completar espacios
             PE.Activities.initFillBlanks('fill-blanks-practice', 
-                'En una presentación eficaz, primero [1] el tema y el objetivo, después [2] los resultados con ejemplos y finalmente [3] la idea principal.',
-                ['presentamos', 'explicamos', 'concluimos']
+                'En la presentación final, [1] el proyecto, [2] evidencias y [3] conclusiones.',
+                ['introducimos', 'mostramos', 'cerramos']
             );
 
             // Editor de texto
