@@ -1,48 +1,49 @@
 /**
- * Conexión a la base de datos PostgreSQL
+ * Conexión a PostgreSQL (Neon)
  */
 
 const { Pool } = require('pg');
 
-const connectionString = process.env.DATABASE_URL;
-
-if (!connectionString) {
-    console.warn('DATABASE_URL no está configurada. La API no podrá conectar a la base de datos.');
-}
-
-const schema = (process.env.PG_SCHEMA || 'public').trim();
-const schemaIsValid = /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(schema);
-
-if (!schemaIsValid) {
-    throw new Error(`PG_SCHEMA inválido: "${schema}"`);
-}
-
-const sslRequired = connectionString && connectionString.includes('sslmode=require');
-
+// Crear pool de conexiones
 const pool = new Pool({
-    connectionString,
-    ssl: sslRequired ? { rejectUnauthorized: false } : undefined
-});
-
-pool.on('connect', async (client) => {
-    try {
-        await client.query(`SET search_path TO ${schema}`);
-    } catch (error) {
-        console.error('Error al configurar search_path:', error);
-        throw error;
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+        rejectUnauthorized: false
     }
 });
 
-async function query(text, params) {
-    return pool.query(text, params);
-}
+// Verificar conexión
+pool.on('connect', () => {
+    console.log('Conectado a PostgreSQL (Neon)');
+});
 
-async function getClient() {
-    return pool.connect();
-}
+pool.on('error', (err) => {
+    console.error('Error en conexión PostgreSQL:', err);
+});
 
-async function closeDb() {
-    await pool.end();
-}
+// Helper para ejecutar queries
+const query = async (text, params) => {
+    const start = Date.now();
+    try {
+        const res = await pool.query(text, params);
+        const duration = Date.now() - start;
+        if (process.env.NODE_ENV === 'development') {
+            console.log('Query ejecutada', { text: text.substring(0, 50), duration, rows: res.rowCount });
+        }
+        return res;
+    } catch (error) {
+        console.error('Error en query:', error.message);
+        throw error;
+    }
+};
 
-module.exports = { query, getClient, closeDb, pool, schema };
+// Helper para obtener una conexión del pool
+const getClient = async () => {
+    return await pool.connect();
+};
+
+module.exports = {
+    pool,
+    query,
+    getClient
+};

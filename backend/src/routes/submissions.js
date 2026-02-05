@@ -1,5 +1,5 @@
 /**
- * Rutas de entregas (submissions)
+ * Rutas de entregas - submissions (PostgreSQL)
  */
 
 const express = require('express');
@@ -17,6 +17,53 @@ function countWords(text) {
 }
 
 /**
+ * GET /api/submissions/stats/overview
+ * Estadisticas de entregas (solo admin)
+ * IMPORTANTE: Esta ruta debe ir ANTES de /:id
+ */
+router.get('/stats/overview', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const statsResult = await query(`
+            SELECT
+                COUNT(*) as total,
+                SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
+                SUM(CASE WHEN status = 'reviewed' THEN 1 ELSE 0 END) as reviewed,
+                AVG(word_count) as avg_word_count
+            FROM submissions
+        `);
+
+        const bySessionResult = await query(`
+            SELECT
+                s.session_id,
+                cs.title as session_title,
+                COUNT(*) as count
+            FROM submissions s
+            LEFT JOIN course_sessions cs ON s.session_id = cs.id
+            GROUP BY s.session_id, cs.title
+            ORDER BY s.session_id
+        `);
+
+        const recentResult = await query(`
+            SELECT DATE(created_at) as date, COUNT(*) as count
+            FROM submissions
+            WHERE created_at >= CURRENT_DATE - INTERVAL '30 days'
+            GROUP BY DATE(created_at)
+            ORDER BY date DESC
+        `);
+
+        res.json({
+            stats: statsResult.rows[0],
+            bySession: bySessionResult.rows,
+            recentActivity: recentResult.rows
+        });
+
+    } catch (error) {
+        console.error('Error al obtener estadisticas:', error);
+        res.status(500).json({ error: 'Error al obtener estadisticas' });
+    }
+});
+
+/**
  * GET /api/submissions
  * Obtener entregas (estudiante: las suyas, admin: todas)
  */
@@ -30,66 +77,69 @@ router.get('/', authenticateToken, [
     try {
         const { status, session_id, user_id, limit = 50, offset = 0 } = req.query;
 
-        const whereClause = [];
-        const params = [];
+        let whereClause = [];
+        let params = [];
+        let paramIndex = 1;
 
+        // Si no es admin, solo puede ver sus propias entregas
         if (req.user.role !== 'admin') {
+            whereClause.push(`s.user_id = $${paramIndex++}`);
             params.push(req.user.id);
-            whereClause.push(`s.user_id = $${params.length}`);
         } else if (user_id) {
-            params.push(parseInt(user_id, 10));
-            whereClause.push(`s.user_id = $${params.length}`);
+            whereClause.push(`s.user_id = $${paramIndex++}`);
+            params.push(user_id);
         }
 
         if (status && status !== 'all') {
+            whereClause.push(`s.status = $${paramIndex++}`);
             params.push(status);
-            whereClause.push(`s.status = $${params.length}`);
         }
 
         if (session_id) {
-            params.push(parseInt(session_id, 10));
-            whereClause.push(`s.session_id = $${params.length}`);
+            whereClause.push(`s.session_id = $${paramIndex++}`);
+            params.push(session_id);
         }
 
-        const whereSQL = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
+        const whereSQL = whereClause.length > 0 ? 'WHERE ' + whereClause.join(' AND ') : '';
 
+        // Contar total
         const countResult = await query(
-            `SELECT COUNT(*)::int as total FROM submissions s ${whereSQL}`,
+            `SELECT COUNT(*) as total FROM submissions s ${whereSQL}`,
             params
         );
-        const total = countResult.rows[0]?.total || 0;
+        const total = parseInt(countResult.rows[0].total);
 
-        params.push(parseInt(limit, 10));
-        const limitIndex = params.length;
-        params.push(parseInt(offset, 10));
-        const offsetIndex = params.length;
+        // Obtener entregas con informacion de usuario y feedback
+        const limitParam = paramIndex++;
+        const offsetParam = paramIndex;
+        params.push(parseInt(limit), parseInt(offset));
 
-        const submissionsResult = await query(
-            `SELECT
+        const result = await query(`
+            SELECT
                 s.*,
                 u.name as user_name,
                 u.email as user_email,
                 f.feedback_text,
                 f.grade,
                 f.created_at as feedback_date
-             FROM submissions s
-             LEFT JOIN users u ON s.user_id = u.id
-             LEFT JOIN feedback f ON s.id = f.submission_id
-             ${whereSQL}
-             ORDER BY s.created_at DESC
-             LIMIT $${limitIndex} OFFSET $${offsetIndex}`,
-            params
-        );
+            FROM submissions s
+            LEFT JOIN users u ON s.user_id = u.id
+            LEFT JOIN feedback f ON s.id = f.submission_id
+            ${whereSQL}
+            ORDER BY s.created_at DESC
+            LIMIT $${limitParam} OFFSET $${offsetParam}
+        `, params);
 
         res.json({
-            submissions: submissionsResult.rows,
+            submissions: result.rows,
             pagination: {
                 total,
-                limit: parseInt(limit, 10),
-                offset: parseInt(offset, 10),
-                hasMore: (parseInt(offset, 10) + submissionsResult.rows.length) < total
+                limit: parseInt(limit),
+                offset: parseInt(offset),
+                hasMore: (parseInt(offset) + result.rows.length) < total
             }
         });
+
     } catch (error) {
         console.error('Error al obtener entregas:', error);
         res.status(500).json({ error: 'Error al obtener entregas' });
@@ -98,14 +148,14 @@ router.get('/', authenticateToken, [
 
 /**
  * GET /api/submissions/:id
- * Obtener una entrega específica
+ * Obtener una entrega especifica
  */
 router.get('/:id', authenticateToken, async (req, res) => {
     try {
         const submissionId = req.params.id;
 
-        const submissionResult = await query(
-            `SELECT
+        const result = await query(`
+            SELECT
                 s.*,
                 u.name as user_name,
                 u.email as user_email,
@@ -114,25 +164,26 @@ router.get('/:id', authenticateToken, async (req, res) => {
                 f.annotations,
                 f.created_at as feedback_date,
                 r.name as reviewer_name
-             FROM submissions s
-             LEFT JOIN users u ON s.user_id = u.id
-             LEFT JOIN feedback f ON s.id = f.submission_id
-             LEFT JOIN users r ON f.reviewer_id = r.id
-             WHERE s.id = $1`,
-            [submissionId]
-        );
+            FROM submissions s
+            LEFT JOIN users u ON s.user_id = u.id
+            LEFT JOIN feedback f ON s.id = f.submission_id
+            LEFT JOIN users r ON f.reviewer_id = r.id
+            WHERE s.id = $1
+        `, [submissionId]);
 
-        const submission = submissionResult.rows[0];
-
-        if (!submission) {
+        if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Entrega no encontrada' });
         }
 
+        const submission = result.rows[0];
+
+        // Verificar permisos: admin o propietario
         if (req.user.role !== 'admin' && submission.user_id !== req.user.id) {
             return res.status(403).json({ error: 'No tienes permiso para ver esta entrega' });
         }
 
         res.json(submission);
+
     } catch (error) {
         console.error('Error al obtener entrega:', error);
         res.status(500).json({ error: 'Error al obtener entrega' });
@@ -146,7 +197,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
 router.post('/', authenticateToken, [
     body('session_id').optional().isInt(),
     body('activity_id').notEmpty().withMessage('ID de actividad requerido'),
-    body('activity_title').notEmpty().withMessage('Título de actividad requerido'),
+    body('activity_title').notEmpty().withMessage('Titulo de actividad requerido'),
     body('content').isLength({ min: 10 }).withMessage('El contenido debe tener al menos 10 caracteres')
 ], async (req, res) => {
     try {
@@ -158,26 +209,36 @@ router.post('/', authenticateToken, [
         const { session_id, activity_id, activity_title, content } = req.body;
         const wordCount = countWords(content);
 
-        const insertResult = await query(
-            `INSERT INTO submissions (user_id, session_id, activity_id, activity_title, content, word_count)
-             VALUES ($1, $2, $3, $4, $5, $6)
-             RETURNING id, activity_id, activity_title, word_count, status, created_at`,
-            [req.user.id, session_id || null, activity_id, activity_title, content, wordCount]
-        );
+        const result = await query(`
+            INSERT INTO submissions (user_id, session_id, activity_id, activity_title, content, word_count)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING id
+        `, [req.user.id, session_id || null, activity_id, activity_title, content, wordCount]);
 
-        const submission = insertResult.rows[0];
+        const submissionId = result.rows[0].id;
 
+        // Notificar al admin
         const adminsResult = await query("SELECT id FROM users WHERE role = 'admin'");
-        const insertNotificationText = `INSERT INTO notifications (user_id, type, title, message) VALUES ($1, 'new_submission', 'Nueva entrega', $2)`;
 
         for (const admin of adminsResult.rows) {
-            await query(insertNotificationText, [admin.id, `${req.user.name} ha enviado: ${activity_title}`]);
+            await query(`
+                INSERT INTO notifications (user_id, type, title, message)
+                VALUES ($1, 'new_submission', 'Nueva entrega', $2)
+            `, [admin.id, `${req.user.name} ha enviado: ${activity_title}`]);
         }
 
         res.status(201).json({
             message: 'Entrega realizada correctamente',
-            submission
+            submission: {
+                id: submissionId,
+                activity_id,
+                activity_title,
+                word_count: wordCount,
+                status: 'pending',
+                created_at: new Date().toISOString()
+            }
         });
+
     } catch (error) {
         console.error('Error al crear entrega:', error);
         res.status(500).json({ error: 'Error al realizar la entrega' });
@@ -186,7 +247,7 @@ router.post('/', authenticateToken, [
 
 /**
  * PUT /api/submissions/:id
- * Actualizar entrega (solo si está pendiente)
+ * Actualizar entrega (solo si esta pendiente)
  */
 router.put('/:id', authenticateToken, [
     body('content').isLength({ min: 10 }).withMessage('El contenido debe tener al menos 10 caracteres')
@@ -199,12 +260,14 @@ router.put('/:id', authenticateToken, [
 
         const submissionId = req.params.id;
 
+        // Verificar que existe y es del usuario
         const submissionResult = await query('SELECT * FROM submissions WHERE id = $1', [submissionId]);
-        const submission = submissionResult.rows[0];
 
-        if (!submission) {
+        if (submissionResult.rows.length === 0) {
             return res.status(404).json({ error: 'Entrega no encontrada' });
         }
+
+        const submission = submissionResult.rows[0];
 
         if (submission.user_id !== req.user.id) {
             return res.status(403).json({ error: 'No puedes editar esta entrega' });
@@ -217,15 +280,16 @@ router.put('/:id', authenticateToken, [
         const { content } = req.body;
         const wordCount = countWords(content);
 
-        await query(
-            'UPDATE submissions SET content = $1, word_count = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3',
-            [content, wordCount, submissionId]
-        );
+        await query(`
+            UPDATE submissions SET content = $1, word_count = $2, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $3
+        `, [content, wordCount, submissionId]);
 
         res.json({
             message: 'Entrega actualizada correctamente',
             word_count: wordCount
         });
+
     } catch (error) {
         console.error('Error al actualizar entrega:', error);
         res.status(500).json({ error: 'Error al actualizar entrega' });
@@ -234,7 +298,7 @@ router.put('/:id', authenticateToken, [
 
 /**
  * POST /api/submissions/:id/feedback
- * Añadir feedback a una entrega (solo admin)
+ * Anadir feedback a una entrega (solo admin)
  */
 router.post('/:id/feedback', authenticateToken, requireAdmin, [
     body('feedback_text').notEmpty().withMessage('El feedback es requerido'),
@@ -249,59 +313,66 @@ router.post('/:id/feedback', authenticateToken, requireAdmin, [
         const submissionId = req.params.id;
         const { feedback_text, grade, annotations } = req.body;
 
+        // Verificar que la entrega existe
         const submissionResult = await query('SELECT * FROM submissions WHERE id = $1', [submissionId]);
-        const submission = submissionResult.rows[0];
-        if (!submission) {
+        if (submissionResult.rows.length === 0) {
             return res.status(404).json({ error: 'Entrega no encontrada' });
         }
 
+        const submission = submissionResult.rows[0];
+
+        // Insertar o actualizar feedback
         const existingFeedback = await query('SELECT id FROM feedback WHERE submission_id = $1', [submissionId]);
 
-        if (existingFeedback.rows[0]) {
-            await query(
-                `UPDATE feedback
-                 SET feedback_text = $1, grade = $2, annotations = $3, reviewer_id = $4, updated_at = CURRENT_TIMESTAMP
-                 WHERE submission_id = $5`,
-                [feedback_text, grade || null, annotations || null, req.user.id, submissionId]
-            );
+        if (existingFeedback.rows.length > 0) {
+            await query(`
+                UPDATE feedback
+                SET feedback_text = $1, grade = $2, annotations = $3, reviewer_id = $4, updated_at = CURRENT_TIMESTAMP
+                WHERE submission_id = $5
+            `, [feedback_text, grade || null, annotations || null, req.user.id, submissionId]);
         } else {
-            await query(
-                `INSERT INTO feedback (submission_id, reviewer_id, feedback_text, grade, annotations)
-                 VALUES ($1, $2, $3, $4, $5)`,
-                [submissionId, req.user.id, feedback_text, grade || null, annotations || null]
-            );
+            await query(`
+                INSERT INTO feedback (submission_id, reviewer_id, feedback_text, grade, annotations)
+                VALUES ($1, $2, $3, $4, $5)
+            `, [submissionId, req.user.id, feedback_text, grade || null, annotations || null]);
         }
 
-        await query('UPDATE submissions SET status = $1 WHERE id = $2', ['reviewed', submissionId]);
+        // Actualizar estado de la entrega
+        await query("UPDATE submissions SET status = 'reviewed' WHERE id = $1", [submissionId]);
 
-        await query(
-            `INSERT INTO notifications (user_id, type, title, message)
-             VALUES ($1, 'feedback', 'Tu entrega ha sido corregida', $2)`,
-            [submission.user_id, `El profesor ha corregido tu entrega: ${submission.activity_title}`]
-        );
+        // Notificar al estudiante
+        await query(`
+            INSERT INTO notifications (user_id, type, title, message)
+            VALUES ($1, 'feedback', 'Tu entrega ha sido corregida', $2)
+        `, [submission.user_id, `El profesor ha corregido tu entrega: ${submission.activity_title}`]);
 
-        res.json({ message: 'Feedback añadido correctamente' });
+        res.json({
+            message: 'Feedback anadido correctamente'
+        });
+
     } catch (error) {
-        console.error('Error al añadir feedback:', error);
-        res.status(500).json({ error: 'Error al añadir feedback' });
+        console.error('Error al anadir feedback:', error);
+        res.status(500).json({ error: 'Error al anadir feedback' });
     }
 });
 
 /**
  * DELETE /api/submissions/:id
- * Eliminar entrega (solo admin o propietario si está pendiente)
+ * Eliminar entrega (solo admin o propietario si esta pendiente)
  */
 router.delete('/:id', authenticateToken, async (req, res) => {
     try {
         const submissionId = req.params.id;
 
         const submissionResult = await query('SELECT * FROM submissions WHERE id = $1', [submissionId]);
-        const submission = submissionResult.rows[0];
 
-        if (!submission) {
+        if (submissionResult.rows.length === 0) {
             return res.status(404).json({ error: 'Entrega no encontrada' });
         }
 
+        const submission = submissionResult.rows[0];
+
+        // Admin puede eliminar cualquiera, usuario solo las suyas si estan pendientes
         if (req.user.role !== 'admin') {
             if (submission.user_id !== req.user.id) {
                 return res.status(403).json({ error: 'No puedes eliminar esta entrega' });
@@ -314,54 +385,10 @@ router.delete('/:id', authenticateToken, async (req, res) => {
         await query('DELETE FROM submissions WHERE id = $1', [submissionId]);
 
         res.json({ message: 'Entrega eliminada correctamente' });
+
     } catch (error) {
         console.error('Error al eliminar entrega:', error);
         res.status(500).json({ error: 'Error al eliminar entrega' });
-    }
-});
-
-/**
- * GET /api/submissions/stats/overview
- * Estadísticas de entregas (solo admin)
- */
-router.get('/stats/overview', authenticateToken, requireAdmin, async (req, res) => {
-    try {
-        const statsResult = await query(
-            `SELECT
-                COUNT(*)::int as total,
-                SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END)::int as pending,
-                SUM(CASE WHEN status = 'reviewed' THEN 1 ELSE 0 END)::int as reviewed,
-                AVG(word_count)::float as avg_word_count
-             FROM submissions`
-        );
-
-        const bySessionResult = await query(
-            `SELECT
-                s.session_id,
-                cs.title as session_title,
-                COUNT(*)::int as count
-             FROM submissions s
-             LEFT JOIN course_sessions cs ON s.session_id = cs.id
-             GROUP BY s.session_id, cs.title
-             ORDER BY s.session_id`
-        );
-
-        const recentResult = await query(
-            `SELECT DATE(created_at) as date, COUNT(*)::int as count
-             FROM submissions
-             WHERE created_at >= CURRENT_DATE - INTERVAL '30 days'
-             GROUP BY DATE(created_at)
-             ORDER BY date DESC`
-        );
-
-        res.json({
-            stats: statsResult.rows[0],
-            bySession: bySessionResult.rows,
-            recentActivity: recentResult.rows
-        });
-    } catch (error) {
-        console.error('Error al obtener estadísticas:', error);
-        res.status(500).json({ error: 'Error al obtener estadísticas' });
     }
 });
 
