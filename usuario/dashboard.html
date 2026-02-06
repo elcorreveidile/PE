@@ -9,6 +9,23 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <style>
+        .qr-container {
+            display: inline-block;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid var(--border-color);
+            margin: var(--spacing-sm) 0;
+        }
+        .qr-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+            justify-content: center;
+            margin-top: var(--spacing-sm);
+        }
+    </style>
 </head>
 <body>
     <!-- Header -->
@@ -104,6 +121,21 @@
                             <div class="card-body text-center">
                                 <h3 class="text-primary" style="font-size: 2.5rem; margin-bottom: 0.5rem;" id="stat-reviewed">0</h3>
                                 <p class="text-secondary mb-0">Con retroalimentación</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mi código QR -->
+                    <div class="card mb-4">
+                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                            <h3 style="margin: 0;">Mi código QR</h3>
+                            <span class="badge badge-primary">Identificación</span>
+                        </div>
+                        <div class="card-body text-center">
+                            <p class="text-secondary" style="font-size: 0.875rem;">Tu código QR personal para identificarte en clase</p>
+                            <div class="qr-container" id="qr-student"></div>
+                            <div class="qr-actions">
+                                <button class="btn btn-sm btn-primary" onclick="downloadStudentQR()">Descargar</button>
                             </div>
                         </div>
                     </div>
@@ -204,6 +236,22 @@
                 </div>
             `;
 
+            // Generar QR del estudiante
+            if (typeof QRCode !== 'undefined') {
+                const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+                const profileUrl = window.location.origin + basePath + '/usuario/perfil.html?id=' + user.id;
+                const qrContainer = document.getElementById('qr-student');
+                qrContainer.innerHTML = '';
+                new QRCode(qrContainer, {
+                    text: profileUrl,
+                    width: 150,
+                    height: 150,
+                    colorDark: '#1a1a2e',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            }
+
             // Entregas recientes
             const recentSubmissions = submissions.slice(-3).reverse();
             const submissionsContainer = document.getElementById('recent-submissions');
@@ -248,6 +296,18 @@
                 `;
             }
         });
+
+        function downloadStudentQR() {
+            const container = document.getElementById('qr-student');
+            const canvas = container.querySelector('canvas');
+            if (!canvas) return;
+
+            const user = PE.Auth.getCurrentUser();
+            const link = document.createElement('a');
+            link.download = 'qr-estudiante-' + (user ? user.name.replace(/\s+/g, '-').toLowerCase() : 'pe-c2') + '.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
 
         async function viewSubmission(id) {
             const currentUser = PE.Auth.getCurrentUser();

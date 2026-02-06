@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <style>
         .admin-header {
             background: linear-gradient(135deg, #c53030, #9b2c2c);
@@ -55,6 +56,38 @@
         .student-list {
             max-height: 400px;
             overflow-y: auto;
+        }
+        .qr-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-lg);
+        }
+        .qr-card {
+            text-align: center;
+        }
+        .qr-container {
+            display: inline-block;
+            padding: 12px;
+            background: white;
+            border-radius: var(--border-radius-md);
+            border: 2px solid var(--border-color);
+            margin: var(--spacing-md) 0;
+        }
+        .qr-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+            justify-content: center;
+            margin-top: var(--spacing-sm);
+        }
+        @media (max-width: 992px) {
+            .qr-section {
+                grid-template-columns: 1fr 1fr !important;
+            }
+        }
+        @media (max-width: 600px) {
+            .qr-section {
+                grid-template-columns: 1fr !important;
+            }
         }
     </style>
 </head>
@@ -200,6 +233,52 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Códigos QR -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h3 style="margin: 0;">Códigos QR del curso</h3>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-secondary mb-3">Genera códigos QR para compartir con los estudiantes en clase.</p>
+                            <div class="qr-section" style="grid-template-columns: repeat(3, 1fr);">
+                                <div class="qr-card">
+                                    <h4>Registro de estudiantes</h4>
+                                    <p class="text-secondary" style="font-size: 0.875rem;">Escanear para registrarse en el curso</p>
+                                    <div class="qr-container" id="qr-registration"></div>
+                                    <div class="qr-actions">
+                                        <button class="btn btn-sm btn-primary" onclick="downloadQR('qr-registration', 'qr-registro-curso')">Descargar</button>
+                                        <button class="btn btn-sm btn-outline" onclick="printQR('qr-registration', 'Registro del curso')">Imprimir</button>
+                                    </div>
+                                </div>
+                                <div class="qr-card">
+                                    <h4>Control de asistencia</h4>
+                                    <p class="text-secondary" style="font-size: 0.875rem;">Escanear para registrar asistencia</p>
+                                    <div class="qr-container" id="qr-attendance"></div>
+                                    <div class="qr-actions">
+                                        <button class="btn btn-sm btn-primary" onclick="downloadQR('qr-attendance', 'qr-asistencia')">Descargar</button>
+                                        <button class="btn btn-sm btn-outline" onclick="printQR('qr-attendance', 'Control de asistencia')">Imprimir</button>
+                                    </div>
+                                </div>
+                                <div class="qr-card">
+                                    <h4>Sesión actual</h4>
+                                    <p class="text-secondary" style="font-size: 0.875rem;" id="qr-session-label">Cargando...</p>
+                                    <div class="qr-container" id="qr-session"></div>
+                                    <div class="qr-actions">
+                                        <button class="btn btn-sm btn-primary" onclick="downloadQR('qr-session', 'qr-sesion-actual')">Descargar</button>
+                                        <button class="btn btn-sm btn-outline" onclick="printQR('qr-session', 'Sesión actual')">Imprimir</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <label class="form-label" for="qr-session-select">Generar QR para otra sesión:</label>
+                                <div style="display: flex; gap: var(--spacing-sm); align-items: center;">
+                                    <select id="qr-session-select" class="form-control form-select" style="max-width: 400px;"></select>
+                                    <button class="btn btn-sm btn-outline" onclick="generateSessionQR()">Generar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -307,6 +386,11 @@
                     </a>
                 </div>
             `;
+
+            // Generar códigos QR
+            if (typeof QRCode !== 'undefined') {
+                generateQRCodes();
+            }
         });
 
         async function reviewSubmission(id) {
@@ -388,6 +472,120 @@
             a.click();
 
             PE.UI.notify('Datos exportados correctamente', 'success');
+        }
+
+        // === Funciones de QR ===
+        function getBaseUrl() {
+            const loc = window.location;
+            const basePath = loc.pathname.includes('/PE/') ? '/PE' : '';
+            return loc.origin + basePath;
+        }
+
+        function generateQRCodes() {
+            const baseUrl = getBaseUrl();
+
+            // QR de registro
+            const regContainer = document.getElementById('qr-registration');
+            regContainer.innerHTML = '';
+            new QRCode(regContainer, {
+                text: baseUrl + '/auth/registro.html',
+                width: 180,
+                height: 180,
+                colorDark: '#1a1a2e',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            // QR de asistencia (siempre en la raíz del dominio, sin /PE/)
+            const attendanceUrl = window.location.origin + '/asistencia';
+            const attContainer = document.getElementById('qr-attendance');
+            attContainer.innerHTML = '';
+            new QRCode(attContainer, {
+                text: attendanceUrl,
+                width: 180,
+                height: 180,
+                colorDark: '#1a1a2e',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            // QR de sesión actual
+            const nextSession = PE.CourseData.getCurrentSession();
+            const sessionUrl = baseUrl + '/sesiones/sesion-' + String(nextSession.id).padStart(2, '0') + '.html';
+            const sessionContainer = document.getElementById('qr-session');
+            sessionContainer.innerHTML = '';
+            new QRCode(sessionContainer, {
+                text: sessionUrl,
+                width: 180,
+                height: 180,
+                colorDark: '#1a1a2e',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            document.getElementById('qr-session-label').textContent =
+                'Sesion ' + nextSession.id + ': ' + nextSession.title;
+
+            // Poblar selector de sesiones
+            const select = document.getElementById('qr-session-select');
+            select.innerHTML = PE.CourseData.sessions.map(s =>
+                '<option value="' + s.id + '"' + (s.id === nextSession.id ? ' selected' : '') + '>' +
+                'Sesion ' + s.id + ' - ' + PE.Utils.escapeHtml(s.title) +
+                '</option>'
+            ).join('');
+        }
+
+        function generateSessionQR() {
+            const select = document.getElementById('qr-session-select');
+            const sessionId = parseInt(select.value);
+            const session = PE.CourseData.sessions.find(s => s.id === sessionId);
+            if (!session) return;
+
+            const baseUrl = getBaseUrl();
+            const sessionUrl = baseUrl + '/sesiones/sesion-' + String(session.id).padStart(2, '0') + '.html';
+            const sessionContainer = document.getElementById('qr-session');
+            sessionContainer.innerHTML = '';
+            new QRCode(sessionContainer, {
+                text: sessionUrl,
+                width: 180,
+                height: 180,
+                colorDark: '#1a1a2e',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            document.getElementById('qr-session-label').textContent =
+                'Sesion ' + session.id + ': ' + session.title;
+        }
+
+        function downloadQR(containerId, filename) {
+            const container = document.getElementById(containerId);
+            const canvas = container.querySelector('canvas');
+            if (!canvas) return;
+
+            const link = document.createElement('a');
+            link.download = filename + '.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        function printQR(containerId, title) {
+            const container = document.getElementById(containerId);
+            const canvas = container.querySelector('canvas');
+            if (!canvas) return;
+
+            const win = window.open('', '_blank');
+            win.document.write(
+                '<html><head><title>QR - ' + title + '</title>' +
+                '<style>body{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:Arial,sans-serif;margin:0;}' +
+                'h2{margin-bottom:1rem;}p{color:#666;margin-bottom:2rem;}</style></head>' +
+                '<body><h2>' + title + '</h2>' +
+                '<p>Produccion Escrita C2 - Centro de Lenguas Modernas, UGR</p>' +
+                '<img src="' + canvas.toDataURL('image/png') + '" style="width:300px;height:300px;">' +
+                '<script>window.onload=function(){window.print();}<\/script>' +
+                '</body></html>'
+            );
+            win.document.close();
         }
 
         function sendReminder() {
