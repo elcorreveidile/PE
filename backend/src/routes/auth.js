@@ -377,10 +377,6 @@ router.post('/forgot-password', [
             return res.json({ message: 'Si el email existe, recibiras instrucciones para restablecer la contrasena' });
         }
 
-        if (!isDevelopment) {
-            return res.json({ message: 'Si el email existe, recibiras instrucciones para restablecer la contrasena' });
-        }
-
         res.json({
             message: 'Token de recuperacion generado (modo desarrollo)',
             devToken: resetToken,
