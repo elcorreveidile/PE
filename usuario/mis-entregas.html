@@ -152,9 +152,13 @@
         });
 
         async function viewSubmission(id) {
-            let submissions = await PE.Submissions.getAll();
+            const currentUser = PE.Auth.getCurrentUser();
+            if (!currentUser) return;
+
+            let submissions = await PE.Submissions.getByUser(currentUser.id);
             submissions = Array.isArray(submissions) ? submissions : [];
-            const s = submissions.find(sub => sub.id === id);
+            const targetId = String(id);
+            const s = submissions.find(sub => String(sub.id) === targetId);
             if (s) {
                 PE.UI.showModal(s.activityTitle, `
                     <p class="text-secondary">Entregado: ${PE.Utils.formatDate(s.createdAt, 'long')}</p>

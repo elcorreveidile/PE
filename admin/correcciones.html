@@ -193,7 +193,8 @@
         async function reviewSubmission(id) {
             let submissions = await PE.Submissions.getAll();
             submissions = Array.isArray(submissions) ? submissions : [];
-            const s = submissions.find(sub => sub.id === id);
+            const targetId = String(id);
+            const s = submissions.find(sub => String(sub.id) === targetId);
 
             if (s) {
                 PE.UI.showModal('Corregir: ' + s.activityTitle, `

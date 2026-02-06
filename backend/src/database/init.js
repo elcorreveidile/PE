@@ -28,7 +28,7 @@ async function initDatabase() {
         console.log(`Base de datos: ${process.env.DATABASE_URL?.split('@')[1]?.split('/')[0] || 'Neon'}`);
 
         // Leer y ejecutar el esquema SQL
-        const schemaPath = path.join(__dirname, 'schema.sql');
+        const schemaPath = path.join(__dirname, 'schema-postgres.sql');
         const schema = fs.readFileSync(schemaPath, 'utf8');
 
         console.log('Ejecutando esquema SQL...');

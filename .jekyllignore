@@ -1,0 +1,7 @@
+# Excluir dependencias y backend del render de Jekyll/GitHub Pages
+node_modules/
+backend/node_modules/
+backend/node_modules/**
+
+# El backend no forma parte del sitio estático publicado en Pages
+backend/

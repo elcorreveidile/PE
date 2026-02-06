@@ -250,9 +250,13 @@
         });
 
         async function viewSubmission(id) {
-            let submissions = await PE.Submissions.getAll();
+            const currentUser = PE.Auth.getCurrentUser();
+            if (!currentUser) return;
+
+            let submissions = await PE.Submissions.getByUser(currentUser.id);
             submissions = Array.isArray(submissions) ? submissions : [];
-            const submission = submissions.find(s => s.id === id);
+            const targetId = String(id);
+            const submission = submissions.find(s => String(s.id) === targetId);
 
             if (submission) {
                 let feedbackHtml = '';

@@ -58,9 +58,7 @@ const CONFIG = (() => {
         API_URL: (!isLocal ? (productionApiUrl || resolvedOrigin) : (storedApiUrl || resolvedOrigin)),
         // En producción forzamos API para evitar datos inconsistentes
         ENFORCE_API: !isLocal,
-        // SIEMPRE usar API en producción, nunca localStorage
-        // Esto es CRÍTICO para evitar que los datos se guarden localmente
-        USE_API: !isLocal, // En producción siempre true, en local se actualiza dinámicamente
+
         // Código de inscripción (solo para modo localStorage)
         REGISTRATION_CODE: (typeof window !== 'undefined' && window.PE_CONFIG && window.PE_CONFIG.registrationCode)
             ? window.PE_CONFIG.registrationCode
@@ -419,6 +417,15 @@ const Auth = {
 
     // Obtener usuario actual
     getCurrentUser() {
+        // Si no está en memoria, intentar leer de localStorage
+        if (!AppState.user) {
+            const storedUser = Utils.storage.get('currentUser');
+            if (storedUser) {
+                AppState.user = storedUser;
+                AppState.token = Utils.storage.get('token');
+                AppState.isAdmin = storedUser.role === 'admin';
+            }
+        }
         return AppState.user;
     },
 
@@ -469,7 +476,7 @@ const Auth = {
 
         // Fallback localStorage
         const users = Utils.storage.get('users') || [];
-        const user = users.find(u => u.id === AppState.user.id);
+        const user = users.find(u => String(u.id) === String(AppState.user.id));
         if (!user || user.password !== currentPassword) {
             throw new Error('Contraseña actual incorrecta');
         }
@@ -538,7 +545,7 @@ const Submissions = {
             throw new Error('Backend no disponible. No se permiten consultas locales en producción.');
         }
         const all = Utils.storage.get('submissions') || [];
-        return all.filter(s => s.userId === userId);
+        return all.filter(s => String(s.userId) === String(userId));
     },
 
     // Obtener entregas por sesión
@@ -600,7 +607,7 @@ const Submissions = {
         return new Promise((resolve, reject) => {
             setTimeout(() => {
                 const submissions = Utils.storage.get('submissions') || [];
-                const index = submissions.findIndex(s => s.id === submissionId);
+                const index = submissions.findIndex(s => String(s.id) === String(submissionId));
 
                 if (index === -1) {
                     reject(new Error('Entrega no encontrada'));
@@ -654,7 +661,7 @@ const Submissions = {
         }
 
         const submissions = Utils.storage.get('submissions') || [];
-        const filtered = submissions.filter(s => s.id !== submissionId);
+        const filtered = submissions.filter(s => String(s.id) !== String(submissionId));
         Utils.storage.set('submissions', filtered);
         return { success: true };
     }

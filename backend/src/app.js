@@ -31,17 +31,48 @@ app.use(helmet({
 }));
 
 // CORS - permitir frontend
-const corsOptions = {
-    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [
+const normalizeOrigin = (origin) => origin.trim().replace(/\/$/, '').toLowerCase();
+
+const configuredOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map(normalizeOrigin).filter(Boolean)
+    : [
         'http://localhost:3000',
         'http://localhost:5500',
         'http://127.0.0.1:5500',
         'https://elcorreveidile.github.io'
-    ],
+    ];
+
+const defaultOrigins = [
+    'https://www.cognoscencia.com',
+    'https://cognoscencia.com'
+];
+
+const allowedOrigins = new Set([...configuredOrigins, ...defaultOrigins.map(normalizeOrigin)]);
+
+const isAllowedOrigin = (origin) => {
+    const normalizedOrigin = normalizeOrigin(origin);
+
+    if (allowedOrigins.has(normalizedOrigin)) {
+        return true;
+    }
+
+    return /^https:\/\/([a-z0-9-]+\.)?cognoscencia\.com$/i.test(normalizedOrigin);
+};
+
+const corsOptions = {
+    origin(origin, callback) {
+        if (!origin || isAllowedOrigin(origin)) {
+            return callback(null, true);
+        }
+
+        console.warn(`CORS bloqueado para el origen: ${origin}`);
+        return callback(null, false);
+    },
     credentials: true,
     optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Rate limiting (deshabilitado en tests para evitar handles abiertos)
 if (!IS_TEST) {

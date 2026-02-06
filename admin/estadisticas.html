@@ -272,8 +272,8 @@
             // Ranking de estudiantes
             const studentStats = students.map(s => ({
                 ...s,
-                submissions: submissions.filter(sub => sub.userId === s.id).length,
-                words: submissions.filter(sub => sub.userId === s.id).reduce((sum, sub) => sum + (sub.wordCount || 0), 0)
+                submissions: submissions.filter(sub => String(sub.userId) === String(s.id)).length,
+                words: submissions.filter(sub => String(sub.userId) === String(s.id)).reduce((sum, sub) => sum + (sub.wordCount || 0), 0)
             })).sort((a, b) => b.submissions - a.submissions);
 
             if (studentStats.length === 0) {
@@ -335,7 +335,7 @@
                     nombre: s.name,
                     email: s.email,
                     nivel: s.level || 'C2',
-                    entregas: submissions.filter(sub => sub.userId === s.id).length
+                    entregas: submissions.filter(sub => String(sub.userId) === String(s.id)).length
                 }))
             };
 
