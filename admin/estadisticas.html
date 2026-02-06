@@ -228,7 +228,7 @@
             try {
                 if (CONFIG.USE_API) {
                     users = await API.get('/users');
-                    submissions = await API.get('/submissions');
+                    submissions = await PE.Submissions.getAll();
                 } else {
                     users = JSON.parse(localStorage.getItem('pe_c2_users') || '[]');
                     submissions = await PE.Submissions.getAll();
@@ -349,7 +349,7 @@
             try {
                 if (CONFIG.USE_API) {
                     users = await API.get('/users');
-                    submissions = await API.get('/submissions');
+                    submissions = await PE.Submissions.getAll();
                 } else {
                     users = JSON.parse(localStorage.getItem('pe_c2_users') || '[]');
                     submissions = await PE.Submissions.getAll();
