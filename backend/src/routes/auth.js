@@ -1,11 +1,11 @@
 /**
- * Rutas de autenticación
+ * Rutas de autenticacion (PostgreSQL)
  */
 
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { body, validationResult } = require('express-validator');
-const { getDb } = require('../database/db');
+const { query } = require('../database/db');
 const { generateToken, authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
@@ -15,10 +15,11 @@ const router = express.Router();
  * Registrar nuevo usuario
  */
 router.post('/register', [
-    body('email').isEmail().normalizeEmail().withMessage('Email inválido'),
-    body('password').isLength({ min: 6 }).withMessage('La contraseña debe tener al menos 6 caracteres'),
+    body('email').isEmail().normalizeEmail().withMessage('Email invalido'),
+    body('password').isLength({ min: 6 }).withMessage('La contrasena debe tener al menos 6 caracteres'),
     body('name').trim().isLength({ min: 2 }).withMessage('El nombre debe tener al menos 2 caracteres'),
-    body('level').optional().isIn(['C2-8', 'C2-9', 'C2']).withMessage('Nivel inválido')
+    body('level').optional().isIn(['C2-8', 'C2-9', 'C2']).withMessage('Nivel invalido'),
+    body('registration_code').notEmpty().withMessage('Codigo de registro requerido')
 ], async (req, res) => {
     try {
         // Validar entrada
@@ -27,34 +28,40 @@ router.post('/register', [
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { email, password, name, level, motivation } = req.body;
-        const db = getDb();
+        const { email, password, name, level, motivation, registration_code } = req.body;
 
-        // Verificar si el email ya existe
-        const existingUser = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
-        if (existingUser) {
-            return res.status(400).json({ error: 'Este email ya está registrado' });
+        // Verificar codigo de registro
+        const validCode = process.env.REGISTRATION_CODE || 'PIO7-2026-CLM';
+        if (registration_code !== validCode) {
+            return res.status(400).json({ error: 'Codigo de registro invalido' });
         }
 
-        // Hash de la contraseña
+        // Verificar si el email ya existe
+        const existingUser = await query('SELECT id FROM users WHERE email = $1', [email]);
+        if (existingUser.rows.length > 0) {
+            return res.status(400).json({ error: 'Este email ya esta registrado' });
+        }
+
+        // Hash de la contrasena
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Insertar usuario
-        const result = db.prepare(`
+        const result = await query(`
             INSERT INTO users (email, password, name, level, motivation)
-            VALUES (?, ?, ?, ?, ?)
-        `).run(email, hashedPassword, name, level || 'C2', motivation || null);
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING id
+        `, [email, hashedPassword, name, level || 'C2', motivation || null]);
 
-        const userId = result.lastInsertRowid;
+        const userId = result.rows[0].id;
 
         // Generar token
         const token = generateToken(userId);
 
-        // Crear notificación de bienvenida
-        db.prepare(`
+        // Crear notificacion de bienvenida
+        await query(`
             INSERT INTO notifications (user_id, type, title, message)
-            VALUES (?, 'welcome', 'Bienvenido/a al curso', 'Te has registrado correctamente en el curso de Producción Escrita C2. El curso comienza el 2 de febrero de 2026.')
-        `).run(userId);
+            VALUES ($1, 'welcome', 'Bienvenido/a al curso', 'Te has registrado correctamente en el curso de Produccion Escrita C2. El curso comienza el 2 de febrero de 2026.')
+        `, [userId]);
 
         res.status(201).json({
             message: 'Usuario registrado correctamente',
@@ -76,11 +83,11 @@ router.post('/register', [
 
 /**
  * POST /api/auth/login
- * Iniciar sesión
+ * Iniciar sesion
  */
 router.post('/login', [
-    body('email').isEmail().normalizeEmail().withMessage('Email inválido'),
-    body('password').notEmpty().withMessage('Contraseña requerida')
+    body('email').isEmail().normalizeEmail().withMessage('Email invalido'),
+    body('password').notEmpty().withMessage('Contrasena requerida')
 ], async (req, res) => {
     try {
         const errors = validationResult(req);
@@ -89,33 +96,34 @@ router.post('/login', [
         }
 
         const { email, password } = req.body;
-        const db = getDb();
 
         // Buscar usuario
-        const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+        const result = await query('SELECT * FROM users WHERE email = $1', [email]);
 
-        if (!user) {
-            return res.status(401).json({ error: 'Email o contraseña incorrectos' });
+        if (result.rows.length === 0) {
+            return res.status(401).json({ error: 'Email o contrasena incorrectos' });
         }
+
+        const user = result.rows[0];
 
         if (!user.active) {
             return res.status(403).json({ error: 'Cuenta desactivada' });
         }
 
-        // Verificar contraseña
+        // Verificar contrasena
         const validPassword = await bcrypt.compare(password, user.password);
         if (!validPassword) {
-            return res.status(401).json({ error: 'Email o contraseña incorrectos' });
+            return res.status(401).json({ error: 'Email o contrasena incorrectos' });
         }
 
-        // Actualizar último login
-        db.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?').run(user.id);
+        // Actualizar ultimo login
+        await query('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1', [user.id]);
 
         // Generar token
         const token = generateToken(user.id);
 
         res.json({
-            message: 'Sesión iniciada correctamente',
+            message: 'Sesion iniciada correctamente',
             user: {
                 id: user.id,
                 email: user.email,
@@ -128,7 +136,7 @@ router.post('/login', [
 
     } catch (error) {
         console.error('Error en login:', error);
-        res.status(500).json({ error: 'Error al iniciar sesión' });
+        res.status(500).json({ error: 'Error al iniciar sesion' });
     }
 });
 
@@ -136,25 +144,28 @@ router.post('/login', [
  * GET /api/auth/me
  * Obtener usuario actual
  */
-router.get('/me', authenticateToken, (req, res) => {
+router.get('/me', authenticateToken, async (req, res) => {
     try {
-        const db = getDb();
-        const user = db.prepare(`
+        const userResult = await query(`
             SELECT id, email, name, role, level, motivation, created_at, last_login
-            FROM users WHERE id = ?
-        `).get(req.user.id);
+            FROM users WHERE id = $1
+        `, [req.user.id]);
 
-        if (!user) {
+        if (userResult.rows.length === 0) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
 
-        // Contar entregas y notificaciones no leídas
-        const stats = db.prepare(`
+        const user = userResult.rows[0];
+
+        // Contar entregas y notificaciones no leidas
+        const statsResult = await query(`
             SELECT
-                (SELECT COUNT(*) FROM submissions WHERE user_id = ?) as submissions_count,
-                (SELECT COUNT(*) FROM submissions WHERE user_id = ? AND status = 'reviewed') as reviewed_count,
-                (SELECT COUNT(*) FROM notifications WHERE user_id = ? AND read = 0) as unread_notifications
-        `).get(req.user.id, req.user.id, req.user.id);
+                (SELECT COUNT(*) FROM submissions WHERE user_id = $1) as submissions_count,
+                (SELECT COUNT(*) FROM submissions WHERE user_id = $1 AND status = 'reviewed') as reviewed_count,
+                (SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND read = false) as unread_notifications
+        `, [req.user.id]);
+
+        const stats = statsResult.rows[0];
 
         res.json({
             ...user,
@@ -163,17 +174,17 @@ router.get('/me', authenticateToken, (req, res) => {
 
     } catch (error) {
         console.error('Error al obtener usuario:', error);
-        res.status(500).json({ error: 'Error al obtener información del usuario' });
+        res.status(500).json({ error: 'Error al obtener informacion del usuario' });
     }
 });
 
 /**
  * PUT /api/auth/password
- * Cambiar contraseña
+ * Cambiar contrasena
  */
 router.put('/password', authenticateToken, [
-    body('currentPassword').notEmpty().withMessage('Contraseña actual requerida'),
-    body('newPassword').isLength({ min: 6 }).withMessage('La nueva contraseña debe tener al menos 6 caracteres')
+    body('currentPassword').notEmpty().withMessage('Contrasena actual requerida'),
+    body('newPassword').isLength({ min: 6 }).withMessage('La nueva contrasena debe tener al menos 6 caracteres')
 ], async (req, res) => {
     try {
         const errors = validationResult(req);
@@ -182,28 +193,28 @@ router.put('/password', authenticateToken, [
         }
 
         const { currentPassword, newPassword } = req.body;
-        const db = getDb();
 
-        // Obtener usuario con contraseña
-        const user = db.prepare('SELECT password FROM users WHERE id = ?').get(req.user.id);
+        // Obtener usuario con contrasena
+        const result = await query('SELECT password FROM users WHERE id = $1', [req.user.id]);
+        const user = result.rows[0];
 
-        // Verificar contraseña actual
+        // Verificar contrasena actual
         const validPassword = await bcrypt.compare(currentPassword, user.password);
         if (!validPassword) {
-            return res.status(401).json({ error: 'Contraseña actual incorrecta' });
+            return res.status(401).json({ error: 'Contrasena actual incorrecta' });
         }
 
-        // Hash de nueva contraseña
+        // Hash de nueva contrasena
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-        // Actualizar contraseña
-        db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hashedPassword, req.user.id);
+        // Actualizar contrasena
+        await query('UPDATE users SET password = $1 WHERE id = $2', [hashedPassword, req.user.id]);
 
-        res.json({ message: 'Contraseña actualizada correctamente' });
+        res.json({ message: 'Contrasena actualizada correctamente' });
 
     } catch (error) {
-        console.error('Error al cambiar contraseña:', error);
-        res.status(500).json({ error: 'Error al cambiar contraseña' });
+        console.error('Error al cambiar contrasena:', error);
+        res.status(500).json({ error: 'Error al cambiar contrasena' });
     }
 });
 
@@ -212,9 +223,9 @@ router.put('/password', authenticateToken, [
  * Actualizar perfil
  */
 router.put('/profile', authenticateToken, [
-    body('name').optional().trim().isLength({ min: 2 }).withMessage('Nombre inválido'),
+    body('name').optional().trim().isLength({ min: 2 }).withMessage('Nombre invalido'),
     body('motivation').optional().trim()
-], (req, res) => {
+], async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -222,17 +233,17 @@ router.put('/profile', authenticateToken, [
         }
 
         const { name, motivation } = req.body;
-        const db = getDb();
 
         const updates = [];
         const params = [];
+        let paramIndex = 1;
 
         if (name) {
-            updates.push('name = ?');
+            updates.push(`name = $${paramIndex++}`);
             params.push(name);
         }
         if (motivation !== undefined) {
-            updates.push('motivation = ?');
+            updates.push(`motivation = $${paramIndex++}`);
             params.push(motivation);
         }
 
@@ -241,7 +252,7 @@ router.put('/profile', authenticateToken, [
         }
 
         params.push(req.user.id);
-        db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).run(...params);
+        await query(`UPDATE users SET ${updates.join(', ')} WHERE id = $${paramIndex}`, params);
 
         res.json({ message: 'Perfil actualizado correctamente' });
 

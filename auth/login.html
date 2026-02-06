@@ -80,24 +80,6 @@
             height: 1px;
             background: var(--border-color);
         }
-        .demo-accounts {
-            background: var(--info-light);
-            border-radius: var(--border-radius-md);
-            padding: var(--spacing-md);
-            margin-top: var(--spacing-lg);
-            font-size: 0.875rem;
-        }
-        .demo-accounts h4 {
-            font-size: 0.875rem;
-            color: var(--info-color);
-            margin-bottom: var(--spacing-sm);
-        }
-        .demo-accounts code {
-            background: white;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.8125rem;
-        }
     </style>
 </head>
 <body class="auth-page">
@@ -160,15 +142,6 @@
                     </button>
                 </form>
 
-                <div class="demo-accounts">
-                    <h4>Cuentas de demostración:</h4>
-                    <p style="margin-bottom: 0.5rem;">
-                        <strong>Profesor:</strong> <code>profesor@curso.es</code> / <code>admin123</code>
-                    </p>
-                    <p style="margin: 0;">
-                        <strong>Estudiante:</strong> <code>estudiante@ejemplo.com</code> / <code>estudiante123</code>
-                    </p>
-                </div>
             </div>
 
             <div class="auth-footer">
@@ -179,6 +152,11 @@
         </div>
     </div>
 
+    <script>
+        window.PE_CONFIG = {
+            API_URL: 'https://produccion-escrita-c2-api-production.up.railway.app'
+        };
+    </script>
     <script src="../js/app.js"></script>
 </body>
 </html>

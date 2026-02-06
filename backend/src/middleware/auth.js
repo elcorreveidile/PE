@@ -1,16 +1,16 @@
 /**
- * Middleware de autenticación JWT
+ * Middleware de autenticacion JWT (PostgreSQL)
  */
 
 const jwt = require('jsonwebtoken');
-const { getDb } = require('../database/db');
+const { query } = require('../database/db');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default_secret_change_me';
 
 /**
  * Verificar token JWT
  */
-function authenticateToken(req, res, next) {
+async function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
@@ -18,21 +18,20 @@ function authenticateToken(req, res, next) {
         return res.status(401).json({ error: 'Token de acceso requerido' });
     }
 
-    jwt.verify(token, JWT_SECRET, (err, decoded) => {
-        if (err) {
-            if (err.name === 'TokenExpiredError') {
-                return res.status(401).json({ error: 'Token expirado' });
-            }
-            return res.status(403).json({ error: 'Token inválido' });
-        }
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
 
-        // Verificar que el usuario aún existe y está activo
-        const db = getDb();
-        const user = db.prepare('SELECT id, email, name, role, active FROM users WHERE id = ?').get(decoded.userId);
+        // Verificar que el usuario aun existe y esta activo
+        const result = await query(
+            'SELECT id, email, name, role, active FROM users WHERE id = $1',
+            [decoded.userId]
+        );
 
-        if (!user) {
+        if (result.rows.length === 0) {
             return res.status(401).json({ error: 'Usuario no encontrado' });
         }
+
+        const user = result.rows[0];
 
         if (!user.active) {
             return res.status(403).json({ error: 'Cuenta desactivada' });
@@ -40,7 +39,16 @@ function authenticateToken(req, res, next) {
 
         req.user = user;
         next();
-    });
+    } catch (err) {
+        if (err.name === 'TokenExpiredError') {
+            return res.status(401).json({ error: 'Token expirado' });
+        }
+        if (err.name === 'JsonWebTokenError') {
+            return res.status(403).json({ error: 'Token invalido' });
+        }
+        console.error('Error en autenticacion:', err);
+        return res.status(500).json({ error: 'Error de autenticacion' });
+    }
 }
 
 /**
@@ -56,7 +64,7 @@ function requireAdmin(req, res, next) {
 /**
  * Middleware opcional - no bloquea si no hay token
  */
-function optionalAuth(req, res, next) {
+async function optionalAuth(req, res, next) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
 
@@ -64,16 +72,21 @@ function optionalAuth(req, res, next) {
         return next();
     }
 
-    jwt.verify(token, JWT_SECRET, (err, decoded) => {
-        if (!err) {
-            const db = getDb();
-            const user = db.prepare('SELECT id, email, name, role, active FROM users WHERE id = ?').get(decoded.userId);
-            if (user && user.active) {
-                req.user = user;
-            }
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        const result = await query(
+            'SELECT id, email, name, role, active FROM users WHERE id = $1',
+            [decoded.userId]
+        );
+
+        if (result.rows.length > 0 && result.rows[0].active) {
+            req.user = result.rows[0];
         }
-        next();
-    });
+    } catch (err) {
+        // Token invalido, continuar sin usuario
+    }
+
+    next();
 }
 
 /**

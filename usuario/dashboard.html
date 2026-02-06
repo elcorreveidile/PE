@@ -138,7 +138,7 @@
                             <div class="alert alert-info">
                                 <div class="alert-content">
                                     <strong>Bienvenido/a al curso</strong>
-                                    <p style="margin: 0.5rem 0 0;">El curso comienza el lunes 2 de febrero de 2026. Prepara un texto breve en español para la primera sesión.</p>
+                                    <p style="margin: 0.5rem 0 0;">El curso comienza el martes 3 de febrero de 2026. Prepara un texto breve en español para la primera sesión.</p>
                                 </div>
                             </div>
                         </div>
@@ -158,9 +158,14 @@
         </div>
     </footer>
 
+    <script>
+        window.PE_CONFIG = {
+            API_URL: 'https://produccion-escrita-c2-api-production.up.railway.app'
+        };
+    </script>
     <script src="../js/app.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             // Verificar autenticación
             const user = PE.Auth.getCurrentUser();
             if (!user) {
@@ -175,7 +180,8 @@
 
             // Obtener estadísticas
             const progress = PE.CourseData.getCourseProgress();
-            const submissions = PE.Submissions.getByUser(user.id);
+            let submissions = await PE.Submissions.getByUser(user.id);
+            submissions = Array.isArray(submissions) ? submissions : [];
             const reviewed = submissions.filter(s => s.status === 'reviewed');
 
             document.getElementById('stat-sessions').textContent = progress.completed;
@@ -243,8 +249,9 @@
             }
         });
 
-        function viewSubmission(id) {
-            const submissions = PE.Submissions.getAll();
+        async function viewSubmission(id) {
+            let submissions = await PE.Submissions.getAll();
+            submissions = Array.isArray(submissions) ? submissions : [];
             const submission = submissions.find(s => s.id === id);
 
             if (submission) {

@@ -76,9 +76,9 @@
                         <div class="card-body">
                             <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
                                 <div>
-                                    <span class="badge" style="background: rgba(255,255,255,0.2);">Sesión 8 de 32</span>
+                                    <span class="badge" style="background: rgba(255,255,255,0.2);">Sesión 8 de 27</span>
                                     <h1 style="color: white; margin: 0.5rem 0;">Valoraciones artísticas</h1>
-                                    <p style="opacity: 0.9; margin: 0;">Miércoles, 25 de febrero de 2026 | 90 minutos</p>
+                                    <p style="opacity: 0.9; margin: 0;">Jueves, 26 de febrero de 2026 | 90 minutos</p>
                                 </div>
                                 <div style="display: flex; gap: 0.5rem;">
                                     <a href="sesion-07.html" class="btn btn-outline-white">&larr; Anterior</a>
@@ -94,7 +94,7 @@
                         </div>
                         <div class="card-body">
                             <ul>
-                                <li>Desarrollar habilidades de producción escrita en el contexto de Recursos para atenuar</li>
+                                <li>Desarrollar habilidades de producción escrita en el contexto de Valoraciones artísticas</li>
                                 <li>Practicar estructuras y vocabulario específico del tema</li>
                                 <li>Analizar textos modelo y aplicar estrategias aprendidas</li>
                                 <li>Producir textos propios con retroalimentación</li>
@@ -108,8 +108,7 @@
                         </div>
                         <div class="card-body">
                             <div class="alert alert-info">
-                                <strong>Contenido principal:</strong> Recursos para atenuar
-                            </div>
+                                <strong>Contenido principal:</strong> Valoraciones artísticas</div>
                             <h4>Programación de aula (90 minutos)</h4>
                             <table>
                                 <thead>
@@ -136,7 +135,7 @@
                         </div>
                         <div class="activity-body">
                             <div class="activity-instructions">
-                                <p><strong>Instrucciones:</strong> Responde a las siguientes preguntas sobre Recursos para atenuar.</p>
+                                <p><strong>Instrucciones:</strong> Responde a las siguientes preguntas sobre Valoraciones artísticas.</p>
                             </div>
                             <div id="quiz-activacion"></div>
                         </div>
@@ -154,7 +153,8 @@
                             </div>
                             <div class="card" style="background: var(--bg-light);">
                                 <div class="card-body">
-                                    <p><em>El texto modelo se presentará en clase. Analiza: estructura, registro, conectores utilizados, y recursos lingüísticos destacados.</em></p>
+                                    <p><strong>Texto modelo disponible:</strong> Descárgalo y analiza su estructura, registro, conectores utilizados y recursos lingüísticos destacados.</p>
+<a class="btn btn-outline btn-sm" href="../recursos/materiales/texto-modelo-sesion-08-valoracion-artistica.pdf" download>Descargar texto modelo (PDF)</a>
                                 </div>
                             </div>
                             <div class="form-group mt-3">
@@ -168,7 +168,7 @@
                     <section class="activity mb-4">
                         <div class="activity-header">
                             <span class="activity-type">Actividad 3 | Práctica</span>
-                            <h3 class="activity-title">Ejercicios de Recursos para atenuar</h3>
+                            <h3 class="activity-title">Ejercicios de Valoraciones artísticas</h3>
                         </div>
                         <div class="activity-body">
                             <div class="activity-instructions">
@@ -244,22 +244,22 @@
             
             // Quiz de activación
             PE.Activities.initQuiz('quiz-activacion', [
-                {
-                    question: '¿Qué elementos son importantes en Recursos para atenuar?',
-                    options: ['Solo la gramática', 'Solo el vocabulario', 'Gramática, vocabulario y organización', 'Ninguno de los anteriores'],
-                    correct: 2
-                },
-                {
-                    question: '¿Cuál es el objetivo principal de esta sesión?',
-                    options: ['Memorizar reglas', 'Practicar la producción escrita', 'Leer textos', 'Hacer ejercicios orales'],
-                    correct: 1
-                }
-            ]);
+                            {
+                                question: '¿Qué se debe equilibrar en una valoración artística?',
+                                options: ['Insultos y halagos', 'Descripción y juicio', 'Silencio y ruido', 'Datos y chistes'],
+                                correct: 1
+                            },
+                            {
+                                question: '¿Qué justifica una valoración?',
+                                options: ['Opinión sin ejemplos', 'Criterios y evidencias', 'Solo gusto personal', 'Copiar reseñas'],
+                                correct: 1
+                            }
+                        ]);
 
             // Completar espacios
             PE.Activities.initFillBlanks('fill-blanks-practice', 
-                'Para escribir un buen texto es necesario [1] las ideas antes de empezar. Luego debemos [2] el borrador y finalmente [3] el texto.',
-                ['planificar', 'redactar', 'revisar']
+                'En una valoración artística, [1] la obra, [2] criterios y [3] un juicio final.',
+                ['describimos', 'aplicamos', 'emitimos']
             );
 
             // Editor de texto

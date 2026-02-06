@@ -82,7 +82,7 @@
                             <li>Trabajo colaborativo</li>
                         </ul>
                         <div class="alert alert-warning mt-3" style="font-size: 0.875rem;">
-                            <strong>Sesión:</strong> Lunes 2 de marzo (Sesión 9)
+                            <strong>Sesión:</strong> Martes 3 de marzo (Sesión 9)
                         </div>
                     </div>
                     <div class="card-footer">
@@ -107,7 +107,7 @@
                             <li>Expresión de emociones y sensaciones</li>
                         </ul>
                         <div class="alert alert-warning mt-3" style="font-size: 0.875rem;">
-                            <strong>Sesión:</strong> Lunes 23 de marzo (Sesión 15)
+                            <strong>Sesión:</strong> Martes 24 de marzo (Sesión 15)
                         </div>
                     </div>
                     <div class="card-footer">
@@ -132,7 +132,7 @@
                             <li>Creatividad e imaginación</li>
                         </ul>
                         <div class="alert alert-warning mt-3" style="font-size: 0.875rem;">
-                            <strong>Sesión:</strong> Miércoles 8 de abril (Sesión 20)
+                            <strong>Sesión:</strong> Martes 5 de mayo (Sesión 24)
                         </div>
                     </div>
                     <div class="card-footer">
@@ -157,7 +157,7 @@
                             <li>Proyecto colaborativo complejo</li>
                         </ul>
                         <div class="alert alert-warning mt-3" style="font-size: 0.875rem;">
-                            <strong>Sesión:</strong> Lunes 27 de abril (Sesión 25)
+                            <strong>Sesión:</strong> Jueves 7 de mayo (Sesión 25)
                         </div>
                     </div>
                     <div class="card-footer">
@@ -205,5 +205,14 @@
     </footer>
 
     <script src="../js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+            document.querySelectorAll('a[href^="taller-"]').forEach(link => {
+                const file = link.getAttribute('href').split('/').pop();
+                link.setAttribute('href', `${basePath}/talleres/${file}`);
+            });
+        });
+    </script>
 </body>
 </html>

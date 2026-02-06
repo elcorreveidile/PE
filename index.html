@@ -45,7 +45,7 @@
                         <a href="sesiones/index.html">Sesiones</a>
                         <div class="dropdown-menu">
                             <a href="sesiones/index.html">Todas las sesiones</a>
-                            <a href="sesiones/sesion-01.html">Sesión actual</a>
+                            <a href="sesiones/sesion-01.html" data-current-session-link>Sesión actual</a>
                             <a href="calendario.html">Calendario</a>
                         </div>
                     </div>
@@ -102,11 +102,11 @@
                 </div>
                 <div class="hero-stats">
                     <div class="hero-stat">
-                        <span class="hero-stat-value">32</span>
+                        <span class="hero-stat-value">27</span>
                         <span class="hero-stat-label">Sesiones</span>
                     </div>
                     <div class="hero-stat">
-                        <span class="hero-stat-value">14</span>
+                        <span class="hero-stat-value">11</span>
                         <span class="hero-stat-label">Temas</span>
                     </div>
                     <div class="hero-stat">
@@ -245,7 +245,7 @@
         <div class="container">
             <div class="section-header">
                 <h2>Temas de escritura</h2>
-                <p>14 unidades temáticas con actividades prácticas y proyectos de escritura</p>
+                <p>11 unidades temáticas con actividades prácticas y proyectos de escritura</p>
             </div>
 
             <div class="sessions-grid">
@@ -484,7 +484,7 @@
                             <h3 style="margin: 0.5rem 0 0; color: white;">Introducción al curso y diagnóstico</h3>
                         </div>
                         <div style="text-align: right;">
-                            <span class="badge" style="background: rgba(255,255,255,0.2); color: white;">Lunes 02/02/2026</span>
+                            <span class="badge" style="background: rgba(255,255,255,0.2); color: white;">Martes 03/02/2026</span>
                         </div>
                     </div>
                 </div>
@@ -505,7 +505,7 @@
                     </div>
                 </div>
                 <div class="card-footer">
-                    <a href="sesiones/sesion-01.html" class="btn btn-primary">Ver sesión completa</a>
+                    <a href="sesiones/sesion-01.html" class="btn btn-primary" data-current-session-link>Ver sesión completa</a>
                     <a href="calendario.html" class="btn btn-outline">Ver calendario</a>
                 </div>
             </div>
@@ -609,6 +609,23 @@
     </footer>
 
     <!-- JavaScript -->
+    <!-- Configuración de la API Backend -->
+    <script>
+        window.PE_CONFIG = {
+            API_URL: 'https://produccion-escrita-c2-api-production.up.railway.app'
+        };
+    </script>
     <script src="js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+            const current = PE.CourseData.getCurrentSession();
+            const href = `${basePath}/sesiones/sesion-${String(current.id).padStart(2, '0')}.html`;
+
+            document.querySelectorAll('[data-current-session-link]').forEach(link => {
+                link.setAttribute('href', href);
+            });
+        });
+    </script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estudiantes | Panel de Administracion</title>
+    <title>Usuarios | Panel de Administracion</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/styles.css">
@@ -60,10 +60,13 @@
                 <div class="main-content">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-xl);">
                         <div>
-                            <h1 style="margin-bottom: 0.25rem;">Gestion de estudiantes</h1>
-                            <p class="text-secondary mb-0">Listado y seguimiento de todos los estudiantes del curso</p>
+                            <h1 style="margin-bottom: 0.25rem;">Gestion de usuarios</h1>
+                            <p class="text-secondary mb-0">Crea, edita y gestiona estudiantes y profesores del curso</p>
                         </div>
-                        <span class="badge badge-primary" id="total-students">0 estudiantes</span>
+                        <div style="display: flex; gap: 0.75rem; align-items: center;">
+                            <button class="btn btn-primary" id="create-user-btn">Crear usuario</button>
+                            <span class="badge badge-primary" id="total-users">0 usuarios</span>
+                        </div>
                     </div>
 
                     <!-- Filtros y busqueda -->
@@ -71,10 +74,15 @@
                         <div class="card-body">
                             <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
                                 <input type="text" id="search-input" class="form-control" placeholder="Buscar por nombre o email..." style="flex: 1; min-width: 200px;">
+                                <select id="filter-role" class="form-control form-select" style="width: auto;">
+                                    <option value="">Todos los roles</option>
+                                    <option value="student">Estudiantes</option>
+                                    <option value="admin">Profesores</option>
+                                </select>
                                 <select id="filter-level" class="form-control form-select" style="width: auto;">
                                     <option value="">Todos los niveles</option>
-                                    <option value="B2">B2</option>
-                                    <option value="C1">C1</option>
+                                    <option value="C2-8">C2-8</option>
+                                    <option value="C2-9">C2-9</option>
                                     <option value="C2">C2</option>
                                 </select>
                                 <select id="filter-activity" class="form-control form-select" style="width: auto;">
@@ -103,86 +111,142 @@
         </div>
     </footer>
 
+    <script>
+        window.PE_CONFIG = {
+            API_URL: 'https://produccion-escrita-c2-api-production.up.railway.app'
+        };
+    </script>
     <script src="../js/app.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
             const user = PE.Auth.getCurrentUser();
             if (!user || user.role !== 'admin') {
-                const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
                 window.location.href = basePath + '/auth/login.html';
                 return;
             }
 
-            const users = JSON.parse(localStorage.getItem('pe_c2_users') || '[]');
-            const students = users.filter(u => u.role !== 'admin');
-            const submissions = PE.Submissions.getAll();
+            const API = PE.API;
+            const CONFIG = window.CONFIG || { USE_API: false };
+            const Utils = PE.Utils;
 
-            document.getElementById('total-students').textContent = students.length + ' estudiantes';
+            try {
+                await API.ensureAvailability();
+                CONFIG.USE_API = true;
+            } catch (e) {
+                console.error('API no disponible:', e);
+            }
 
-            function renderStudents(filter = {}) {
-                let filtered = [...students];
+            let users = [];
+            let submissions = [];
+
+            async function loadData() {
+                try {
+                    if (CONFIG.USE_API) {
+                        users = await API.get('/users');
+                        submissions = [];
+                    } else {
+                        users = Utils.storage.get('users') || [];
+                        submissions = await PE.Submissions.getAll();
+                        submissions = Array.isArray(submissions) ? submissions : [];
+                    }
+                } catch (e) {
+                    console.error('Error cargando datos:', e);
+                    users = [];
+                }
+                document.getElementById('total-users').textContent = users.length + ' usuarios';
+            }
+
+            function getStatsForUser(current) {
+                if (CONFIG.USE_API) {
+                    const total = current.submissions_count || 0;
+                    const reviewed = current.reviewed_count || 0;
+                    const pending = Math.max(total - reviewed, 0);
+                    return { total, reviewed, pending };
+                }
+
+                const userSubmissions = submissions.filter(sub => sub.userId === current.id);
+                const reviewed = userSubmissions.filter(sub => sub.status === 'reviewed');
+                const pending = userSubmissions.filter(sub => sub.status === 'pending');
+                return {
+                    total: userSubmissions.length,
+                    reviewed: reviewed.length,
+                    pending: pending.length
+                };
+            }
+
+            function renderUsers(filter = {}) {
+                let filtered = [...users];
 
                 if (filter.search) {
                     const search = filter.search.toLowerCase();
-                    filtered = filtered.filter(s =>
-                        s.name.toLowerCase().includes(search) ||
-                        s.email.toLowerCase().includes(search)
+                    filtered = filtered.filter(u =>
+                        u.name.toLowerCase().includes(search) ||
+                        u.email.toLowerCase().includes(search)
                     );
                 }
 
                 if (filter.level) {
-                    filtered = filtered.filter(s => s.level === filter.level);
+                    filtered = filtered.filter(u => (u.level || 'C2') === filter.level);
+                }
+
+                if (filter.role) {
+                    filtered = filtered.filter(u => (u.role || 'student') === filter.role);
                 }
 
                 if (filter.activity === 'active') {
-                    filtered = filtered.filter(s => submissions.some(sub => sub.userId === s.id));
+                    filtered = filtered.filter(u => getStatsForUser(u).total > 0);
                 } else if (filter.activity === 'inactive') {
-                    filtered = filtered.filter(s => !submissions.some(sub => sub.userId === s.id));
+                    filtered = filtered.filter(u => getStatsForUser(u).total === 0);
                 }
 
                 const container = document.getElementById('students-list');
 
                 if (filtered.length === 0) {
-                    container.innerHTML = '<div class="card"><div class="card-body text-center"><p class="text-secondary">No se encontraron estudiantes.</p></div></div>';
+                    container.innerHTML = '<div class="card"><div class="card-body text-center"><p class="text-secondary">No se encontraron usuarios.</p></div></div>';
                     return;
                 }
 
-                container.innerHTML = filtered.map(s => {
-                    const studentSubmissions = submissions.filter(sub => sub.userId === s.id);
-                    const reviewed = studentSubmissions.filter(sub => sub.status === 'reviewed');
-                    const pending = studentSubmissions.filter(sub => sub.status === 'pending');
-                    const initials = s.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                container.innerHTML = filtered.map(u => {
+                    const stats = getStatsForUser(u);
+                    const initials = u.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                    const roleLabel = (u.role || 'student') === 'admin' ? 'Profesor' : 'Estudiante';
+                    const roleClass = (u.role || 'student') === 'admin' ? 'badge-warning' : 'badge-primary';
+                    const createdAt = u.created_at || u.createdAt;
+                    const canDelete = String(u.id) !== String(user.id);
 
                     return `
                         <div class="student-card">
                             <div class="student-info">
                                 <div class="student-avatar">${initials}</div>
                                 <div class="student-details">
-                                    <h4 style="margin: 0;">${PE.Utils.escapeHtml(s.name)}</h4>
-                                    <p class="text-secondary mb-0" style="font-size: 0.875rem;">${PE.Utils.escapeHtml(s.email)}</p>
+                                    <h4 style="margin: 0;">${PE.Utils.escapeHtml(u.name)}</h4>
+                                    <p class="text-secondary mb-0" style="font-size: 0.875rem;">${PE.Utils.escapeHtml(u.email)}</p>
                                     <div style="margin-top: 0.5rem;">
-                                        <span class="badge badge-primary">${s.level || 'C2'}</span>
+                                        <span class="badge ${roleClass}">${roleLabel}</span>
+                                        ${(u.role || 'student') === 'student' ? `<span class="badge badge-primary">${u.level || 'C2'}</span>` : ''}
                                         <span class="text-secondary" style="font-size: 0.8rem; margin-left: 0.5rem;">
-                                            Registro: ${PE.Utils.formatDate(s.createdAt)}
+                                            Registro: ${createdAt ? PE.Utils.formatDate(createdAt) : '-'}
                                         </span>
                                     </div>
                                 </div>
                                 <div class="student-stats">
                                     <div class="student-stat">
-                                        <div class="student-stat-value">${studentSubmissions.length}</div>
+                                        <div class="student-stat-value">${stats.total}</div>
                                         <div class="student-stat-label">Entregas</div>
                                     </div>
                                     <div class="student-stat">
-                                        <div class="student-stat-value">${reviewed.length}</div>
+                                        <div class="student-stat-value">${stats.reviewed}</div>
                                         <div class="student-stat-label">Corregidas</div>
                                     </div>
                                     <div class="student-stat">
-                                        <div class="student-stat-value">${pending.length}</div>
+                                        <div class="student-stat-value">${stats.pending}</div>
                                         <div class="student-stat-label">Pendientes</div>
                                     </div>
                                 </div>
                                 <div>
-                                    <button class="btn btn-sm btn-outline" onclick="viewStudent('${s.id}')">Ver detalle</button>
+                                    <button class="btn btn-sm btn-outline" onclick="viewUser('${u.id}')">Ver detalle</button>
+                                    <button class="btn btn-sm btn-ghost" ${canDelete ? '' : 'disabled'} onclick="deleteUser('${u.id}')">Eliminar</button>
                                 </div>
                             </div>
                         </div>
@@ -190,77 +254,236 @@
                 }).join('');
             }
 
-            renderStudents();
+            async function refresh() {
+                await loadData();
+                renderUsers(getFilters());
+            }
+
+            function getFilters() {
+                return {
+                    search: document.getElementById('search-input').value,
+                    level: document.getElementById('filter-level').value,
+                    role: document.getElementById('filter-role').value,
+                    activity: document.getElementById('filter-activity').value
+                };
+            }
 
             // Filtros
             document.getElementById('search-input').addEventListener('input', PE.Utils.debounce((e) => {
-                renderStudents({
-                    search: e.target.value,
-                    level: document.getElementById('filter-level').value,
-                    activity: document.getElementById('filter-activity').value
-                });
+                renderUsers(getFilters());
             }, 300));
 
             document.getElementById('filter-level').addEventListener('change', (e) => {
-                renderStudents({
-                    search: document.getElementById('search-input').value,
-                    level: e.target.value,
-                    activity: document.getElementById('filter-activity').value
-                });
+                renderUsers(getFilters());
             });
 
             document.getElementById('filter-activity').addEventListener('change', (e) => {
-                renderStudents({
-                    search: document.getElementById('search-input').value,
-                    level: document.getElementById('filter-level').value,
-                    activity: e.target.value
+                renderUsers(getFilters());
+            });
+
+            document.getElementById('filter-role').addEventListener('change', () => {
+                renderUsers(getFilters());
+            });
+
+            document.getElementById('create-user-btn').addEventListener('click', () => {
+                const modal = PE.UI.showModal('Crear usuario', `
+                    <div class="form-group">
+                        <label class="form-label required">Nombre completo</label>
+                        <input type="text" id="new-name" class="form-control" placeholder="Nombre y apellidos">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label required">Correo electrónico</label>
+                        <input type="email" id="new-email" class="form-control" placeholder="email@dominio.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label required">Contraseña</label>
+                        <input type="password" id="new-password" class="form-control" placeholder="Mínimo 6 caracteres">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label required">Rol</label>
+                            <select id="new-role" class="form-control form-select">
+                                <option value="student">Estudiante</option>
+                                <option value="admin">Profesor</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="level-group">
+                            <label class="form-label">Nivel</label>
+                            <select id="new-level" class="form-control form-select">
+                                <option value="C2-8">C2-8</option>
+                                <option value="C2-9">C2-9</option>
+                                <option value="C2" selected>C2</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Estado</label>
+                        <select id="new-active" class="form-control form-select">
+                            <option value="true" selected>Activo</option>
+                            <option value="false">Desactivado</option>
+                        </select>
+                    </div>
+                    <div class="form-errors"></div>
+                `, [
+                    { text: 'Cancelar' },
+                    {
+                        text: 'Crear',
+                        class: 'btn-primary',
+                        close: false,
+                        callback: async () => {
+                            const name = document.getElementById('new-name').value.trim();
+                            const email = document.getElementById('new-email').value.trim();
+                            const password = document.getElementById('new-password').value;
+                            const role = document.getElementById('new-role').value;
+                            const level = document.getElementById('new-level').value;
+                            const active = document.getElementById('new-active').value === 'true';
+                            const errors = [];
+
+                            if (!name || name.length < 2) errors.push('Nombre inválido');
+                            if (!email || !PE.Utils.isValidEmail(email)) errors.push('Email inválido');
+                            if (!password || password.length < 6) errors.push('Contraseña demasiado corta');
+
+                            const errorsContainer = modal.querySelector('.form-errors');
+                            if (errors.length > 0) {
+                                errorsContainer.innerHTML = errors.map(err => `<div class="alert alert-error">${err}</div>`).join('');
+                                return;
+                            }
+
+                            try {
+                                if (CONFIG.USE_API) {
+                                    await API.post('/users', { name, email, password, role, level, active });
+                                } else {
+                                    const stored = Utils.storage.get('users') || [];
+                                    if (stored.find(u => u.email === email)) {
+                                        throw new Error('Este email ya está registrado');
+                                    }
+                                    stored.push({
+                                        id: PE.Utils.generateId(),
+                                        email,
+                                        password,
+                                        name,
+                                        role,
+                                        level,
+                                        active,
+                                        createdAt: new Date().toISOString()
+                                    });
+                                    Utils.storage.set('users', stored);
+                                }
+                                modal.remove();
+                                await refresh();
+                                PE.UI.notify('Usuario creado correctamente', 'success');
+                            } catch (error) {
+                                errorsContainer.innerHTML = `<div class="alert alert-error">${error.message || 'Error al crear usuario'}</div>`;
+                            }
+                        }
+                    }
+                ]);
+
+                const roleSelect = modal.querySelector('#new-role');
+                const levelGroup = modal.querySelector('#level-group');
+                roleSelect.addEventListener('change', () => {
+                    levelGroup.style.display = roleSelect.value === 'student' ? '' : 'none';
                 });
             });
-        });
 
-        function viewStudent(id) {
-            const users = JSON.parse(localStorage.getItem('pe_c2_users') || '[]');
-            const student = users.find(u => u.id === id);
-            const submissions = PE.Submissions.getAll().filter(s => s.userId === id);
+            await refresh();
 
-            if (student) {
-                const submissionsList = submissions.length === 0
-                    ? '<p class="text-secondary">No hay entregas registradas.</p>'
-                    : submissions.map(s => `
-                        <div style="padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; margin-bottom: 0.5rem;">
-                            <div style="display: flex; justify-content: space-between;">
-                                <strong>${PE.Utils.escapeHtml(s.activityTitle)}</strong>
-                                <span class="badge badge-${s.status === 'reviewed' ? 'success' : 'warning'}">
-                                    ${s.status === 'reviewed' ? 'Corregido' : 'Pendiente'}
-                                </span>
+            window.viewUser = async (id) => {
+                if (CONFIG.USE_API) {
+                    const userDetail = await API.get(`/users/${id}`);
+                    const submissionsList = (userDetail.submissions || []).length === 0
+                        ? '<p class="text-secondary">No hay entregas registradas.</p>'
+                        : userDetail.submissions.map(s => `
+                            <div style="padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; margin-bottom: 0.5rem;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <strong>${PE.Utils.escapeHtml(s.activity_title || s.activityTitle)}</strong>
+                                    <span class="badge badge-${s.status === 'reviewed' ? 'success' : 'warning'}">
+                                        ${s.status === 'reviewed' ? 'Corregido' : 'Pendiente'}
+                                    </span>
+                                </div>
+                                <p class="text-secondary mb-0" style="font-size: 0.8rem;">
+                                    ${PE.Utils.formatDate(s.created_at || s.createdAt)} - ${s.word_count || s.wordCount || 0} palabras
+                                </p>
                             </div>
-                            <p class="text-secondary mb-0" style="font-size: 0.8rem;">
-                                ${PE.Utils.formatDate(s.createdAt)} - ${s.wordCount} palabras
-                            </p>
-                        </div>
-                    `).join('');
+                        `).join('');
 
-                PE.UI.showModal('Detalle del estudiante', `
-                    <div class="mb-3">
-                        <strong>Nombre:</strong> ${PE.Utils.escapeHtml(student.name)}
-                    </div>
-                    <div class="mb-3">
-                        <strong>Email:</strong> ${PE.Utils.escapeHtml(student.email)}
-                    </div>
-                    <div class="mb-3">
-                        <strong>Nivel:</strong> ${student.level || 'C2'}
-                    </div>
-                    <div class="mb-3">
-                        <strong>Fecha de registro:</strong> ${PE.Utils.formatDate(student.createdAt, 'long')}
-                    </div>
-                    <hr>
-                    <h4>Entregas (${submissions.length})</h4>
-                    <div style="max-height: 300px; overflow-y: auto;">
-                        ${submissionsList}
-                    </div>
-                `, [{ text: 'Cerrar' }]);
-            }
-        }
+                    PE.UI.showModal('Detalle del usuario', `
+                        <div class="mb-3"><strong>Nombre:</strong> ${PE.Utils.escapeHtml(userDetail.name)}</div>
+                        <div class="mb-3"><strong>Email:</strong> ${PE.Utils.escapeHtml(userDetail.email)}</div>
+                        <div class="mb-3"><strong>Rol:</strong> ${(userDetail.role === 'admin') ? 'Profesor' : 'Estudiante'}</div>
+                        ${userDetail.role === 'student' ? `<div class="mb-3"><strong>Nivel:</strong> ${userDetail.level || 'C2'}</div>` : ''}
+                        <div class="mb-3"><strong>Fecha de registro:</strong> ${PE.Utils.formatDate(userDetail.created_at || userDetail.createdAt, 'long')}</div>
+                        <hr>
+                        <h4>Entregas (${(userDetail.submissions || []).length})</h4>
+                        <div style="max-height: 300px; overflow-y: auto;">
+                            ${submissionsList}
+                        </div>
+                    `, [{ text: 'Cerrar' }]);
+                    return;
+                }
+
+                const storedUsers = Utils.storage.get('users') || [];
+                const selected = storedUsers.find(u => u.id === id);
+                let localSubmissions = await PE.Submissions.getAll();
+                localSubmissions = Array.isArray(localSubmissions) ? localSubmissions : [];
+                localSubmissions = localSubmissions.filter(s => s.userId === id);
+
+                if (selected) {
+                    const submissionsList = localSubmissions.length === 0
+                        ? '<p class="text-secondary">No hay entregas registradas.</p>'
+                        : localSubmissions.map(s => `
+                            <div style="padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; margin-bottom: 0.5rem;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <strong>${PE.Utils.escapeHtml(s.activityTitle)}</strong>
+                                    <span class="badge badge-${s.status === 'reviewed' ? 'success' : 'warning'}">
+                                        ${s.status === 'reviewed' ? 'Corregido' : 'Pendiente'}
+                                    </span>
+                                </div>
+                                <p class="text-secondary mb-0" style="font-size: 0.8rem;">
+                                    ${PE.Utils.formatDate(s.createdAt)} - ${s.wordCount} palabras
+                                </p>
+                            </div>
+                        `).join('');
+
+                    PE.UI.showModal('Detalle del usuario', `
+                        <div class="mb-3"><strong>Nombre:</strong> ${PE.Utils.escapeHtml(selected.name)}</div>
+                        <div class="mb-3"><strong>Email:</strong> ${PE.Utils.escapeHtml(selected.email)}</div>
+                        <div class="mb-3"><strong>Rol:</strong> ${(selected.role === 'admin') ? 'Profesor' : 'Estudiante'}</div>
+                        ${selected.role === 'student' ? `<div class="mb-3"><strong>Nivel:</strong> ${selected.level || 'C2'}</div>` : ''}
+                        <div class="mb-3"><strong>Fecha de registro:</strong> ${PE.Utils.formatDate(selected.createdAt, 'long')}</div>
+                        <hr>
+                        <h4>Entregas (${localSubmissions.length})</h4>
+                        <div style="max-height: 300px; overflow-y: auto;">
+                            ${submissionsList}
+                        </div>
+                    `, [{ text: 'Cerrar' }]);
+                }
+            };
+
+            window.deleteUser = async (id) => {
+                if (String(id) === String(user.id)) {
+                    PE.UI.notify('No puedes eliminar tu propia cuenta', 'warning');
+                    return;
+                }
+
+                PE.UI.confirm('¿Seguro que deseas eliminar este usuario?', async () => {
+                    try {
+                        if (CONFIG.USE_API) {
+                            await API.delete(`/users/${id}`);
+                        } else {
+                            const stored = Utils.storage.get('users') || [];
+                            Utils.storage.set('users', stored.filter(u => u.id !== id));
+                            const localSubmissions = Utils.storage.get('submissions') || [];
+                            Utils.storage.set('submissions', localSubmissions.filter(s => s.userId !== id));
+                        }
+                        await refresh();
+                        PE.UI.notify('Usuario eliminado correctamente', 'success');
+                    } catch (error) {
+                        PE.UI.notify(error.message || 'Error al eliminar usuario', 'error');
+                    }
+                });
+            };
+        });
     </script>
 </body>
 </html>

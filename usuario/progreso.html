@@ -52,7 +52,7 @@
                             <div class="card-body text-center">
                                 <h3 class="text-primary" style="font-size: 2.5rem; margin-bottom: 0.5rem;" id="stat-sessions">0</h3>
                                 <p class="text-secondary mb-0">Sesiones completadas</p>
-                                <p class="text-secondary" style="font-size: 0.85rem;">de 32 totales</p>
+                                <p class="text-secondary" style="font-size: 0.85rem;">de 27 totales</p>
                             </div>
                         </div>
                         <div class="card">
@@ -90,7 +90,7 @@
                                     <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
                                 </div>
                             </div>
-                            <p class="text-secondary">El curso consta de 32 sesiones de 90 minutos, los lunes y miercoles de febrero a mayo de 2026.</p>
+                            <p class="text-secondary">El curso consta de 27 sesiones de 90 minutos, los martes y jueves de febrero a mayo de 2026.</p>
                         </div>
                     </div>
 
@@ -142,9 +142,14 @@
         </div>
     </footer>
 
+    <script>
+        window.PE_CONFIG = {
+            API_URL: 'https://produccion-escrita-c2-api-production.up.railway.app'
+        };
+    </script>
     <script src="../js/app.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             const user = PE.Auth.getCurrentUser();
             if (!user) {
                 const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
@@ -153,12 +158,14 @@
             }
 
             // Obtener estadisticas
-            const submissions = PE.Submissions.getByUser(user.id);
+            let submissions = await PE.Submissions.getByUser(user.id);
+            submissions = Array.isArray(submissions) ? submissions : [];
             const reviewed = submissions.filter(s => s.status === 'reviewed');
             const totalWords = submissions.reduce((sum, s) => sum + (s.wordCount || 0), 0);
 
             // Calcular sesiones completadas (basado en fecha actual)
             const courseProgress = PE.CourseData.getCourseProgress();
+            const today = PE.CourseData.getTodayDate ? PE.CourseData.getTodayDate() : new Date();
 
             // Actualizar estadisticas
             document.getElementById('stat-sessions').textContent = courseProgress.completed;
@@ -190,7 +197,8 @@
             const workshops = PE.CourseData.workshops;
             const workshopsHtml = workshops.map((workshop, index) => {
                 const workshopSession = PE.CourseData.sessions.find(s => s.workshop === workshop.id);
-                const isCompleted = workshopSession && new Date(workshopSession.date) < new Date();
+                const workshopDate = workshopSession ? (PE.CourseData.getSessionDate ? PE.CourseData.getSessionDate(workshopSession.date) : new Date(workshopSession.date)) : null;
+                const isCompleted = workshopDate && workshopDate < today;
                 const hasSubmission = submissions.some(s => s.activityId && s.activityId.includes('taller'));
                 return `
                     <div style="display: flex; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">

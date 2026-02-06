@@ -156,7 +156,7 @@
                 <span class="hero-badge">Febrero - Mayo 2026</span>
                 <h1>Calendario del Curso</h1>
                 <p class="hero-description">
-                    32 sesiones de 90 minutos, lunes y miércoles. Examen final: jueves 21 de mayo.
+                    27 sesiones de 90 minutos, martes y jueves. Examen parcial: jueves 26 de marzo. Examen final: jueves 21 de mayo.
                 </p>
             </div>
         </div>
@@ -185,7 +185,7 @@
                 <div class="card-body">
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--spacing-lg); text-align: center;">
                         <div>
-                            <strong style="font-size: 1.5rem; color: var(--primary-color);">32</strong>
+                            <strong style="font-size: 1.5rem; color: var(--primary-color);">27</strong>
                             <p class="text-secondary mb-0">Sesiones totales</p>
                         </div>
                         <div>
@@ -193,7 +193,7 @@
                             <p class="text-secondary mb-0">Por sesión</p>
                         </div>
                         <div>
-                            <strong style="font-size: 1.5rem; color: var(--primary-color);">Lun / Mié</strong>
+                            <strong style="font-size: 1.5rem; color: var(--primary-color);">Mar / Jue</strong>
                             <p class="text-secondary mb-0">Días de clase</p>
                         </div>
                         <div>
@@ -242,6 +242,10 @@
             ];
 
             const dayNames = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+            const exams = {
+                '2026-03-26': 'EXAMEN PARCIAL',
+                '2026-05-21': 'EXAMEN FINAL'
+            };
 
             // Calcular día de inicio para cada mes
             function getFirstDayOfMonth(year, month) {
@@ -270,7 +274,8 @@
                 for (let day = 1; day <= m.days; day++) {
                     const dateStr = `2026-${String(m.month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                     const session = sessions.find(s => s.date === dateStr);
-                    const isExam = dateStr === '2026-05-21';
+                    const examLabel = exams[dateStr];
+                    const isExam = Boolean(examLabel);
                     const isWorkshop = session && session.theme === 'taller';
 
                     let cellClass = 'day-cell';
@@ -285,7 +290,7 @@
                         html += `<div class="day-event ${eventClass}" title="${session.title}">S${session.id}</div>`;
                     }
                     if (isExam) {
-                        html += `<div class="day-event exam">EXAMEN</div>`;
+                        html += `<div class="day-event exam">${examLabel}</div>`;
                     }
 
                     html += '</div>';
@@ -318,6 +323,14 @@
                     </div>
                 `;
             }).join('') + `
+                <div class="session-item" style="border-color: var(--secondary-color); background: rgba(197, 48, 48, 0.1);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong style="color: var(--secondary-color);">EXAMEN PARCIAL</strong>
+                            <br><span class="text-secondary">Jueves, 26 de marzo de 2026</span>
+                        </div>
+                    </div>
+                </div>
                 <div class="session-item" style="border-color: var(--secondary-color); background: rgba(197, 48, 48, 0.1);">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>

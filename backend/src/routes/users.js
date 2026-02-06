@@ -1,40 +1,83 @@
 /**
- * Rutas de usuarios (admin)
+ * Rutas de usuarios - admin (PostgreSQL)
  */
 
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { body, validationResult } = require('express-validator');
-const { getDb } = require('../database/db');
+const { query } = require('../database/db');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
 /**
+ * GET /api/users/stats/overview
+ * Estadisticas de usuarios (solo admin)
+ * IMPORTANTE: Esta ruta debe ir ANTES de /:id
+ */
+router.get('/stats/overview', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const statsResult = await query(`
+            SELECT
+                COUNT(*) as total,
+                SUM(CASE WHEN role = 'student' THEN 1 ELSE 0 END) as students,
+                SUM(CASE WHEN role = 'admin' THEN 1 ELSE 0 END) as admins,
+                SUM(CASE WHEN active = true THEN 1 ELSE 0 END) as active
+            FROM users
+        `);
+
+        const byLevelResult = await query(`
+            SELECT level, COUNT(*) as count
+            FROM users
+            WHERE role = 'student'
+            GROUP BY level
+        `);
+
+        const recentResult = await query(`
+            SELECT DATE(created_at) as date, COUNT(*) as count
+            FROM users
+            WHERE created_at >= CURRENT_DATE - INTERVAL '30 days'
+            GROUP BY DATE(created_at)
+            ORDER BY date DESC
+        `);
+
+        res.json({
+            stats: statsResult.rows[0],
+            byLevel: byLevelResult.rows,
+            recentRegistrations: recentResult.rows
+        });
+
+    } catch (error) {
+        console.error('Error al obtener estadisticas:', error);
+        res.status(500).json({ error: 'Error al obtener estadisticas' });
+    }
+});
+
+/**
  * GET /api/users
  * Listar usuarios (solo admin)
  */
-router.get('/', authenticateToken, requireAdmin, (req, res) => {
+router.get('/', authenticateToken, requireAdmin, async (req, res) => {
     try {
-        const db = getDb();
         const { role, active } = req.query;
 
         let whereClause = [];
         let params = [];
+        let paramIndex = 1;
 
         if (role) {
-            whereClause.push('role = ?');
+            whereClause.push(`role = $${paramIndex++}`);
             params.push(role);
         }
 
         if (active !== undefined) {
-            whereClause.push('active = ?');
-            params.push(active === 'true' ? 1 : 0);
+            whereClause.push(`active = $${paramIndex++}`);
+            params.push(active === 'true');
         }
 
         const whereSQL = whereClause.length > 0 ? 'WHERE ' + whereClause.join(' AND ') : '';
 
-        const users = db.prepare(`
+        const result = await query(`
             SELECT
                 u.id, u.email, u.name, u.role, u.level, u.active, u.created_at, u.last_login,
                 (SELECT COUNT(*) FROM submissions WHERE user_id = u.id) as submissions_count,
@@ -42,9 +85,9 @@ router.get('/', authenticateToken, requireAdmin, (req, res) => {
             FROM users u
             ${whereSQL}
             ORDER BY u.created_at DESC
-        `).all(...params);
+        `, params);
 
-        res.json(users);
+        res.json(result.rows);
 
     } catch (error) {
         console.error('Error al listar usuarios:', error);
@@ -54,40 +97,41 @@ router.get('/', authenticateToken, requireAdmin, (req, res) => {
 
 /**
  * GET /api/users/:id
- * Obtener usuario específico (solo admin)
+ * Obtener usuario especifico (solo admin)
  */
-router.get('/:id', authenticateToken, requireAdmin, (req, res) => {
+router.get('/:id', authenticateToken, requireAdmin, async (req, res) => {
     try {
-        const db = getDb();
         const userId = req.params.id;
 
-        const user = db.prepare(`
+        const userResult = await query(`
             SELECT id, email, name, role, level, motivation, active, created_at, last_login
-            FROM users WHERE id = ?
-        `).get(userId);
+            FROM users WHERE id = $1
+        `, [userId]);
 
-        if (!user) {
+        if (userResult.rows.length === 0) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
 
+        const user = userResult.rows[0];
+
         // Obtener entregas del usuario
-        const submissions = db.prepare(`
+        const submissionsResult = await query(`
             SELECT s.*, f.grade
             FROM submissions s
             LEFT JOIN feedback f ON s.id = f.submission_id
-            WHERE s.user_id = ?
+            WHERE s.user_id = $1
             ORDER BY s.created_at DESC
-        `).all(userId);
+        `, [userId]);
 
         // Obtener progreso
-        const progress = db.prepare(`
-            SELECT * FROM student_progress WHERE user_id = ?
-        `).all(userId);
+        const progressResult = await query(`
+            SELECT * FROM student_progress WHERE user_id = $1
+        `, [userId]);
 
         res.json({
             ...user,
-            submissions,
-            progress
+            submissions: submissionsResult.rows,
+            progress: progressResult.rows
         });
 
     } catch (error) {
@@ -105,37 +149,37 @@ router.put('/:id', authenticateToken, requireAdmin, [
     body('level').optional().isString(),
     body('role').optional().isIn(['student', 'admin']),
     body('active').optional().isBoolean()
-], (req, res) => {
+], async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const db = getDb();
         const userId = req.params.id;
         const { name, level, role, active } = req.body;
 
         // Verificar que el usuario existe
-        const user = db.prepare('SELECT id FROM users WHERE id = ?').get(userId);
-        if (!user) {
+        const userCheck = await query('SELECT id FROM users WHERE id = $1', [userId]);
+        if (userCheck.rows.length === 0) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
 
         const updates = [];
         const params = [];
+        let paramIndex = 1;
 
-        if (name) { updates.push('name = ?'); params.push(name); }
-        if (level) { updates.push('level = ?'); params.push(level); }
-        if (role) { updates.push('role = ?'); params.push(role); }
-        if (active !== undefined) { updates.push('active = ?'); params.push(active ? 1 : 0); }
+        if (name) { updates.push(`name = $${paramIndex++}`); params.push(name); }
+        if (level) { updates.push(`level = $${paramIndex++}`); params.push(level); }
+        if (role) { updates.push(`role = $${paramIndex++}`); params.push(role); }
+        if (active !== undefined) { updates.push(`active = $${paramIndex++}`); params.push(active); }
 
         if (updates.length === 0) {
             return res.status(400).json({ error: 'No hay datos para actualizar' });
         }
 
         params.push(userId);
-        db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).run(...params);
+        await query(`UPDATE users SET ${updates.join(', ')} WHERE id = $${paramIndex}`, params);
 
         res.json({ message: 'Usuario actualizado correctamente' });
 
@@ -147,10 +191,10 @@ router.put('/:id', authenticateToken, requireAdmin, [
 
 /**
  * PUT /api/users/:id/password
- * Cambiar contraseña de usuario (solo admin)
+ * Cambiar contrasena de usuario (solo admin)
  */
 router.put('/:id/password', authenticateToken, requireAdmin, [
-    body('password').isLength({ min: 6 }).withMessage('La contraseña debe tener al menos 6 caracteres')
+    body('password').isLength({ min: 6 }).withMessage('La contrasena debe tener al menos 6 caracteres')
 ], async (req, res) => {
     try {
         const errors = validationResult(req);
@@ -158,23 +202,22 @@ router.put('/:id/password', authenticateToken, requireAdmin, [
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const db = getDb();
         const userId = req.params.id;
         const { password } = req.body;
 
-        const user = db.prepare('SELECT id FROM users WHERE id = ?').get(userId);
-        if (!user) {
+        const userCheck = await query('SELECT id FROM users WHERE id = $1', [userId]);
+        if (userCheck.rows.length === 0) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hashedPassword, userId);
+        await query('UPDATE users SET password = $1 WHERE id = $2', [hashedPassword, userId]);
 
-        res.json({ message: 'Contraseña actualizada correctamente' });
+        res.json({ message: 'Contrasena actualizada correctamente' });
 
     } catch (error) {
-        console.error('Error al cambiar contraseña:', error);
-        res.status(500).json({ error: 'Error al cambiar contraseña' });
+        console.error('Error al cambiar contrasena:', error);
+        res.status(500).json({ error: 'Error al cambiar contrasena' });
     }
 });
 
@@ -182,72 +225,27 @@ router.put('/:id/password', authenticateToken, requireAdmin, [
  * DELETE /api/users/:id
  * Eliminar usuario (solo admin)
  */
-router.delete('/:id', authenticateToken, requireAdmin, (req, res) => {
+router.delete('/:id', authenticateToken, requireAdmin, async (req, res) => {
     try {
-        const db = getDb();
         const userId = req.params.id;
 
-        // No permitir que admin se elimine a sí mismo
+        // No permitir que admin se elimine a si mismo
         if (userId == req.user.id) {
             return res.status(400).json({ error: 'No puedes eliminarte a ti mismo' });
         }
 
-        const user = db.prepare('SELECT id FROM users WHERE id = ?').get(userId);
-        if (!user) {
+        const userCheck = await query('SELECT id FROM users WHERE id = $1', [userId]);
+        if (userCheck.rows.length === 0) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
 
-        db.prepare('DELETE FROM users WHERE id = ?').run(userId);
+        await query('DELETE FROM users WHERE id = $1', [userId]);
 
         res.json({ message: 'Usuario eliminado correctamente' });
 
     } catch (error) {
         console.error('Error al eliminar usuario:', error);
         res.status(500).json({ error: 'Error al eliminar usuario' });
-    }
-});
-
-/**
- * GET /api/users/stats/overview
- * Estadísticas de usuarios (solo admin)
- */
-router.get('/stats/overview', authenticateToken, requireAdmin, (req, res) => {
-    try {
-        const db = getDb();
-
-        const stats = db.prepare(`
-            SELECT
-                COUNT(*) as total,
-                SUM(CASE WHEN role = 'student' THEN 1 ELSE 0 END) as students,
-                SUM(CASE WHEN role = 'admin' THEN 1 ELSE 0 END) as admins,
-                SUM(CASE WHEN active = 1 THEN 1 ELSE 0 END) as active
-            FROM users
-        `).get();
-
-        const byLevel = db.prepare(`
-            SELECT level, COUNT(*) as count
-            FROM users
-            WHERE role = 'student'
-            GROUP BY level
-        `).all();
-
-        const recentRegistrations = db.prepare(`
-            SELECT DATE(created_at) as date, COUNT(*) as count
-            FROM users
-            WHERE created_at >= date('now', '-30 days')
-            GROUP BY DATE(created_at)
-            ORDER BY date DESC
-        `).all();
-
-        res.json({
-            stats,
-            byLevel,
-            recentRegistrations
-        });
-
-    } catch (error) {
-        console.error('Error al obtener estadísticas:', error);
-        res.status(500).json({ error: 'Error al obtener estadísticas' });
     }
 });
 

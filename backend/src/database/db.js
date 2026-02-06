@@ -1,29 +1,49 @@
 /**
- * Conexión a la base de datos SQLite
+ * Conexión a PostgreSQL (Neon)
  */
 
-const path = require('path');
-const Database = require('better-sqlite3');
+const { Pool } = require('pg');
 
-const DB_PATH = process.env.DATABASE_PATH || './data/database.sqlite';
-const dbPath = path.resolve(__dirname, '../../', DB_PATH);
-
-let db = null;
-
-function getDb() {
-    if (!db) {
-        db = new Database(dbPath);
-        db.pragma('foreign_keys = ON');
-        db.pragma('journal_mode = WAL');
+// Crear pool de conexiones
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+        rejectUnauthorized: false
     }
-    return db;
-}
+});
 
-function closeDb() {
-    if (db) {
-        db.close();
-        db = null;
+// Verificar conexión
+pool.on('connect', () => {
+    console.log('Conectado a PostgreSQL (Neon)');
+});
+
+pool.on('error', (err) => {
+    console.error('Error en conexión PostgreSQL:', err);
+});
+
+// Helper para ejecutar queries
+const query = async (text, params) => {
+    const start = Date.now();
+    try {
+        const res = await pool.query(text, params);
+        const duration = Date.now() - start;
+        if (process.env.NODE_ENV === 'development') {
+            console.log('Query ejecutada', { text: text.substring(0, 50), duration, rows: res.rowCount });
+        }
+        return res;
+    } catch (error) {
+        console.error('Error en query:', error.message);
+        throw error;
     }
-}
+};
 
-module.exports = { getDb, closeDb };
+// Helper para obtener una conexión del pool
+const getClient = async () => {
+    return await pool.connect();
+};
+
+module.exports = {
+    pool,
+    query,
+    getClient
+};

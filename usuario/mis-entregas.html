@@ -73,18 +73,23 @@
         </div>
     </footer>
 
+    <script>
+        window.PE_CONFIG = {
+            API_URL: 'https://produccion-escrita-c2-api-production.up.railway.app'
+        };
+    </script>
     <script src="../js/app.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             const user = PE.Auth.getCurrentUser();
             if (!user) {
                 window.location.href = '../auth/login.html';
                 return;
             }
 
-            function renderSubmissions(filter = 'all') {
-                let submissions = PE.Submissions.getByUser(user.id);
-
+            async function renderSubmissions(filter = 'all') {
+                let submissions = await PE.Submissions.getByUser(user.id);
+                submissions = Array.isArray(submissions) ? submissions : [];
                 if (filter === 'pending') {
                     submissions = submissions.filter(s => s.status === 'pending');
                 } else if (filter === 'reviewed') {
@@ -146,8 +151,9 @@
             });
         });
 
-        function viewSubmission(id) {
-            const submissions = PE.Submissions.getAll();
+        async function viewSubmission(id) {
+            let submissions = await PE.Submissions.getAll();
+            submissions = Array.isArray(submissions) ? submissions : [];
             const s = submissions.find(sub => sub.id === id);
             if (s) {
                 PE.UI.showModal(s.activityTitle, `

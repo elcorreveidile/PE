@@ -8,16 +8,67 @@
 // Configuración y Estado Global
 // ==========================================================================
 
-const CONFIG = {
-    STORAGE_PREFIX: 'pe_c2_',
-    // URL del backend API - cambiar en producción
-    API_URL: localStorage.getItem('pe_c2_api_url') || '',
-    // Si está vacío, usa localStorage como fallback
-    USE_API: false, // Se actualiza automáticamente si la API responde
-    COURSE_START: new Date('2026-02-02'),
-    COURSE_END: new Date('2026-05-21'),
-    SESSION_DAYS: [1, 3], // Lunes = 1, Miércoles = 3
-};
+function normalizeApiUrl(raw) {
+    if (!raw || typeof raw !== 'string') return '';
+    const trimmed = raw.trim();
+    if (!trimmed || trimmed === 'null' || trimmed === 'undefined') return '';
+
+    try {
+        if (/^https?:\/\//i.test(trimmed)) {
+            const url = new URL(trimmed);
+            return url.origin;
+        }
+    } catch {
+        // ignore parse errors, fallback below
+    }
+
+    let normalized = trimmed.replace(/\/+$/, '');
+    if (normalized.endsWith('/api')) {
+        normalized = normalized.slice(0, -4);
+    }
+
+    if (!/^https?:\/\//i.test(normalized) && !normalized.startsWith('/')) {
+        return '';
+    }
+
+    return normalized;
+}
+
+const CONFIG = (() => {
+    const hostname = (typeof window !== 'undefined' && window.location) ? window.location.hostname : '';
+    const protocol = (typeof window !== 'undefined' && window.location) ? window.location.protocol : '';
+    const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || protocol === 'file:';
+
+    const resolvedOrigin = normalizeApiUrl((typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin !== 'null')
+        ? window.location.origin
+        : '');
+    const storedApiUrl = normalizeApiUrl(localStorage.getItem('pe_c2_api_url'));
+
+    // URL de la API en Render (o tu backend desplegado)
+    // Para cambiar la URL del backend, puedes:
+    // 1. Añadir <script>window.PE_CONFIG = { API_URL: 'https://tu-api.onrender.com' }</script> antes de cargar este script
+    // 2. O cambiar manualmente la URL aquí
+    const productionApiUrl = (typeof window !== 'undefined' && window.PE_CONFIG && window.PE_CONFIG.API_URL)
+        ? window.PE_CONFIG.API_URL
+        : storedApiUrl;
+
+    return {
+        STORAGE_PREFIX: 'pe_c2_',
+        // URL del backend API - usa productionApiUrl si está configurado, sino el origin actual
+        API_URL: (!isLocal ? (productionApiUrl || resolvedOrigin) : (storedApiUrl || resolvedOrigin)),
+        // En producción forzamos API para evitar datos inconsistentes
+        ENFORCE_API: !isLocal,
+        // Si está vacío, usa localStorage como fallback (solo en local)
+        USE_API: false, // Se actualiza automáticamente si la API responde
+        // Código de inscripción (solo para modo localStorage)
+        REGISTRATION_CODE: (typeof window !== 'undefined' && window.PE_CONFIG && window.PE_CONFIG.registrationCode)
+            ? window.PE_CONFIG.registrationCode
+            : (localStorage.getItem('pe_c2_registration_code') || ''),
+        COURSE_START: new Date('2026-02-03'),
+        COURSE_END: new Date('2026-05-21'),
+        SESSION_DAYS: [2, 4], // Martes = 2, Jueves = 4
+    };
+})();
 
 // Estado global de la aplicación
 const AppState = {
@@ -34,6 +85,8 @@ const AppState = {
 // ==========================================================================
 
 const API = {
+    _availabilityPromise: null,
+
     // Verificar si la API está disponible
     async checkAvailability() {
         if (!CONFIG.API_URL) return false;
@@ -48,6 +101,22 @@ const API = {
             CONFIG.USE_API = false;
             return false;
         }
+    },
+
+    async ensureAvailability() {
+        if (CONFIG.USE_API) return true;
+        if (!CONFIG.API_URL) return false;
+
+        if (!this._availabilityPromise) {
+            this._availabilityPromise = this.checkAvailability();
+        }
+
+        const available = await this._availabilityPromise;
+        this._availabilityPromise = null;
+        if (CONFIG.ENFORCE_API && !available) {
+            throw new Error('Backend no disponible. No se puede usar el modo local en producción.');
+        }
+        return available;
     },
 
     // Hacer petición a la API
@@ -69,10 +138,21 @@ const API = {
                 headers
             });
 
-            const data = await response.json();
+            const text = await response.text();
+            let data = {};
+            if (text) {
+                try {
+                    data = JSON.parse(text);
+                } catch {
+                    data = { error: text };
+                }
+            }
 
             if (!response.ok) {
-                throw new Error(data.error || 'Error en la petición');
+                const validationMessage = Array.isArray(data?.errors) && data.errors.length > 0
+                    ? data.errors[0].msg
+                    : null;
+                throw new Error(data.error || data.message || validationMessage || 'Error en la petición');
             }
 
             return data;
@@ -198,7 +278,7 @@ const Auth = {
         }
 
         // Inicializar usuarios demo en localStorage si no hay API
-        if (!CONFIG.USE_API && !Utils.storage.get('users')) {
+        if (!CONFIG.ENFORCE_API && !CONFIG.USE_API && !Utils.storage.get('users')) {
             Utils.storage.set('users', [
                 {
                     id: 'admin1',
@@ -223,13 +303,27 @@ const Auth = {
 
     // Registrar usuario
     async register(userData) {
+        await API.ensureAvailability();
         if (CONFIG.USE_API) {
-            try {
-                const response = await API.post('/auth/register', userData);
-                return response.data;
-            } catch (error) {
-                throw error;
+            const response = await API.post('/auth/register', userData);
+            const user = response.user || response.data || response;
+
+            if (response.token) {
+                AppState.token = response.token;
+                Utils.storage.set('token', response.token);
             }
+
+            if (user) {
+                Utils.storage.set('currentUser', user);
+                AppState.user = user;
+                AppState.isAdmin = user.role === 'admin';
+            }
+
+            return user;
+        }
+
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('El backend no está disponible. No se permite el registro en modo local en producción.');
         }
 
         // Fallback localStorage
@@ -263,24 +357,27 @@ const Auth = {
 
     // Iniciar sesión
     async login(email, password) {
+        await API.ensureAvailability();
         if (CONFIG.USE_API) {
-            try {
-                const response = await API.post('/auth/login', { email, password });
+            const response = await API.post('/auth/login', { email, password });
 
-                // Guardar token
+            const user = response.user || response.data || response;
+            if (response.token) {
                 AppState.token = response.token;
                 Utils.storage.set('token', response.token);
+            }
 
-                // Guardar usuario
-                const user = response.data;
+            if (user) {
                 Utils.storage.set('currentUser', user);
                 AppState.user = user;
                 AppState.isAdmin = user.role === 'admin';
-
-                return user;
-            } catch (error) {
-                throw error;
             }
+
+            return user;
+        }
+
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('El backend no está disponible. No se permite el inicio de sesión en modo local en producción.');
         }
 
         // Fallback localStorage
@@ -326,11 +423,12 @@ const Auth = {
             AppState.isAdmin = user.role === 'admin';
 
             // Si hay API y token, verificar que el token sigue siendo válido
+            await API.ensureAvailability();
             if (CONFIG.USE_API && token) {
                 try {
                     const response = await API.get('/auth/me');
-                    AppState.user = response.data;
-                    Utils.storage.set('currentUser', response.data);
+                    AppState.user = response;
+                    Utils.storage.set('currentUser', response);
                 } catch {
                     // Token inválido, limpiar sesión
                     this.logout();
@@ -353,11 +451,17 @@ const Auth = {
 
     // Actualizar perfil
     async updateProfile(data) {
+        await API.ensureAvailability();
         if (CONFIG.USE_API) {
-            const response = await API.put('/auth/profile', data);
-            AppState.user = response.data;
-            Utils.storage.set('currentUser', response.data);
-            return response.data;
+            await API.put('/auth/profile', data);
+            const updated = await API.get('/auth/me');
+            AppState.user = updated;
+            Utils.storage.set('currentUser', updated);
+            return updated;
+        }
+
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('El backend no está disponible. No se permiten cambios de perfil en modo local en producción.');
         }
 
         // Fallback localStorage
@@ -376,8 +480,13 @@ const Auth = {
 
     // Cambiar contraseña
     async changePassword(currentPassword, newPassword) {
+        await API.ensureAvailability();
         if (CONFIG.USE_API) {
             return API.put('/auth/password', { currentPassword, newPassword });
+        }
+
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('El backend no está disponible. No se permite cambiar contraseña en modo local en producción.');
         }
 
         // Fallback localStorage
@@ -397,28 +506,58 @@ const Auth = {
 // ==========================================================================
 
 const Submissions = {
+    normalize(submission) {
+        if (!submission || typeof submission !== 'object') return submission;
+
+        return {
+            ...submission,
+            userId: submission.user_id ?? submission.userId,
+            userName: submission.user_name ?? submission.userName,
+            userEmail: submission.user_email ?? submission.userEmail,
+            sessionId: submission.session_id ?? submission.sessionId,
+            activityId: submission.activity_id ?? submission.activityId,
+            activityTitle: submission.activity_title ?? submission.activityTitle,
+            wordCount: submission.word_count ?? submission.wordCount,
+            feedback: submission.feedback_text ?? submission.feedback,
+            feedbackDate: submission.feedback_date ?? submission.feedbackDate,
+            reviewerName: submission.reviewer_name ?? submission.reviewerName,
+            createdAt: submission.created_at ?? submission.createdAt,
+            updatedAt: submission.updated_at ?? submission.updatedAt,
+            reviewedAt: submission.reviewed_at ?? submission.reviewedAt
+        };
+    },
     // Obtener todas las entregas
     async getAll() {
+        await API.ensureAvailability();
         if (CONFIG.USE_API) {
             try {
                 const response = await API.get('/submissions');
-                return response.data || [];
+                const submissions = response.submissions || response.data || response || [];
+                return Array.isArray(submissions) ? submissions.map(this.normalize) : [];
             } catch {
                 return [];
             }
+        }
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('Backend no disponible. No se permite usar entregas en modo local en producción.');
         }
         return Utils.storage.get('submissions') || [];
     },
 
     // Obtener entregas por usuario
     async getByUser(userId) {
+        await API.ensureAvailability();
         if (CONFIG.USE_API) {
             try {
-                const response = await API.get(`/submissions?userId=${userId}`);
-                return response.data || [];
+                const response = await API.get(`/submissions?user_id=${userId}`);
+                const submissions = response.submissions || response.data || response || [];
+                return Array.isArray(submissions) ? submissions.map(this.normalize) : [];
             } catch {
                 return [];
             }
+        }
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('Backend no disponible. No se permiten consultas locales en producción.');
         }
         const all = Utils.storage.get('submissions') || [];
         return all.filter(s => s.userId === userId);
@@ -426,13 +565,18 @@ const Submissions = {
 
     // Obtener entregas por sesión
     async getBySession(sessionId) {
+        await API.ensureAvailability();
         if (CONFIG.USE_API) {
             try {
-                const response = await API.get(`/submissions?sessionId=${sessionId}`);
-                return response.data || [];
+                const response = await API.get(`/submissions?session_id=${sessionId}`);
+                const submissions = response.submissions || response.data || response || [];
+                return Array.isArray(submissions) ? submissions.map(this.normalize) : [];
             } catch {
                 return [];
             }
+        }
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('Backend no disponible. No se permiten consultas locales en producción.');
         }
         const all = Utils.storage.get('submissions') || [];
         return all.filter(s => s.sessionId === sessionId);
@@ -440,14 +584,20 @@ const Submissions = {
 
     // Crear nueva entrega
     async create(submissionData) {
+        await API.ensureAvailability();
         if (CONFIG.USE_API) {
             const response = await API.post('/submissions', {
-                sessionId: submissionData.sessionId,
-                activityId: submissionData.activityId,
-                activityTitle: submissionData.activityTitle,
+                session_id: submissionData.sessionId,
+                activity_id: submissionData.activityId,
+                activity_title: submissionData.activityTitle,
                 content: submissionData.content
             });
-            return response.data;
+            const created = response.submission || response.data || response;
+            return this.normalize(created);
+        }
+
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('Backend no disponible. No se permiten entregas en modo local en producción.');
         }
 
         // Fallback localStorage
@@ -481,9 +631,16 @@ const Submissions = {
 
     // Actualizar entrega
     async update(submissionId, updates) {
+        await API.ensureAvailability();
         if (CONFIG.USE_API) {
-            const response = await API.put(`/submissions/${submissionId}`, updates);
-            return response.data;
+            const response = await API.put(`/submissions/${submissionId}`, {
+                content: updates.content
+            });
+            return response.data || response;
+        }
+
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('Backend no disponible. No se permite editar entregas en modo local en producción.');
         }
 
         // Fallback localStorage
@@ -511,12 +668,17 @@ const Submissions = {
 
     // Añadir retroalimentación (profesor)
     async addFeedback(submissionId, feedback, grade) {
+        await API.ensureAvailability();
         if (CONFIG.USE_API) {
             const response = await API.post(`/submissions/${submissionId}/feedback`, {
-                feedback,
+                feedback_text: feedback,
                 grade
             });
-            return response.data;
+            return response.data || response;
+        }
+
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('Backend no disponible. No se permite corregir en modo local en producción.');
         }
 
         return this.update(submissionId, {
@@ -529,8 +691,13 @@ const Submissions = {
 
     // Eliminar entrega
     async delete(submissionId) {
+        await API.ensureAvailability();
         if (CONFIG.USE_API) {
             return API.delete(`/submissions/${submissionId}`);
+        }
+
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('Backend no disponible. No se permite borrar entregas en modo local en producción.');
         }
 
         const submissions = Utils.storage.get('submissions') || [];
@@ -547,38 +714,33 @@ const Submissions = {
 const CourseData = {
     // Información de las sesiones
     sessions: [
-        { id: 1, date: '2026-02-02', day: 'Lunes', title: 'Introducción al curso y diagnóstico', theme: 1, content: [1] },
-        { id: 2, date: '2026-02-04', day: 'Miércoles', title: 'El proceso de escribir: planificación', theme: 1, content: [1] },
-        { id: 3, date: '2026-02-09', day: 'Lunes', title: 'Escribir un perfil personal', theme: 1, content: [1, 2] },
-        { id: 4, date: '2026-02-11', day: 'Miércoles', title: 'Escribir un perfil profesional', theme: 1, content: [2] },
-        { id: 5, date: '2026-02-16', day: 'Lunes', title: 'Cartas formales: estructura y fórmulas', theme: 2, content: [2, 3] },
-        { id: 6, date: '2026-02-18', day: 'Miércoles', title: 'Cartas de solicitud y reclamación', theme: 2, content: [3] },
-        { id: 7, date: '2026-02-23', day: 'Lunes', title: 'Textos creativos: descripción de sensaciones', theme: 3, content: [4] },
-        { id: 8, date: '2026-02-25', day: 'Miércoles', title: 'Valoraciones artísticas', theme: 3, content: [4, 5] },
-        { id: 9, date: '2026-03-02', day: 'Lunes', title: 'TALLER: Mini serie web (I)', theme: 'taller', workshop: 1 },
-        { id: 10, date: '2026-03-04', day: 'Miércoles', title: 'Textos de opinión: argumentación', theme: 4, content: [5, 6] },
-        { id: 11, date: '2026-03-09', day: 'Lunes', title: 'Conectores y marcadores discursivos', theme: 4, content: [6] },
-        { id: 12, date: '2026-03-11', day: 'Miércoles', title: 'Coherencia y cohesión textual', theme: 4, content: [6] },
-        { id: 13, date: '2026-03-16', day: 'Lunes', title: 'Textos expositivos: ser wikipedista', theme: 5, content: [7, 8] },
-        { id: 14, date: '2026-03-18', day: 'Miércoles', title: 'Precisión léxica: nominalización', theme: 5, content: [7] },
-        { id: 15, date: '2026-03-23', day: 'Lunes', title: 'TALLER: Olvidos de Granada (I)', theme: 'taller', workshop: 2 },
-        { id: 16, date: '2026-03-25', day: 'Miércoles', title: 'Preparar una entrevista', theme: 6, content: [7, 8] },
-        { id: 17, date: '2026-03-30', day: 'Lunes', title: 'Vocabulario especializado', theme: 6, content: [8] },
-        { id: 18, date: '2026-04-01', day: 'Miércoles', title: 'Pros y contras en textos académicos', theme: 7, content: [6, 11] },
-        { id: 19, date: '2026-04-06', day: 'Lunes', title: 'Lenguaje académico (I)', theme: 7, content: [11] },
-        { id: 20, date: '2026-04-08', day: 'Miércoles', title: 'TALLER: Safari fotográfico (I)', theme: 'taller', workshop: 3 },
-        { id: 21, date: '2026-04-13', day: 'Lunes', title: 'Presentaciones especializadas', theme: 8, content: [8, 11] },
-        { id: 22, date: '2026-04-15', day: 'Miércoles', title: 'Colocaciones e idiomatismos', theme: 8, content: [9] },
-        { id: 23, date: '2026-04-20', day: 'Lunes', title: 'Participación en foros', theme: 9, content: [9, 10] },
-        { id: 24, date: '2026-04-22', day: 'Miércoles', title: 'Variedades léxicas y registros', theme: 9, content: [10] },
-        { id: 25, date: '2026-04-27', day: 'Lunes', title: 'TALLER: Granada 2031 (I)', theme: 'taller', workshop: 4 },
-        { id: 26, date: '2026-04-29', day: 'Miércoles', title: 'Crítica cinematográfica', theme: 10, content: [3, 4] },
-        { id: 27, date: '2026-05-04', day: 'Lunes', title: 'Textos periodísticos', theme: 11, content: [2, 8] },
-        { id: 28, date: '2026-05-06', day: 'Miércoles', title: 'Lenguaje académico (II)', theme: 11, content: [11, 12] },
-        { id: 29, date: '2026-05-11', day: 'Lunes', title: 'Resúmenes y síntesis', theme: 12, content: [12, 13] },
-        { id: 30, date: '2026-05-13', day: 'Miércoles', title: 'Recursos para escribir y citación', theme: 12, content: [13, 15] },
-        { id: 31, date: '2026-05-18', day: 'Lunes', title: 'Cuestiones ortográficas y formato', theme: 13, content: [14] },
-        { id: 32, date: '2026-05-20', day: 'Miércoles', title: 'Repaso general y preparación examen', theme: 14, content: [14] },
+        { id: 1, date: '2026-02-03', day: 'Martes', title: 'Introducción al curso y diagnóstico', theme: 1, content: [1] },
+        { id: 2, date: '2026-02-05', day: 'Jueves', title: 'El proceso de escribir: planificación', theme: 1, content: [1] },
+        { id: 3, date: '2026-02-10', day: 'Martes', title: 'Escribir un perfil personal', theme: 1, content: [1, 2] },
+        { id: 4, date: '2026-02-12', day: 'Jueves', title: 'Escribir un perfil profesional', theme: 1, content: [2] },
+        { id: 5, date: '2026-02-17', day: 'Martes', title: 'Cartas formales: estructura y fórmulas', theme: 2, content: [2, 3] },
+        { id: 6, date: '2026-02-19', day: 'Jueves', title: 'Cartas de solicitud y reclamación', theme: 2, content: [3] },
+        { id: 7, date: '2026-02-24', day: 'Martes', title: 'Textos creativos: descripción de sensaciones', theme: 3, content: [4] },
+        { id: 8, date: '2026-02-26', day: 'Jueves', title: 'Valoraciones artísticas', theme: 3, content: [4, 5] },
+        { id: 9, date: '2026-03-03', day: 'Martes', title: 'TALLER: Mini serie web (I)', theme: 'taller', workshop: 1 },
+        { id: 10, date: '2026-03-05', day: 'Jueves', title: 'Textos de opinión: argumentación', theme: 4, content: [5, 6] },
+        { id: 11, date: '2026-03-10', day: 'Martes', title: 'Conectores y marcadores discursivos', theme: 4, content: [6] },
+        { id: 12, date: '2026-03-12', day: 'Jueves', title: 'Coherencia y cohesión textual', theme: 4, content: [6] },
+        { id: 13, date: '2026-03-17', day: 'Martes', title: 'Textos expositivos: ser wikipedista', theme: 5, content: [7, 8] },
+        { id: 14, date: '2026-03-19', day: 'Jueves', title: 'Precisión léxica: nominalización', theme: 5, content: [7] },
+        { id: 15, date: '2026-03-24', day: 'Martes', title: 'TALLER: Olvidos de Granada (I)', theme: 'taller', workshop: 2 },
+        { id: 16, date: '2026-04-07', day: 'Martes', title: 'Bienvenida post-vacaciones: Puesta al día social y lingüística', theme: 6, content: [16] },
+        { id: 17, date: '2026-04-09', day: 'Jueves', title: 'La entrevista: Estructura y tipos (Entrevistas de trabajo, a expertos)', theme: 6, content: [17] },
+        { id: 18, date: '2026-04-14', day: 'Martes', title: 'Estrategias de interacción: Preguntas abiertas y seguir el hilo', theme: 7, content: [18] },
+        { id: 19, date: '2026-04-16', day: 'Jueves', title: 'El estilo indirecto: Transmitir mensajes y opiniones de otros', theme: 7, content: [19] },
+        { id: 20, date: '2026-04-21', day: 'Martes', title: 'Estrategias de influencia: Aconsejar, sugerir y advertir', theme: 8, content: [20] },
+        { id: 21, date: '2026-04-23', day: 'Jueves', title: 'Lenguaje persuasivo: Insistir en una petición y gestionar conflictos', theme: 8, content: [21] },
+        { id: 22, date: '2026-04-28', day: 'Martes', title: 'La Conferencia (I): Apertura, captar atención y presentar la idea central', theme: 9, content: [22] },
+        { id: 23, date: '2026-04-30', day: 'Jueves', title: 'La Conferencia (II): Desarrollo, énfasis en detalles y cierre efectivo', theme: 9, content: [23] },
+        { id: 24, date: '2026-05-05', day: 'Martes', title: 'TALLER: Safari fotográfico (I)', theme: 'taller', workshop: 3 },
+        { id: 25, date: '2026-05-07', day: 'Jueves', title: 'TALLER: Granada 2031 (I)', theme: 'taller', workshop: 4 },
+        { id: 26, date: '2026-05-12', day: 'Martes', title: 'Crítica cinematográfica', theme: 10, content: [3, 4] },
+        { id: 27, date: '2026-05-14', day: 'Jueves', title: 'Última clase: Presentaciones finales y despedida', theme: 11, content: [25] },
     ],
 
     // Contenidos del curso
@@ -598,6 +760,16 @@ const CourseData = {
         { id: 13, title: 'Recursos para escribir: diccionarios, páginas en la red, corpus textuales' },
         { id: 14, title: 'Cuestiones ortográficas, acentuación y formato' },
         { id: 15, title: 'Formas de citación en textos académicos' },
+        { id: 16, title: 'Puesta al día social y lingüística' },
+        { id: 17, title: 'Entrevistas: estructura y tipos' },
+        { id: 18, title: 'Interacción: preguntas abiertas y seguimiento' },
+        { id: 19, title: 'Estilo indirecto: transmitir mensajes y opiniones' },
+        { id: 20, title: 'Estrategias de influencia: aconsejar, sugerir y advertir' },
+        { id: 21, title: 'Lenguaje persuasivo y gestión de conflictos' },
+        { id: 22, title: 'Conferencia: apertura y presentación de la idea central' },
+        { id: 23, title: 'Conferencia: desarrollo, énfasis y cierre' },
+        { id: 24, title: 'Descripción visual: safari fotográfico' },
+        { id: 25, title: 'Presentaciones finales y despedida' },
     ],
 
     // Temas del curso
@@ -607,15 +779,12 @@ const CourseData = {
         { id: 3, title: 'Textos creativos', file: 'tema-03-creativos.html' },
         { id: 4, title: 'Textos de opinión', file: 'tema-04-opinion.html' },
         { id: 5, title: 'Textos expositivos', file: 'tema-05-expositivos.html' },
-        { id: 6, title: 'Preparar una entrevista', file: 'tema-06-entrevista.html' },
-        { id: 7, title: 'Pros y contras académicos', file: 'tema-07-proscontras.html' },
-        { id: 8, title: 'Presentaciones especializadas', file: 'tema-08-presentacion.html' },
-        { id: 9, title: 'Participación en foros', file: 'tema-09-foros.html' },
+        { id: 6, title: 'Entrevistas', file: 'tema-06-entrevista.html' },
+        { id: 7, title: 'Interacción y estilo indirecto', file: 'tema-07-proscontras.html' },
+        { id: 8, title: 'Lenguaje persuasivo', file: 'tema-08-presentacion.html' },
+        { id: 9, title: 'Conferencias', file: 'tema-09-foros.html' },
         { id: 10, title: 'Crítica cinematográfica', file: 'tema-10-critica.html' },
-        { id: 11, title: 'Textos periodísticos', file: 'tema-11-periodisticos.html' },
-        { id: 12, title: 'Resúmenes', file: 'tema-12-resumenes.html' },
-        { id: 13, title: 'Artículos de opinión', file: 'tema-13-articulos.html' },
-        { id: 14, title: 'La descripción', file: 'tema-14-descripcion.html' },
+        { id: 11, title: 'Presentaciones finales', file: 'tema-11-periodisticos.html' },
     ],
 
     // Talleres
@@ -626,29 +795,47 @@ const CourseData = {
         { id: 4, title: 'Granada 2031, Capital Cultural', file: 'taller-04-granada2031.html' },
     ],
 
-    // Obtener sesión actual
-    getCurrentSession() {
+    // Parsear fecha local (evita desfases por zona horaria)
+    getSessionDate(dateStr) {
+        const [year, month, day] = dateStr.split('-').map(Number);
+        return new Date(year, month - 1, day);
+    },
+
+    getTodayDate() {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
+        return today;
+    },
 
-        for (let i = 0; i < this.sessions.length; i++) {
-            const sessionDate = new Date(this.sessions[i].date);
-            sessionDate.setHours(0, 0, 0, 0);
+    // Obtener sesión actual
+    getCurrentSession() {
+        const today = this.getTodayDate();
 
-            if (sessionDate >= today) {
-                return this.sessions[i];
-            }
+        const exact = this.sessions.find(session => this.getSessionDate(session.date).getTime() === today.getTime());
+        if (exact) {
+            return exact;
         }
+
+        const firstDate = this.getSessionDate(this.sessions[0].date);
+        if (today < firstDate) {
+            return this.sessions[0];
+        }
+
+        const upcoming = this.sessions.find(session => this.getSessionDate(session.date) > today);
+        if (upcoming) {
+            return upcoming;
+        }
+
         return this.sessions[this.sessions.length - 1];
     },
 
     // Obtener progreso del curso
     getCourseProgress() {
-        const today = new Date();
+        const today = this.getTodayDate();
         let completed = 0;
 
         this.sessions.forEach(session => {
-            if (new Date(session.date) < today) {
+            if (this.getSessionDate(session.date) < today) {
                 completed++;
             }
         });
@@ -698,6 +885,23 @@ const UI = {
         `;
         document.body.appendChild(container);
         return container;
+    },
+
+    showBlockingError(message) {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay active';
+        overlay.innerHTML = `
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 class="modal-title">Conexión no disponible</h3>
+                </div>
+                <div class="modal-body">
+                    <p>${message}</p>
+                    <p>Actualiza la página cuando el backend esté activo.</p>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
     },
 
     // Mostrar modal
@@ -1086,6 +1290,7 @@ const Forms = {
 
         const name = data.get('name')?.trim();
         const email = data.get('email')?.trim();
+        const registrationCode = data.get('registrationCode')?.trim();
         const password = data.get('password');
         const confirmPassword = data.get('confirmPassword');
         const level = data.get('level');
@@ -1096,6 +1301,12 @@ const Forms = {
 
         if (!email || !Utils.isValidEmail(email)) {
             errors.push('Introduce un email válido');
+        }
+
+        if (!registrationCode) {
+            errors.push('Introduce el código de inscripción');
+        } else if (!CONFIG.USE_API && CONFIG.REGISTRATION_CODE && registrationCode !== CONFIG.REGISTRATION_CODE) {
+            errors.push('El código de inscripción es incorrecto');
         }
 
         if (!password || password.length < 6) {
@@ -1110,7 +1321,7 @@ const Forms = {
             errors.push('Selecciona tu nivel');
         }
 
-        return { valid: errors.length === 0, errors, data: { name, email, password, level } };
+        return { valid: errors.length === 0, errors, data: { name, email, password, level, registrationCode } };
     },
 
     // Manejar envío de formulario de registro
@@ -1197,6 +1408,11 @@ const Forms = {
 document.addEventListener('DOMContentLoaded', async () => {
     // Verificar disponibilidad de la API
     await API.checkAvailability();
+
+    if (CONFIG.ENFORCE_API && !CONFIG.USE_API) {
+        UI.showBlockingError('El backend está desconectado. En producción no se permite usar almacenamiento local para evitar datos inconsistentes.');
+        return;
+    }
 
     // Inicializar autenticación
     Auth.init();
@@ -1286,8 +1502,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 const APIConfig = {
     // Configurar URL del backend
     setUrl(url) {
-        localStorage.setItem('pe_c2_api_url', url);
-        CONFIG.API_URL = url;
+        const normalized = normalizeApiUrl(url);
+        if (!normalized) {
+            console.warn('URL de API inválida:', url);
+            return;
+        }
+        localStorage.setItem('pe_c2_api_url', normalized);
+        CONFIG.API_URL = normalized;
         console.log('URL de API configurada:', url);
         console.log('Recarga la página para aplicar los cambios.');
     },

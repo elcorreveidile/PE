@@ -108,14 +108,14 @@
                                         <div class="chart-container">
                                             <div class="chart-bar" id="bar-sessions" style="width: 0%;"></div>
                                         </div>
-                                        <span class="chart-value" id="val-sessions">0/32</span>
+                                        <span class="chart-value" id="val-sessions">0/27</span>
                                     </div>
                                     <div class="chart-row">
                                         <span class="chart-label">Temas</span>
                                         <div class="chart-container">
                                             <div class="chart-bar" id="bar-themes" style="width: 0%; background: var(--success-color);"></div>
                                         </div>
-                                        <span class="chart-value" id="val-themes">0/14</span>
+                                        <span class="chart-value" id="val-themes">0/11</span>
                                     </div>
                                     <div class="chart-row">
                                         <span class="chart-label">Talleres</span>
@@ -196,9 +196,14 @@
         </div>
     </footer>
 
+    <script>
+        window.PE_CONFIG = {
+            API_URL: 'https://produccion-escrita-c2-api-production.up.railway.app'
+        };
+    </script>
     <script src="../js/app.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             const user = PE.Auth.getCurrentUser();
             if (!user || user.role !== 'admin') {
                 const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
@@ -208,9 +213,11 @@
 
             const users = JSON.parse(localStorage.getItem('pe_c2_users') || '[]');
             const students = users.filter(u => u.role !== 'admin');
-            const submissions = PE.Submissions.getAll();
+            let submissions = await PE.Submissions.getAll();
+            submissions = Array.isArray(submissions) ? submissions : [];
             const sessions = PE.CourseData.sessions;
             const progress = PE.CourseData.getCourseProgress();
+            const today = PE.CourseData.getTodayDate ? PE.CourseData.getTodayDate() : new Date();
 
             const reviewed = submissions.filter(s => s.status === 'reviewed');
             const pending = submissions.filter(s => s.status === 'pending');
@@ -226,13 +233,16 @@
             // Progreso del curso
             document.getElementById('course-progress').textContent = progress.percentage + '%';
             document.getElementById('bar-sessions').style.width = progress.percentage + '%';
-            document.getElementById('val-sessions').textContent = progress.completed + '/32';
+            document.getElementById('val-sessions').textContent = progress.completed + '/27';
 
             const themesCompleted = Math.floor(progress.completed / 2);
-            document.getElementById('bar-themes').style.width = Math.round(themesCompleted / 14 * 100) + '%';
-            document.getElementById('val-themes').textContent = themesCompleted + '/14';
+            document.getElementById('bar-themes').style.width = Math.round(themesCompleted / 11 * 100) + '%';
+            document.getElementById('val-themes').textContent = themesCompleted + '/11';
 
-            const workshopsCompleted = sessions.filter(s => s.workshop && new Date(s.date) < new Date()).length;
+            const workshopsCompleted = sessions.filter(s => {
+                const sessionDate = PE.CourseData.getSessionDate ? PE.CourseData.getSessionDate(s.date) : new Date(s.date);
+                return s.workshop && sessionDate < today;
+            }).length;
             document.getElementById('bar-workshops').style.width = Math.round(workshopsCompleted / 4 * 100) + '%';
             document.getElementById('val-workshops').textContent = workshopsCompleted + '/4';
 
@@ -245,7 +255,7 @@
 
             // Entregas por sesion
             const maxSubmissions = Math.max(...sessions.map(s => submissions.filter(sub => sub.sessionId == s.id).length), 1);
-            document.getElementById('sessions-chart').innerHTML = sessions.slice(0, 16).map(session => {
+            document.getElementById('sessions-chart').innerHTML = sessions.map(session => {
                 const count = submissions.filter(s => s.sessionId == session.id).length;
                 const width = (count / maxSubmissions) * 100;
                 return `
@@ -303,10 +313,11 @@
             }).join('');
         });
 
-        function exportStats() {
+        async function exportStats() {
             const users = JSON.parse(localStorage.getItem('pe_c2_users') || '[]');
             const students = users.filter(u => u.role !== 'admin');
-            const submissions = PE.Submissions.getAll();
+            let submissions = await PE.Submissions.getAll();
+            submissions = Array.isArray(submissions) ? submissions : [];
             const progress = PE.CourseData.getCourseProgress();
 
             const report = {
