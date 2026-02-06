@@ -58,8 +58,8 @@ const CONFIG = (() => {
         API_URL: (!isLocal ? (productionApiUrl || resolvedOrigin) : (storedApiUrl || resolvedOrigin)),
         // En producción forzamos API para evitar datos inconsistentes
         ENFORCE_API: !isLocal,
-        // Si está vacío, usa localStorage como fallback (solo en local)
-        USE_API: false, // Se actualiza automáticamente si la API responde
+        // En producción usamos siempre la API, en local se detecta automáticamente
+        USE_API: !isLocal,
         // Código de inscripción (solo para modo localStorage)
         REGISTRATION_CODE: (typeof window !== 'undefined' && window.PE_CONFIG && window.PE_CONFIG.registrationCode)
             ? window.PE_CONFIG.registrationCode
