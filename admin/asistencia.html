@@ -160,15 +160,6 @@
     </script>
     <script src="../js/app.js"></script>
     <script>
-        async function getApiError(response, fallbackMessage) {
-            try {
-                const data = await response.json();
-                return data?.error || data?.message || fallbackMessage;
-            } catch (_) {
-                return fallbackMessage;
-            }
-        }
-
         document.addEventListener('DOMContentLoaded', async () => {
             const user = PE.Auth.getCurrentUser();
             if (!user || user.role !== 'admin') {
@@ -188,17 +179,14 @@
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
-                if (!response.ok) {
-                    throw new Error(await getApiError(response, 'Error al cargar estadísticas'));
+                if (response.ok) {
+                    const stats = await response.json();
+                    document.getElementById('stat-today').textContent = stats.todayAttendance;
+                    document.getElementById('stat-week').textContent = stats.weekAttendance;
+                    document.getElementById('stat-students').textContent = stats.totalStudents;
                 }
-
-                const stats = await response.json();
-                document.getElementById('stat-today').textContent = stats.todayAttendance;
-                document.getElementById('stat-week').textContent = stats.weekAttendance;
-                document.getElementById('stat-students').textContent = stats.totalStudents;
             } catch (error) {
                 console.error('Error cargando estadísticas:', error);
-                PE.UI.notify(error.message || 'Error al cargar estadísticas', 'error');
             }
         }
 
@@ -219,7 +207,7 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error(await getApiError(response, 'Error al generar código'));
+                    throw new Error('Error al generar código');
                 }
 
                 const data = await response.json();
@@ -251,7 +239,7 @@
 
             } catch (error) {
                 console.error('Error generando QR:', error);
-                PE.UI.notify(error.message || 'Error al generar código QR', 'error');
+                PE.UI.notify('Error al generar código QR', 'error');
             } finally {
                 btn.disabled = false;
                 btn.textContent = '🔄 Generar Código QR';
@@ -277,7 +265,7 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error(await getApiError(response, 'Error al cargar asistencias'));
+                    throw new Error('Error al cargar asistencias');
                 }
 
                 let attendance = await response.json();

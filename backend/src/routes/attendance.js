@@ -9,48 +9,6 @@ const { query } = require('../database/db');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
-let attendanceSchemaReady = false;
-let attendanceSchemaPromise = null;
-
-async function ensureAttendanceSchema() {
-    if (attendanceSchemaReady) return;
-    if (attendanceSchemaPromise) {
-        await attendanceSchemaPromise;
-        return;
-    }
-
-    attendanceSchemaPromise = (async () => {
-        await query(`
-            CREATE TABLE IF NOT EXISTS attendance (
-                id SERIAL PRIMARY KEY,
-                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-                session_id INTEGER REFERENCES course_sessions(id) ON DELETE SET NULL,
-                verification_code TEXT NOT NULL UNIQUE,
-                date DATE NOT NULL DEFAULT CURRENT_DATE,
-                verified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        `);
-
-        // Compatibilidad con instalaciones previas: permitir registros QR sin usuario asignado.
-        await query('ALTER TABLE attendance ALTER COLUMN user_id DROP NOT NULL');
-
-        await query('CREATE INDEX IF NOT EXISTS idx_attendance_user ON attendance(user_id)');
-        await query('CREATE INDEX IF NOT EXISTS idx_attendance_session ON attendance(session_id)');
-        await query('CREATE INDEX IF NOT EXISTS idx_attendance_date ON attendance(date)');
-        await query('CREATE INDEX IF NOT EXISTS idx_attendance_code ON attendance(verification_code)');
-        await query('CREATE INDEX IF NOT EXISTS idx_attendance_user_date ON attendance(user_id, date)');
-        await query('CREATE UNIQUE INDEX IF NOT EXISTS idx_attendance_unique_daily ON attendance(user_id, date)');
-
-        attendanceSchemaReady = true;
-    })();
-
-    try {
-        await attendanceSchemaPromise;
-    } finally {
-        attendanceSchemaPromise = null;
-    }
-}
 
 /**
  * Generar código de verificación único
@@ -65,7 +23,6 @@ function generateVerificationCode() {
  */
 router.post('/generate', authenticateToken, requireAdmin, async (req, res) => {
     try {
-        await ensureAttendanceSchema();
         const { sessionId } = req.body;
 
         // Obtener fecha actual
@@ -149,7 +106,6 @@ router.post('/generate', authenticateToken, requireAdmin, async (req, res) => {
  */
 router.get('/session/:code', authenticateToken, async (req, res) => {
     try {
-        await ensureAttendanceSchema();
         const code = req.params.code;
 
         const result = await query(`
@@ -198,7 +154,6 @@ router.post('/check-in', authenticateToken, [
     body('verificationCode').notEmpty().withMessage('El código es requerido')
 ], async (req, res) => {
     try {
-        await ensureAttendanceSchema();
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
@@ -270,7 +225,6 @@ router.post('/check-in', authenticateToken, [
  */
 router.get('/', authenticateToken, requireAdmin, async (req, res) => {
     try {
-        await ensureAttendanceSchema();
         const { date, userId, sessionId } = req.query;
 
         let whereClause = [];
@@ -328,7 +282,6 @@ router.get('/', authenticateToken, requireAdmin, async (req, res) => {
  */
 router.get('/stats', authenticateToken, requireAdmin, async (req, res) => {
     try {
-        await ensureAttendanceSchema();
         // Total de estudiantes
         const totalStudents = await query(`
             SELECT COUNT(*) as count FROM users WHERE role = 'student'
