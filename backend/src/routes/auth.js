@@ -363,23 +363,14 @@ router.post('/forgot-password', [
 
         console.log(`[Password Reset] Token for ${email}: ${resetToken}`);
         console.log(`[Password Reset] Reset link: https://www.cognoscencia.com/auth/reset-password.html?token=${resetToken}`);
-
-        let emailSent = false;
         try {
-            emailSent = await sendPasswordResetEmail({
+            await sendPasswordResetEmail({
                 email: user.email,
                 name: user.name,
                 resetLink
             });
         } catch (emailError) {
             console.error('Error enviando email de recuperacion:', emailError);
-        }
-
-        if (isDevelopment) {
-            console.log(`[Password Reset][DEV] Token for ${email}: ${resetToken}`);
-            console.log(`[Password Reset][DEV] Reset link: ${resetLink}`);
-        } else if (!emailSent) {
-            console.error('[Password Reset] SMTP no configurado o fallo de envio en produccion');
         }
 
         if (!isDevelopment) {
@@ -389,9 +380,8 @@ router.post('/forgot-password', [
         res.json({
             message: 'Token de recuperacion generado (modo desarrollo)',
             devToken: resetToken,
-            resetLink,
-            isDevelopment: true,
-            emailSent
+            resetLink: `https://www.cognoscencia.com/auth/reset-password.html?token=${resetToken}`,
+            isDevelopment: true
         });
 
     } catch (error) {
