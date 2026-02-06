@@ -28,9 +28,9 @@ router.get('/students', authenticateToken, requireAdmin, async (req, res) => {
                 u.active,
                 u.created_at as "registro",
                 u.last_login as "ultimo_acceso",
-                (SELECT COUNT(*) FROM submissions WHERE user_id = u.id) as "total_entregas",
-                (SELECT COUNT(*) FROM submissions WHERE user_id = u.id AND status = 'reviewed') as "entregas_corregidas",
-                (SELECT SUM(word_count) FROM submissions WHERE user_id = u.id) as "total_palabras"
+                COALESCE((SELECT COUNT(*) FROM submissions WHERE user_id = u.id), 0) as "total_entregas",
+                COALESCE((SELECT COUNT(*) FROM submissions WHERE user_id = u.id AND status = 'reviewed'), 0) as "entregas_corregidas",
+                COALESCE((SELECT SUM(word_count) FROM submissions WHERE user_id = u.id), 0) as "total_palabras"
             FROM users u
             WHERE u.role = 'student'
             ORDER BY u.name
