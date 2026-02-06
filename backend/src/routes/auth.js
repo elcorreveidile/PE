@@ -370,17 +370,17 @@ router.post('/forgot-password', [
             resetLink
         });
 
+        const logEmailError = (emailError) => {
+            console.error('Error enviando email de recuperacion:', emailError);
+        };
+
         if (!isDevelopment) {
-            sendEmailPromise.catch((emailError) => {
-                console.error('Error enviando email de recuperacion:', emailError);
-            });
+            sendEmailPromise.catch(logEmailError);
 
             return res.json({ message: 'Si el email existe, recibiras instrucciones para restablecer la contrasena' });
         }
 
-        await sendEmailPromise.catch((emailError) => {
-            console.error('Error enviando email de recuperacion:', emailError);
-        });
+        await sendEmailPromise.catch(logEmailError);
 
         res.json({
             message: 'Token de recuperacion generado (modo desarrollo)',
