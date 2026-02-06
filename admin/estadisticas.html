@@ -343,7 +343,7 @@
 
         async function exportStats(format) {
             try {
-                const CONFIG = window.CONFIG || {};
+                const CONFIG = window.PE_CONFIG || {};
                 const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
 
                 if (!token) {

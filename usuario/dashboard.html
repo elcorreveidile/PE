@@ -340,7 +340,8 @@
             }
         });
 
-        async function viewSubmission(id) {
+        // Función global para ver entrega (accesible desde onclick)
+        window.viewSubmission = async function(id) {
             const currentUser = PE.Auth.getCurrentUser();
             if (!currentUser) return;
 
@@ -372,7 +373,7 @@
                     { text: 'Cerrar' }
                 ]);
             }
-        });
+        };
     </script>
 </body>
 </html>
