@@ -5,7 +5,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const { body, validationResult } = require('express-validator');
 const { query } = require('../database/db');
 const { generateToken, authenticateToken } = require('../middleware/auth');
@@ -14,49 +14,43 @@ const { generateToken, authenticateToken } = require('../middleware/auth');
 const router = express.Router();
 
 const FRONTEND_URL = (process.env.FRONTEND_URL || 'https://www.cognoscencia.com').replace(/\/$/, '');
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'noreply@cognoscencia.com';
+
+// Inicializar Resend si hay API key
+let resend;
+if (RESEND_API_KEY) {
+    resend = new Resend(RESEND_API_KEY);
+}
 
 function buildResetLink(token) {
     return `${FRONTEND_URL}/auth/reset-password.html?token=${token}`;
 }
 
 async function sendPasswordResetEmail({ email, name, resetLink }) {
-    const smtpHost = process.env.SMTP_HOST;
-    const smtpPort = Number(process.env.SMTP_PORT || 587);
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
-    const smtpFrom = process.env.SMTP_FROM || smtpUser;
-
-    if (!smtpHost || !smtpUser || !smtpPass || !smtpFrom) {
+    if (!resend) {
+        console.warn('Resend no configurado (RESEND_API_KEY no definida)');
         return false;
     }
 
-    const transporter = nodemailer.createTransport({
-        host: smtpHost,
-        port: smtpPort,
-        secure: process.env.SMTP_SECURE === 'true' || smtpPort === 465,
-        auth: { user: smtpUser, pass: smtpPass }
-    });
-
-    await transporter.sendMail({
-        from: smtpFrom,
-        to: email,
-        subject: 'Restablecer contrasena - Cognoscencia',
-        text: `Hola ${name || ''}.
-
-Para restablecer tu contrasena visita: ${resetLink}
-
-Este enlace expira en 1 hora.
-Si no solicitaste este cambio, ignora este mensaje.`,
-        html: `
-            <p>Hola ${name || ''},</p>
-            <p>Hemos recibido una solicitud para restablecer tu contrasena.</p>
-            <p><a href="${resetLink}">Haz clic aqui para restablecer tu contrasena</a></p>
-            <p>Este enlace expira en 1 hora.</p>
-            <p>Si no solicitaste este cambio, ignora este correo.</p>
-        `
-    });
-
-    return true;
+    try {
+        await resend.emails.send({
+            from: RESEND_FROM_EMAIL,
+            to: email,
+            subject: 'Restablecer contraseña - Cognoscencia',
+            html: `
+                <p>Hola ${name || ''},</p>
+                <p>Hemos recibido una solicitud para restablecer tu contraseña.</p>
+                <p><a href="${resetLink}">Haz clic aquí para restablecer tu contraseña</a></p>
+                <p>Este enlace expira en 1 hora.</p>
+                <p>Si no solicitaste este cambio, ignora este correo.</p>
+            `
+        });
+        return true;
+    } catch (error) {
+        console.error('Error enviando email con Resend:', error);
+        return false;
+    }
 }
 
 /**
