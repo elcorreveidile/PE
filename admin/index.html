@@ -278,7 +278,7 @@
                 studentContainer.innerHTML = '<p class="text-secondary text-center">No hay estudiantes registrados.</p>';
             } else {
                 studentContainer.innerHTML = students.map(s => {
-                    const studentSubmissions = submissions.filter(sub => sub.userId === s.id);
+                    const studentSubmissions = submissions.filter(sub => String(sub.userId) === String(s.id));
                     return `
                         <div class="submission-item">
                             <div class="submission-header">
@@ -312,7 +312,8 @@
         async function reviewSubmission(id) {
             let submissions = await PE.Submissions.getAll();
             submissions = Array.isArray(submissions) ? submissions : [];
-            const submission = submissions.find(s => s.id === id);
+            const targetId = String(id);
+            const submission = submissions.find(s => String(s.id) === targetId);
 
             if (submission) {
                 PE.UI.showModal('Corregir entrega', `

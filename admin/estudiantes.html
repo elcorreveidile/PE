@@ -165,7 +165,7 @@
                     return { total, reviewed, pending };
                 }
 
-                const userSubmissions = submissions.filter(sub => sub.userId === current.id);
+                const userSubmissions = submissions.filter(sub => String(sub.userId) === String(current.id));
                 const reviewed = userSubmissions.filter(sub => sub.status === 'reviewed');
                 const pending = userSubmissions.filter(sub => sub.status === 'pending');
                 return {
@@ -423,10 +423,10 @@
                 }
 
                 const storedUsers = Utils.storage.get('users') || [];
-                const selected = storedUsers.find(u => u.id === id);
+                const selected = storedUsers.find(u => String(u.id) === String(id));
                 let localSubmissions = await PE.Submissions.getAll();
                 localSubmissions = Array.isArray(localSubmissions) ? localSubmissions : [];
-                localSubmissions = localSubmissions.filter(s => s.userId === id);
+                localSubmissions = localSubmissions.filter(s => String(s.userId) === String(id));
 
                 if (selected) {
                     const submissionsList = localSubmissions.length === 0
