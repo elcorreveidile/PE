@@ -363,22 +363,25 @@ router.post('/forgot-password', [
 
         console.log(`[Password Reset] Token for ${email}: ${resetToken}`);
         console.log(`[Password Reset] Reset link: https://www.cognoscencia.com/auth/reset-password.html?token=${resetToken}`);
-        try {
-            await sendPasswordResetEmail({
-                email: user.email,
-                name: user.name,
-                resetLink
+
+        const sendEmailPromise = sendPasswordResetEmail({
+            email: user.email,
+            name: user.name,
+            resetLink
+        });
+
+        if (!isDevelopment) {
+            sendEmailPromise.catch((emailError) => {
+                console.error('Error enviando email de recuperacion:', emailError);
             });
+
+            return res.json({ message: 'Si el email existe, recibiras instrucciones para restablecer la contrasena' });
+        }
+
+        try {
+            await sendEmailPromise;
         } catch (emailError) {
             console.error('Error enviando email de recuperacion:', emailError);
-        }
-
-        if (!isDevelopment) {
-            return res.json({ message: 'Si el email existe, recibiras instrucciones para restablecer la contrasena' });
-        }
-
-        if (!isDevelopment) {
-            return res.json({ message: 'Si el email existe, recibiras instrucciones para restablecer la contrasena' });
         }
 
         res.json({

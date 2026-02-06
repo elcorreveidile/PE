@@ -31,13 +31,30 @@ app.use(helmet({
 }));
 
 // CORS - permitir frontend
-const corsOptions = {
-    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [
+const configuredOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim()).filter(Boolean)
+    : [
         'http://localhost:3000',
         'http://localhost:5500',
         'http://127.0.0.1:5500',
         'https://elcorreveidile.github.io'
-    ],
+    ];
+
+const defaultOrigins = [
+    'https://www.cognoscencia.com',
+    'https://cognoscencia.com'
+];
+
+const allowedOrigins = new Set([...configuredOrigins, ...defaultOrigins]);
+
+const corsOptions = {
+    origin(origin, callback) {
+        if (!origin || allowedOrigins.has(origin)) {
+            return callback(null, true);
+        }
+
+        return callback(new Error(`Origin ${origin} is not allowed by Access-Control-Allow-Origin`));
+    },
     credentials: true,
     optionsSuccessStatus: 200
 };
