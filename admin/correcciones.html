@@ -73,13 +73,56 @@
                         </div>
                     </div>
 
-                    <!-- Filtros -->
+                    <!-- Filtros avanzados -->
                     <div class="card mb-4">
                         <div class="card-body">
-                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                                <button class="btn btn-sm btn-primary filter-btn active" data-filter="pending">Pendientes</button>
-                                <button class="btn btn-sm btn-outline filter-btn" data-filter="reviewed">Corregidas</button>
-                                <button class="btn btn-sm btn-outline filter-btn" data-filter="all">Todas</button>
+                            <!-- Filtros principales -->
+                            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                                <button class="btn btn-sm btn-primary filter-btn active" data-filter="pending">
+                                    📝 Pendientes <span class="badge badge-light ml-1" id="count-pending">0</span>
+                                </button>
+                                <button class="btn btn-sm btn-outline filter-btn" data-filter="recent">
+                                    🕒 Recientes (7 días) <span class="badge badge-light ml-1" id="count-recent">0</span>
+                                </button>
+                                <button class="btn btn-sm btn-outline filter-btn" data-filter="reviewed">
+                                    ✓ Corregidas (archivo) <span class="badge badge-light ml-1" id="count-reviewed">0</span>
+                                </button>
+                                <button class="btn btn-sm btn-outline filter-btn" data-filter="all">
+                                    📋 Todas
+                                </button>
+                            </div>
+
+                            <!-- Filtros adicionales -->
+                            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                                <input type="text" id="search-input" class="form-control" placeholder="🔍 Buscar por estudiante o actividad..." style="flex: 1; min-width: 250px; max-width: 400px;">
+
+                                <select id="session-filter" class="form-control form-select" style="width: auto;">
+                                    <option value="">Todas las sesiones</option>
+                                </select>
+
+                                <select id="student-filter" class="form-control form-select" style="width: auto;">
+                                    <option value="">Todos los estudiantes</option>
+                                </select>
+
+                                <select id="limit-select" class="form-control form-select" style="width: auto;">
+                                    <option value="20">20 por página</option>
+                                    <option value="50">50 por página</option>
+                                    <option value="100">100 por página</option>
+                                </select>
+
+                                <button class="btn btn-sm btn-outline" onclick="resetFilters()">🔄 Limpiar filtros</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Información de paginación -->
+                    <div class="card mb-3" id="pagination-info" style="display: none;">
+                        <div class="card-body" style="padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center;">
+                            <span class="text-secondary" id="pagination-text">Mostrando 1-20 de 100</span>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn btn-sm btn-outline" id="prev-page" disabled>← Anterior</button>
+                                <span class="text-secondary" style="padding: 0.25rem 0.5rem;" id="page-indicator">Página 1</span>
+                                <button class="btn btn-sm btn-outline" id="next-page">Siguiente →</button>
                             </div>
                         </div>
                     </div>
@@ -106,6 +149,14 @@
     </script>
     <script src="../js/app.js"></script>
     <script>
+        // Estado global de la aplicación
+        let allSubmissions = [];
+        let allUsers = [];
+        let currentPage = 1;
+        let itemsPerPage = 20;
+        let currentFilter = 'pending';
+        let filteredSubmissions = [];
+
         document.addEventListener('DOMContentLoaded', async () => {
             const user = PE.Auth.getCurrentUser();
             if (!user || user.role !== 'admin') {
@@ -113,70 +164,71 @@
                 return;
             }
 
-            let allSubmissions = await PE.Submissions.getAll();
+            // Cargar datos
+            await loadData();
 
-            allSubmissions = Array.isArray(allSubmissions) ? allSubmissions : [];
-            const pending = allSubmissions.filter(s => s.status === 'pending');
-            const reviewed = allSubmissions.filter(s => s.status === 'reviewed');
+            // Configurar event listeners
+            setupEventListeners();
 
-            document.getElementById('stat-total').textContent = allSubmissions.length;
-            document.getElementById('stat-pending').textContent = pending.length;
-            document.getElementById('stat-reviewed').textContent = reviewed.length;
+            // Render inicial
+            applyFilters();
+        });
 
-            async function renderSubmissions(filter = 'pending') {
-                let submissions = allSubmissions;
-                if (filter === 'pending') submissions = pending;
-                else if (filter === 'reviewed') submissions = reviewed;
+        async function loadData() {
+            try {
+                allSubmissions = await PE.Submissions.getAll();
+                allSubmissions = Array.isArray(allSubmissions) ? allSubmissions : [];
 
-                const container = document.getElementById('submissions-list');
+                allUsers = await PE.API.get('/users');
+                allUsers = Array.isArray(allUsers) ? allUsers.filter(u => (u.role || 'student') !== 'admin') : [];
 
-                if (submissions.length === 0) {
-                    container.innerHTML = `
-                        <div class="card">
-                            <div class="card-body text-center">
-                                <p class="text-secondary">No hay entregas ${filter === 'pending' ? 'pendientes de corrección' : 'con este filtro'}.</p>
-                            </div>
-                        </div>
-                    `;
-                    return;
-                }
+                // Actualizar contadores
+                const pending = allSubmissions.filter(s => s.status === 'pending');
+                const recent = allSubmissions.filter(s => {
+                    const daysDiff = (Date.now() - new Date(s.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+                    return daysDiff <= 7;
+                });
+                const reviewed = allSubmissions.filter(s => s.status === 'reviewed');
 
-                container.innerHTML = submissions.map(s => `
-                    <div class="card mb-3 submission-card ${s.status === 'reviewed' ? 'reviewed' : ''}">
-                        <div class="card-body">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
-                                <div>
-                                    <h4 style="margin: 0 0 0.5rem;">${PE.Utils.escapeHtml(s.activityTitle)}</h4>
-                                    <p class="text-secondary mb-1">
-                                        <strong>Estudiante:</strong> ${PE.Utils.escapeHtml(s.userName || 'Estudiante')}
-                                    </p>
-                                    <p class="text-secondary mb-2">
-                                        Entregado: ${PE.Utils.formatDate(s.createdAt, 'long')} | ${s.wordCount} palabras
-                                    </p>
-                                    <span class="badge badge-${s.status === 'reviewed' ? 'success' : 'warning'}">
-                                        ${s.status === 'reviewed' ? 'Corregido' : 'Pendiente'}
-                                    </span>
-                                </div>
-                                <button class="btn ${s.status === 'reviewed' ? 'btn-outline' : 'btn-primary'}" onclick="reviewSubmission('${s.id}')">
-                                    ${s.status === 'reviewed' ? 'Ver/Editar' : 'Corregir'}
-                                </button>
-                            </div>
-                            <div style="background: var(--bg-light); padding: 1rem; border-radius: 0.5rem; margin-top: 1rem; max-height: 150px; overflow-y: auto;">
-                                ${s.content.substring(0, 500)}${s.content.length > 500 ? '...' : ''}
-                            </div>
-                            ${s.feedback ? `
-                                <div class="alert alert-success mt-3">
-                                    <strong>Tu corrección:</strong> ${PE.Utils.escapeHtml(s.feedback)}
-                                    ${s.grade ? ` | <strong>Calificación:</strong> ${s.grade}` : ''}
-                                </div>
-                            ` : ''}
-                        </div>
-                    </div>
-                `).join('');
+                document.getElementById('stat-total').textContent = allSubmissions.length;
+                document.getElementById('stat-pending').textContent = pending.length;
+                document.getElementById('stat-reviewed').textContent = reviewed.length;
+                document.getElementById('count-pending').textContent = pending.length;
+                document.getElementById('count-recent').textContent = recent.length;
+                document.getElementById('count-reviewed').textContent = reviewed.length;
+
+                // Poblar selects
+                populateFilters();
+
+            } catch (error) {
+                console.error('Error cargando datos:', error);
+                PE.UI.notify('Error al cargar los datos', 'error');
             }
+        }
 
-            renderSubmissions();
+        function populateFilters() {
+            // Poblar filtro de sesiones
+            const sessionFilter = document.getElementById('session-filter');
+            const sessions = PE.CourseData.sessions;
+            sessions.forEach(session => {
+                const option = document.createElement('option');
+                option.value = session.id;
+                option.textContent = `Sesión ${session.id}: ${session.title}`;
+                sessionFilter.appendChild(option);
+            });
 
+            // Poblar filtro de estudiantes
+            const studentFilter = document.getElementById('student-filter');
+            allUsers.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.id;
+                option.textContent = user.name;
+                studentFilter.appendChild(option);
+            });
+        }
+
+        function setupEventListeners() {
+            // Filtros principales
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     document.querySelectorAll('.filter-btn').forEach(b => {
@@ -185,31 +237,193 @@
                     });
                     btn.classList.add('active', 'btn-primary');
                     btn.classList.remove('btn-outline');
-                    renderSubmissions(btn.dataset.filter);
+                    currentFilter = btn.dataset.filter;
+                    currentPage = 1;
+                    applyFilters();
                 });
             });
-        });
+
+            // Búsqueda
+            document.getElementById('search-input').addEventListener('input', PE.Utils.debounce(() => {
+                currentPage = 1;
+                applyFilters();
+            }, 300));
+
+            // Filtro de sesión
+            document.getElementById('session-filter').addEventListener('change', () => {
+                currentPage = 1;
+                applyFilters();
+            });
+
+            // Filtro de estudiante
+            document.getElementById('student-filter').addEventListener('change', () => {
+                currentPage = 1;
+                applyFilters();
+            });
+
+            // Límite por página
+            document.getElementById('limit-select').addEventListener('change', (e) => {
+                itemsPerPage = parseInt(e.target.value);
+                currentPage = 1;
+                applyFilters();
+            });
+
+            // Paginación
+            document.getElementById('prev-page').addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderPage();
+                }
+            });
+
+            document.getElementById('next-page').addEventListener('click', () => {
+                const totalPages = Math.ceil(filteredSubmissions.length / itemsPerPage);
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderPage();
+                }
+            });
+        }
+
+        function applyFilters() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const sessionFilter = document.getElementById('session-filter').value;
+            const studentFilter = document.getElementById('student-filter').value;
+
+            filteredSubmissions = allSubmissions.filter(s => {
+                // Filtro principal
+                if (currentFilter === 'pending' && s.status !== 'pending') return false;
+                if (currentFilter === 'reviewed' && s.status !== 'reviewed') return false;
+                if (currentFilter === 'recent') {
+                    const daysDiff = (Date.now() - new Date(s.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+                    if (daysDiff > 7) return false;
+                }
+
+                // Búsqueda
+                if (searchTerm) {
+                    const activityMatch = (s.activityTitle || '').toLowerCase().includes(searchTerm);
+                    const studentMatch = (s.userName || '').toLowerCase().includes(searchTerm);
+                    if (!activityMatch && !studentMatch) return false;
+                }
+
+                // Filtro de sesión
+                if (sessionFilter && String(s.sessionId) !== sessionFilter) return false;
+
+                // Filtro de estudiante
+                if (studentFilter && String(s.userId) !== studentFilter) return false;
+
+                return true;
+            });
+
+            renderPage();
+        }
+
+        function renderPage() {
+            const container = document.getElementById('submissions-list');
+            const paginationInfo = document.getElementById('pagination-info');
+
+            if (filteredSubmissions.length === 0) {
+                container.innerHTML = `
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <p class="text-secondary">No hay entregas con estos filtros.</p>
+                            <button class="btn btn-outline mt-3" onclick="resetFilters()">Limpiar filtros</button>
+                        </div>
+                    </div>
+                `;
+                paginationInfo.style.display = 'none';
+                return;
+            }
+
+            // Calcular paginación
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const paginatedSubmissions = filteredSubmissions.slice(startIndex, endIndex);
+            const totalPages = Math.ceil(filteredSubmissions.length / itemsPerPage);
+
+            // Mostrar info de paginación
+            paginationInfo.style.display = 'block';
+            document.getElementById('pagination-text').textContent =
+                `Mostrando ${startIndex + 1}-${Math.min(endIndex, filteredSubmissions.length)} de ${filteredSubmissions.length}`;
+            document.getElementById('page-indicator').textContent = `Página ${currentPage} de ${totalPages}`;
+            document.getElementById('prev-page').disabled = currentPage === 1;
+            document.getElementById('next-page').disabled = currentPage === totalPages;
+
+            // Renderizar entregas
+            container.innerHTML = paginatedSubmissions.map(s => `
+                <div class="card mb-3 submission-card ${s.status === 'reviewed' ? 'reviewed' : ''}">
+                    <div class="card-body">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                            <div style="flex: 1; min-width: 300px;">
+                                <h4 style="margin: 0 0 0.5rem;">${PE.Utils.escapeHtml(s.activityTitle)}</h4>
+                                <p class="text-secondary mb-1">
+                                    <strong>Estudiante:</strong> ${PE.Utils.escapeHtml(s.userName || 'Estudiante')}
+                                </p>
+                                <p class="text-secondary mb-2">
+                                    📅 Entregado: ${PE.Utils.formatDate(s.createdAt, 'long')} |
+                                    📝 ${s.wordCount} palabras
+                                    ${s.sessionId ? ` | 🎓 Sesión ${s.sessionId}` : ''}
+                                </p>
+                                <span class="badge badge-${s.status === 'reviewed' ? 'success' : 'warning'}">
+                                    ${s.status === 'reviewed' ? '✓ Corregido' : '📝 Pendiente'}
+                                </span>
+                            </div>
+                            <button class="btn ${s.status === 'reviewed' ? 'btn-outline' : 'btn-primary'}" onclick="reviewSubmission('${s.id}')">
+                                ${s.status === 'reviewed' ? '👁️ Ver/Editar' : '✍️ Corregir'}
+                            </button>
+                        </div>
+                        <div style="background: var(--bg-light); padding: 1rem; border-radius: 0.5rem; margin-top: 1rem; max-height: 150px; overflow-y: auto;">
+                            ${s.content.substring(0, 500)}${s.content.length > 500 ? '...' : ''}
+                        </div>
+                        ${s.feedback ? `
+                            <div class="alert alert-success mt-3">
+                                <strong>💬 Tu corrección:</strong> ${PE.Utils.escapeHtml(s.feedback)}
+                                ${s.grade ? ` | <strong>⭐ Calificación:</strong> ${s.grade}` : ''}
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function resetFilters() {
+            document.getElementById('search-input').value = '';
+            document.getElementById('session-filter').value = '';
+            document.getElementById('student-filter').value = '';
+            document.getElementById('limit-select').value = '20';
+            itemsPerPage = 20;
+            currentPage = 1;
+            currentFilter = 'pending';
+
+            // Resetear botones de filtro
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                b.classList.remove('active', 'btn-primary');
+                b.classList.add('btn-outline');
+            });
+            document.querySelector('[data-filter="pending"]').classList.add('active', 'btn-primary');
+            document.querySelector('[data-filter="pending"]').classList.remove('btn-outline');
+
+            applyFilters();
+        }
 
         async function reviewSubmission(id) {
-            let submissions = await PE.Submissions.getAll();
-            submissions = Array.isArray(submissions) ? submissions : [];
             const targetId = String(id);
-            const s = submissions.find(sub => String(sub.id) === targetId);
+            const s = allSubmissions.find(sub => String(sub.id) === targetId);
 
             if (s) {
-                PE.UI.showModal('Corregir: ' + s.activityTitle, `
-                    <p><strong>Estudiante:</strong> ${PE.Utils.escapeHtml(s.userName || 'Estudiante')}</p>
-                    <p><strong>Fecha:</strong> ${PE.Utils.formatDate(s.createdAt, 'long')}</p>
-                    <div style="background: var(--bg-light); padding: 1rem; border-radius: 0.5rem; max-height: 250px; overflow-y: auto; margin-bottom: 1rem;">
+                PE.UI.showModal('✍️ Corregir: ' + s.activityTitle, `
+                    <p><strong>👤 Estudiante:</strong> ${PE.Utils.escapeHtml(s.userName || 'Estudiante')}</p>
+                    <p><strong>📅 Fecha:</strong> ${PE.Utils.formatDate(s.createdAt, 'long')}</p>
+                    <div style="background: var(--bg-light); padding: 1rem; border-radius: 0.5rem; max-height: 300px; overflow-y: auto; margin-bottom: 1rem; border: 1px solid var(--border-color);">
                         ${s.content}
-                    </div>
-                    <p class="text-secondary">${s.wordCount} palabras</p>
+                            </div>
+                    <p class="text-secondary mb-2">📝 ${s.wordCount} palabras</p>
                     <div class="form-group">
-                        <label class="form-label">Retroalimentación</label>
-                        <textarea id="feedback-text" class="form-control" rows="5">${s.feedback || ''}</textarea>
+                        <label class="form-label">💬 Retroalimentación</label>
+                        <textarea id="feedback-text" class="form-control" rows="6" placeholder="Escribe tu corrección y comentarios...">${s.feedback || ''}</textarea>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Calificación</label>
+                        <label class="form-label">⭐ Calificación</label>
                         <select id="feedback-grade" class="form-control form-select">
                             <option value="">Sin calificación</option>
                             <option value="Excelente" ${s.grade === 'Excelente' ? 'selected' : ''}>Excelente</option>
@@ -222,7 +436,7 @@
                 `, [
                     { text: 'Cancelar' },
                     {
-                        text: 'Guardar corrección',
+                        text: '💾 Guardar corrección',
                         class: 'btn-primary',
                         callback: async () => {
                             const feedback = document.getElementById('feedback-text').value;
@@ -232,7 +446,7 @@
                                 return;
                             }
                             await PE.Submissions.addFeedback(id, feedback, grade);
-                            PE.UI.notify('Corrección guardada', 'success');
+                            PE.UI.notify('✅ Corrección guardada correctamente', 'success');
                             location.reload();
                         },
                         close: false
