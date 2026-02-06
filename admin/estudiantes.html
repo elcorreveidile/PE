@@ -125,19 +125,34 @@
                 window.location.href = basePath + '/auth/login.html';
                 return;
             }
-            await API.ensureAvailability();
+
+            const API = PE.API;
+            const CONFIG = window.CONFIG || { USE_API: false };
+            const Utils = PE.Utils;
+
+            try {
+                await API.ensureAvailability();
+                CONFIG.USE_API = true;
+            } catch (e) {
+                console.error('API no disponible:', e);
+            }
 
             let users = [];
             let submissions = [];
 
             async function loadData() {
-                if (CONFIG.USE_API) {
-                    users = await API.get('/users');
-                    submissions = [];
-                } else {
-                    users = Utils.storage.get('users') || [];
-                    submissions = await PE.Submissions.getAll();
-                    submissions = Array.isArray(submissions) ? submissions : [];
+                try {
+                    if (CONFIG.USE_API) {
+                        users = await API.get('/users');
+                        submissions = [];
+                    } else {
+                        users = Utils.storage.get('users') || [];
+                        submissions = await PE.Submissions.getAll();
+                        submissions = Array.isArray(submissions) ? submissions : [];
+                    }
+                } catch (e) {
+                    console.error('Error cargando datos:', e);
+                    users = [];
                 }
                 document.getElementById('total-users').textContent = users.length + ' usuarios';
             }
