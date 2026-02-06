@@ -496,8 +496,8 @@
                 correctLevel: QRCode.CorrectLevel.H
             });
 
-            // QR de asistencia
-            const attendanceUrl = loc.origin + '/asistencia';
+            // QR de asistencia (siempre en la raíz del dominio, sin /PE/)
+            const attendanceUrl = window.location.origin + '/asistencia';
             const attContainer = document.getElementById('qr-attendance');
             attContainer.innerHTML = '';
             new QRCode(attContainer, {
