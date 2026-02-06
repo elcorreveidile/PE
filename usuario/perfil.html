@@ -201,7 +201,7 @@
 
                 // Verificar contrasena actual
                 const users = PE.Utils.storage.get('users') || [];
-                const fullUser = users.find(u => u.id === user.id);
+                const fullUser = users.find(u => String(u.id) === String(user.id));
 
                 if (!fullUser || fullUser.password !== currentPassword) {
                     messageDiv.innerHTML = '<div class="alert alert-error">La contrasena actual es incorrecta</div>';
