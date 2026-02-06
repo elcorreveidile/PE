@@ -18,6 +18,7 @@ const usersRoutes = require('./routes/users');
 const submissionsRoutes = require('./routes/submissions');
 const notificationsRoutes = require('./routes/notifications');
 const exportRoutes = require('./routes/export');
+const attendanceRoutes = require('./routes/attendance');
 
 // Crear aplicación Express
 const app = express();
@@ -90,6 +91,7 @@ app.use('/api/submissions', submissionsRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/admin/notifications', notificationsRoutes);
 app.use('/api/admin/export', exportRoutes);
+app.use('/api/attendance', attendanceRoutes);
 
 // Ruta de health check
 app.get('/api/health', (req, res) => {
