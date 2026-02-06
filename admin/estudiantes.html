@@ -66,6 +66,8 @@
                         </div>
                         <div style="display: flex; gap: 0.75rem; align-items: center;">
                             <button class="btn btn-primary" id="create-user-btn">Crear usuario</button>
+                            <button class="btn btn-outline" onclick="exportData('csv')" title="Exportar a CSV">📊 CSV</button>
+                            <button class="btn btn-outline" onclick="exportData('xlsx')" title="Exportar a Excel">📈 Excel</button>
                             <span class="badge badge-primary" id="total-users">0 usuarios</span>
                         </div>
                     </div>
@@ -491,6 +493,37 @@
                         PE.UI.notify(error.message || 'Error al eliminar usuario', 'error');
                     }
                 });
+            };
+
+            // Función de exportación (global para que pueda ser llamada desde el HTML)
+            window.exportData = async (format) => {
+                try {
+                    const response = await fetch(`${CONFIG.API_URL}/api/admin/export/students?format=${format}`, {
+                        headers: {
+                            'Authorization': `Bearer ${PE.Auth.getToken()}`
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Error al exportar datos');
+                    }
+
+                    // Descargar archivo
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `estudiantes_${new Date().toISOString().split('T')[0]}.${format}`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+
+                    PE.UI.notify(`Datos exportados a ${format.toUpperCase()} correctamente`, 'success');
+                } catch (error) {
+                    console.error('Error exportando:', error);
+                    PE.UI.notify('Error al exportar datos', 'error');
+                }
             };
         });
     </script>

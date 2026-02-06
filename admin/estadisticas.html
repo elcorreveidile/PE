@@ -69,7 +69,8 @@
                             <h1 style="margin-bottom: 0.25rem;">Estadisticas del curso</h1>
                             <p class="text-secondary mb-0">Metricas y analisis del progreso general</p>
                         </div>
-                        <button class="btn btn-outline" onclick="exportStats()">Exportar informe</button>
+                        <button class="btn btn-outline" onclick="exportStats('csv')" title="Exportar a CSV">📊 CSV</button>
+                        <button class="btn btn-outline" onclick="exportStats('xlsx')" title="Exportar a Excel">📈 Excel</button>
                     </div>
 
                     <!-- Estadisticas principales -->
@@ -340,58 +341,34 @@
             }).join('');
         });
 
-        async function exportStats() {
-            const API = PE.API;
-            const CONFIG = window.CONFIG || { USE_API: false };
-
-            let users = [];
-            let submissions = [];
-
+        async function exportStats(format) {
             try {
-                if (CONFIG.USE_API) {
-                    users = await API.get('/users');
-                    submissions = await PE.Submissions.getAll();
-                } else {
-                    users = JSON.parse(localStorage.getItem('pe_c2_users') || '[]');
-                    submissions = await PE.Submissions.getAll();
+                const response = await fetch(`${window.CONFIG.API_URL}/api/admin/export/stats?format=${format}`, {
+                    headers: {
+                        'Authorization': `Bearer ${PE.Auth.getToken()}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error al exportar estadísticas');
                 }
-            } catch (e) {
-                console.error('Error cargando datos:', e);
-                users = [];
-                submissions = [];
+
+                // Descargar archivo
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `estadisticas_${new Date().toISOString().split('T')[0]}.${format}`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                PE.UI.notify(`Estadísticas exportadas a ${format.toUpperCase()} correctamente`, 'success');
+            } catch (error) {
+                console.error('Error exportando:', error);
+                PE.UI.notify('Error al exportar estadísticas', 'error');
             }
-
-            submissions = Array.isArray(submissions) ? submissions : [];
-            const students = users.filter(u => (u.role || 'student') !== 'admin');
-            const progress = PE.CourseData.getCourseProgress();
-
-            const report = {
-                fecha: new Date().toISOString(),
-                curso: 'Produccion Escrita C2 - CLM UGR',
-                resumen: {
-                    estudiantes: students.length,
-                    entregas_totales: submissions.length,
-                    entregas_corregidas: submissions.filter(s => s.status === 'reviewed').length,
-                    entregas_pendientes: submissions.filter(s => s.status === 'pending').length,
-                    palabras_totales: submissions.reduce((sum, s) => sum + (s.word_count || s.wordCount || 0), 0),
-                    progreso_curso: progress.percentage + '%'
-                },
-                estudiantes: students.map(s => ({
-                    nombre: s.name,
-                    email: s.email,
-                    nivel: s.level || 'C2',
-                    entregas: submissions.filter(sub => String(sub.user_id || sub.userId) === String(s.id)).length
-                }))
-            };
-
-            const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'informe_estadisticas_' + new Date().toISOString().split('T')[0] + '.json';
-            a.click();
-
-            PE.UI.notify('Informe exportado correctamente', 'success');
         }
     </script>
 </body>
