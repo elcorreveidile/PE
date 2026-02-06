@@ -334,13 +334,14 @@ router.post('/forgot-password', [
         const { email } = req.body;
 
         const isDevelopment = process.env.NODE_ENV !== 'production';
+        const neutralMessage = 'Si el email existe, recibiras instrucciones para restablecer la contrasena';
 
         // Buscar usuario
         const result = await query('SELECT id, email, name FROM users WHERE email = $1', [email]);
 
         if (result.rows.length === 0) {
             // Por seguridad, no revelamos si el email existe
-            return res.json({ message: 'Si el email existe, recibiras instrucciones para restablecer la contrasena' });
+            return res.json({ message: neutralMessage });
         }
 
         const user = result.rows[0];
@@ -380,7 +381,7 @@ router.post('/forgot-password', [
         }
 
         if (!isDevelopment) {
-            return res.json({ message: 'Si el email existe, recibiras instrucciones para restablecer la contrasena' });
+            return res.json({ message: neutralMessage });
         }
 
         res.json({
