@@ -378,11 +378,9 @@ router.post('/forgot-password', [
             return res.json({ message: 'Si el email existe, recibiras instrucciones para restablecer la contrasena' });
         }
 
-        try {
-            await sendEmailPromise;
-        } catch (emailError) {
+        await sendEmailPromise.catch((emailError) => {
             console.error('Error enviando email de recuperacion:', emailError);
-        }
+        });
 
         res.json({
             message: 'Token de recuperacion generado (modo desarrollo)',
