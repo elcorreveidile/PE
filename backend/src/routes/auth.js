@@ -364,15 +364,12 @@ router.post('/forgot-password', [
         console.log(`[Password Reset] Token for ${email}: ${resetToken}`);
         console.log(`[Password Reset] Reset link: https://www.cognoscencia.com/auth/reset-password.html?token=${resetToken}`);
         try {
-            const emailDispatched = await sendPasswordResetEmail({
+            await sendPasswordResetEmail({
                 email: user.email,
                 name: user.name,
                 resetLink
             });
 
-            if (!emailDispatched) {
-                console.error('[Password Reset] SMTP no configurado: define SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS/SMTP_FROM');
-            }
         } catch (emailError) {
             console.error('Error enviando email de recuperacion:', emailError);
         }
