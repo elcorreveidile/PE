@@ -285,15 +285,14 @@ router.post('/forgot-password', [
 
         const { email } = req.body;
 
+        const isDevelopment = process.env.NODE_ENV !== 'production';
+
         // Buscar usuario
         const result = await query('SELECT id, email, name FROM users WHERE email = $1', [email]);
 
         if (result.rows.length === 0) {
             // Por seguridad, no revelamos si el email existe
-            return res.json({
-                message: 'Si el email existe, se ha enviado un enlace de recuperacion',
-                devToken: null
-            });
+            return res.json({ message: 'Si el email existe, recibiras instrucciones para restablecer la contrasena' });
         }
 
         const user = result.rows[0];
@@ -313,15 +312,18 @@ router.post('/forgot-password', [
             VALUES ($1, $2, $3)
         `, [user.id, resetToken, expiresAt]);
 
-        // En desarrollo, devolver el token directamente
-        // En produccion, aqui se enviaria un email con el enlace
         console.log(`[Password Reset] Token for ${email}: ${resetToken}`);
         console.log(`[Password Reset] Reset link: https://www.cognoscencia.com/auth/reset-password.html?token=${resetToken}`);
 
+        if (!isDevelopment) {
+            return res.json({ message: 'Si el email existe, recibiras instrucciones para restablecer la contrasena' });
+        }
+
         res.json({
-            message: 'Se ha generado un token de recuperacion',
+            message: 'Token de recuperacion generado (modo desarrollo)',
             devToken: resetToken,
-            resetLink: `https://www.cognoscencia.com/auth/reset-password.html?token=${resetToken}`
+            resetLink: `https://www.cognoscencia.com/auth/reset-password.html?token=${resetToken}`,
+            isDevelopment: true
         });
 
     } catch (error) {
