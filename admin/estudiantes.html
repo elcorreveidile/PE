@@ -498,36 +498,58 @@
             // Función de exportación (global para que pueda ser llamada desde el HTML)
             window.exportData = async (format) => {
                 try {
+                    console.log('[EXPORT] Iniciando exportación con formato:', format);
+
                     const token = Utils.storage.get('token');
+                    console.log('[EXPORT] Token obtenido:', token ? 'SÍ' : 'NO');
+
                     if (!token) {
                         throw new Error('No hay sesión activa');
                     }
 
-                    const response = await fetch(`${CONFIG.API_URL}/api/admin/export/students?format=${format}`, {
+                    const url = `${CONFIG.API_URL}/api/admin/export/students?format=${format}`;
+                    console.log('[EXPORT] URL de petición:', url);
+
+                    const response = await fetch(url, {
                         headers: {
                             'Authorization': `Bearer ${token}`
                         }
                     });
 
+                    console.log('[EXPORT] Respuesta status:', response.status);
+                    console.log('[EXPORT] Respuesta ok:', response.ok);
+
                     if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({}));
-                        throw new Error(errorData.error || 'Error al exportar datos');
+                        const errorText = await response.text();
+                        console.error('[EXPORT] Error response:', errorText);
+                        let errorData;
+                        try {
+                            errorData = JSON.parse(errorText);
+                        } catch {
+                            errorData = { error: errorText };
+                        }
+                        throw new Error(errorData.error || `Error ${response.status}: ${errorText}`);
                     }
 
                     // Descargar archivo
                     const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
+                    console.log('[EXPORT] Blob type:', blob.type);
+                    console.log('[EXPORT] Blob size:', blob.size);
+
+                    const downloadUrl = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
-                    a.href = url;
+                    a.href = downloadUrl;
                     a.download = `estudiantes_${new Date().toISOString().split('T')[0]}.${format}`;
                     document.body.appendChild(a);
                     a.click();
-                    window.URL.revokeObjectURL(url);
+                    window.URL.revokeObjectURL(downloadUrl);
                     document.body.removeChild(a);
 
+                    console.log('[EXPORT] Archivo descargado correctamente');
                     PE.UI.notify(`Datos exportados a ${format.toUpperCase()} correctamente`, 'success');
                 } catch (error) {
-                    console.error('Error exportando:', error);
+                    console.error('[EXPORT] Error completo:', error);
+                    console.error('[EXPORT] Error stack:', error.stack);
                     PE.UI.notify(error.message || 'Error al exportar datos', 'error');
                 }
             };
