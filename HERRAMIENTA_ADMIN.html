@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restablecer Admin</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
+        h1 { color: #333; }
+        .section { background: #f9f9f9; padding: 20px; margin: 20px 0; border-radius: 8px; }
+        button { padding: 12px 24px; font-size: 16px; cursor: pointer; margin: 10px 5px; }
+        .btn-primary { background: #007bff; color: white; border: none; border-radius: 4px; }
+        .btn-warning { background: #ff9800; color: white; border: none; border-radius: 4px; }
+        .btn-success { background: #28a745; color: white; border: none; border-radius: 4px; }
+        input { padding: 10px; font-size: 16px; width: 300px; margin: 5px; }
+        #resultado { background: #f5f5f5; padding: 15px; border-radius: 5px; margin-top: 20px; white-space: pre-wrap; font-family: monospace; }
+        .success { color: #28a745; font-weight: bold; }
+        .error { color: #dc3545; font-weight: bold; }
+        .info { color: #17a2b8; }
+    </style>
+</head>
+<body>
+    <h1>🔑 Herramienta de Administración</h1>
+
+    <div class="section">
+        <h2>Opción 1: Verificar Admin Existente</h2>
+        <p>Verifica si el usuario admin existe en la base de datos</p>
+        <button class="btn-primary" onclick="verificarAdmin()">1. Verificar Admin</button>
+    </div>
+
+    <div class="section">
+        <h2>Opción 2: Crear Nuevo Admin</h2>
+        <p>Crea un usuario admin nuevo (si no existe o la contraseña se perdió)</p>
+        <input type="email" id="email" value="benitezl@go.ugr.es" placeholder="Email del admin">
+        <input type="password" id="password" value="admin123" placeholder="Contraseña">
+        <button class="btn-success" onclick="crearAdmin()">2. Crear Admin</button>
+    </div>
+
+    <div class="section">
+        <h2>Opción 3: Probar Login</h2>
+        <p>Intenta hacer login con las credenciales</p>
+        <button class="btn-warning" onclick="probarLogin()">3. Probar Login</button>
+    </div>
+
+    <div id="resultado"></div>
+
+    <script>
+        const API_URL = 'https://produccion-escrita-c2-api-production.up.railway.app';
+
+        function log(msg, type = '') {
+            const resultado = document.getElementById('resultado');
+            resultado.innerHTML += `<div class="${type}">${msg}</div>`;
+            resultado.scrollTop = resultado.scrollHeight;
+        }
+
+        async function verificarAdmin() {
+            document.getElementById('resultado').innerHTML = '';
+            log('🔍 Verificando si existe admin...', 'info');
+
+            try {
+                const response = await fetch(API_URL + '/api/auth/register', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        email: 'test-admin-check@example.com',
+                        password: 'test123456',
+                        name: 'Test',
+                        level: 'C2',
+                        registration_code: 'PIO7-2026-CLM'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    log('✅ Admin NO existe (se pudo registrar un test)', 'success');
+                    log('Necesitas crear el admin con la Opción 2', 'info');
+                } else {
+                    if (data.error && data.error.includes('ya esta registrado')) {
+                        log('✅ Usuario admin YA EXISTE en la base de datos', 'success');
+                        log('El problema es la contraseña', 'info');
+                        log('Usa la Opción 3 para probar login o', 'info');
+                        log('o crea uno nuevo con diferente email', 'info');
+                    } else {
+                        log('❌ Error: ' + data.error, 'error');
+                    }
+                }
+            } catch (err) {
+                log('❌ Error: ' + err.message, 'error');
+            }
+        }
+
+        async function crearAdmin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                alert('Ingresa email y contraseña');
+                return;
+            }
+
+            document.getElementById('resultado').innerHTML = '';
+            log('🔨 Creando usuario admin...', 'info');
+
+            try {
+                const response = await fetch(API_URL + '/api/auth/register', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        email: email,
+                        password: password,
+                        name: 'Javier Benitez Lainez',
+                        level: 'C2',
+                        registration_code: 'PIO7-2026-CLM',
+                        role: 'admin'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    log('✅✅✅ ADMIN CREADO EXITOSAMENTE ✅✅✅', 'success');
+                    log('');
+                    log('📧 Email: ' + data.user.email, 'success');
+                    log('👤 Nombre: ' + data.user.name, 'success');
+                    log('🔑 Rol: ' + data.user.role, 'success');
+                    log('🎯 Contraseña: ' + password, 'success');
+                    log('');
+                    log('💾 GUARDADO EN BASE DE DATOS', 'success');
+                    log('');
+                    log('➡️ Ahora puedes hacer login con estas credenciales', 'info');
+                } else {
+                    log('❌ Error al crear admin: ' + data.error, 'error');
+                    if (data.error.includes('ya esta registrado')) {
+                        log('');
+                        log('El usuario ya existe. Prueba:', 'info');
+                        log('1. Opción 3: Probar login con diferente contraseña', 'info');
+                        log('2. O crea un admin con email diferente', 'info');
+                    }
+                }
+            } catch (err) {
+                log('❌ Error: ' + err.message, 'error');
+            }
+        }
+
+        async function probarLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                alert('Ingresa email y contraseña');
+                return;
+            }
+
+            document.getElementById('resultado').innerHTML = '';
+            log('🔑 Intentando login...', 'info');
+            log('Email: ' + email, 'info');
+            log('Contraseña: ' + password, 'info');
+            log('');
+
+            try {
+                const response = await fetch(API_URL + '/api/auth/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    log('✅✅✅ LOGIN EXITOSO ✅✅✅', 'success');
+                    log('');
+                    log('Usuario: ' + data.user.name, 'success');
+                    log('Email: ' + data.user.email, 'success');
+                    log('Rol: ' + data.user.role, 'success');
+                    log('');
+                    log('Token guardado en localStorage', 'success');
+                    localStorage.setItem('pe_c2_token', data.token);
+                    localStorage.setItem('pe_c2_currentUser', JSON.stringify(data.user));
+                    log('');
+                    log('➡️ Ahora puedes ir al panel:', 'info');
+                    log('   https://www.cognoscencia.com/admin/estudiantes.html', 'info');
+                } else {
+                    log('❌❌❌ LOGIN FALLIDO ❌❌❌', 'error');
+                    log('');
+                    log('Error: ' + data.error, 'error');
+                    log('');
+                    log('SOLUCIONES:', 'info');
+                    log('1. La contraseña es incorrecta', 'info');
+                    log('2. Usa la Opción 2 para crear un admin nuevo', 'info');
+                    log('3. O intenta con diferentes contraseñas comunes:', 'info');
+                    log('   - admin123, Admin123, Admin2024, etc.', 'info');
+                }
+            } catch (err) {
+                log('❌ Error: ' + err.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
