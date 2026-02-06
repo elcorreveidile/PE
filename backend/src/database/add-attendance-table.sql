@@ -3,7 +3,7 @@
 
 CREATE TABLE IF NOT EXISTS attendance (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     session_id INTEGER REFERENCES course_sessions(id) ON DELETE SET NULL,
     verification_code TEXT NOT NULL UNIQUE,
     date DATE NOT NULL DEFAULT CURRENT_DATE,
