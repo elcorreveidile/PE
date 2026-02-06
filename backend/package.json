@@ -9,7 +9,13 @@
     "init-db": "node src/database/init.js",
     "test": "echo \"No tests configured\" && exit 0"
   },
-  "keywords": ["educacion", "español", "escritura", "c2", "ugr"],
+  "keywords": [
+    "educacion",
+    "español",
+    "escritura",
+    "c2",
+    "ugr"
+  ],
   "author": "Javier Benítez Láinez <benitezl@go.ugr.es>",
   "license": "ISC",
   "dependencies": {
@@ -22,6 +28,7 @@
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
+    "nodemailer": "^6.9.15",
     "pg": "^8.11.3"
   },
   "devDependencies": {

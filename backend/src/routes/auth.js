@@ -5,11 +5,59 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 const { body, validationResult } = require('express-validator');
 const { query } = require('../database/db');
 const { generateToken, authenticateToken } = require('../middleware/auth');
 
+
 const router = express.Router();
+
+const FRONTEND_URL = (process.env.FRONTEND_URL || 'https://www.cognoscencia.com').replace(/\/$/, '');
+
+function buildResetLink(token) {
+    return `${FRONTEND_URL}/auth/reset-password.html?token=${token}`;
+}
+
+async function sendPasswordResetEmail({ email, name, resetLink }) {
+    const smtpHost = process.env.SMTP_HOST;
+    const smtpPort = Number(process.env.SMTP_PORT || 587);
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+    const smtpFrom = process.env.SMTP_FROM || smtpUser;
+
+    if (!smtpHost || !smtpUser || !smtpPass || !smtpFrom) {
+        return false;
+    }
+
+    const transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: smtpPort,
+        secure: process.env.SMTP_SECURE === 'true' || smtpPort === 465,
+        auth: { user: smtpUser, pass: smtpPass }
+    });
+
+    await transporter.sendMail({
+        from: smtpFrom,
+        to: email,
+        subject: 'Restablecer contrasena - Cognoscencia',
+        text: `Hola ${name || ''}.
+
+Para restablecer tu contrasena visita: ${resetLink}
+
+Este enlace expira en 1 hora.
+Si no solicitaste este cambio, ignora este mensaje.`,
+        html: `
+            <p>Hola ${name || ''},</p>
+            <p>Hemos recibido una solicitud para restablecer tu contrasena.</p>
+            <p><a href="${resetLink}">Haz clic aqui para restablecer tu contrasena</a></p>
+            <p>Este enlace expira en 1 hora.</p>
+            <p>Si no solicitaste este cambio, ignora este correo.</p>
+        `
+    });
+
+    return true;
+}
 
 /**
  * POST /api/auth/register
@@ -20,7 +68,13 @@ router.post('/register', [
     body('password').isLength({ min: 6 }).withMessage('La contrasena debe tener al menos 6 caracteres'),
     body('name').trim().isLength({ min: 2 }).withMessage('El nombre debe tener al menos 2 caracteres'),
     body('level').optional().isIn(['C2-8', 'C2-9', 'C2']).withMessage('Nivel invalido'),
-    body('registration_code').notEmpty().withMessage('Codigo de registro requerido')
+    body().custom((value, { req }) => {
+        const registrationCode = req.body.registration_code ?? req.body.registrationCode;
+        if (!registrationCode || !String(registrationCode).trim()) {
+            throw new Error('Codigo de registro requerido');
+        }
+        return true;
+    })
 ], async (req, res) => {
     try {
         // Validar entrada
@@ -29,11 +83,12 @@ router.post('/register', [
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { email, password, name, level, motivation, registration_code } = req.body;
+        const { email, password, name, level, motivation } = req.body;
+        const registrationCode = (req.body.registration_code ?? req.body.registrationCode ?? '').toString().trim();
 
         // Verificar codigo de registro
         const validCode = process.env.REGISTRATION_CODE || 'PIO7-2026-CLM';
-        if (registration_code !== validCode) {
+        if (registrationCode !== validCode) {
             return res.status(400).json({ error: 'Codigo de registro invalido' });
         }
 
@@ -278,21 +333,21 @@ router.post('/forgot-password', [
 
         const { email } = req.body;
 
+        const isDevelopment = process.env.NODE_ENV !== 'production';
+
         // Buscar usuario
         const result = await query('SELECT id, email, name FROM users WHERE email = $1', [email]);
 
         if (result.rows.length === 0) {
             // Por seguridad, no revelamos si el email existe
-            return res.json({
-                message: 'Si el email existe, se ha enviado un enlace de recuperacion',
-                devToken: null
-            });
+            return res.json({ message: 'Si el email existe, recibiras instrucciones para restablecer la contrasena' });
         }
 
         const user = result.rows[0];
 
         // Generar token seguro
         const resetToken = crypto.randomBytes(32).toString('hex');
+        const resetLink = buildResetLink(resetToken);
 
         // Expiracion: 1 hora
         const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
@@ -306,15 +361,31 @@ router.post('/forgot-password', [
             VALUES ($1, $2, $3)
         `, [user.id, resetToken, expiresAt]);
 
-        // En desarrollo, devolver el token directamente
-        // En produccion, aqui se enviaria un email con el enlace
         console.log(`[Password Reset] Token for ${email}: ${resetToken}`);
         console.log(`[Password Reset] Reset link: https://www.cognoscencia.com/auth/reset-password.html?token=${resetToken}`);
+        try {
+            const emailDispatched = await sendPasswordResetEmail({
+                email: user.email,
+                name: user.name,
+                resetLink
+            });
+
+            if (!emailDispatched) {
+                console.error('[Password Reset] SMTP no configurado: define SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS/SMTP_FROM');
+            }
+        } catch (emailError) {
+            console.error('Error enviando email de recuperacion:', emailError);
+        }
+
+        if (!isDevelopment) {
+            return res.json({ message: 'Si el email existe, recibiras instrucciones para restablecer la contrasena' });
+        }
 
         res.json({
-            message: 'Se ha generado un token de recuperacion',
+            message: 'Token de recuperacion generado (modo desarrollo)',
             devToken: resetToken,
-            resetLink: `https://www.cognoscencia.com/auth/reset-password.html?token=${resetToken}`
+            resetLink: `https://www.cognoscencia.com/auth/reset-password.html?token=${resetToken}`,
+            isDevelopment: true
         });
 
     } catch (error) {
