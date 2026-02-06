@@ -238,11 +238,37 @@
                 return;
             }
 
+            const API = PE.API;
+            const CONFIG = window.CONFIG || { USE_API: false };
+
+            try {
+                await API.ensureAvailability();
+                CONFIG.USE_API = true;
+            } catch (e) {
+                console.error('API no disponible:', e);
+            }
+
             // Obtener datos
-            const users = JSON.parse(localStorage.getItem('pe_c2_users') || '[]');
-            const students = users.filter(u => u.role !== 'admin');
-            let submissions = await PE.Submissions.getAll();
+            let users = [];
+            let submissions = [];
+
+            try {
+                if (CONFIG.USE_API) {
+                    users = await API.get('/users');
+                    // Obtener todas las submissions
+                    submissions = await API.get('/submissions');
+                } else {
+                    users = JSON.parse(localStorage.getItem('pe_c2_users') || '[]');
+                    submissions = await PE.Submissions.getAll();
+                }
+            } catch (e) {
+                console.error('Error cargando datos:', e);
+                users = [];
+                submissions = [];
+            }
+
             submissions = Array.isArray(submissions) ? submissions : [];
+            const students = users.filter(u => (u.role || 'student') !== 'admin');
             const pending = submissions.filter(s => s.status === 'pending');
             const progress = PE.CourseData.getCourseProgress();
 
@@ -261,12 +287,12 @@
                     <div class="submission-item">
                         <div class="submission-header">
                             <div>
-                                <strong>${PE.Utils.escapeHtml(s.userName || 'Estudiante')}</strong>
+                                <strong>${PE.Utils.escapeHtml(s.userName || s.user_name || 'Estudiante')}</strong>
                                 <span class="badge badge-warning ml-2">Pendiente</span>
                             </div>
-                            <span class="text-secondary" style="font-size: 0.875rem;">${PE.Utils.formatDate(s.createdAt)}</span>
+                            <span class="text-secondary" style="font-size: 0.875rem;">${PE.Utils.formatDate(s.created_at || s.createdAt)}</span>
                         </div>
-                        <p class="text-secondary mb-2" style="font-size: 0.875rem;">${PE.Utils.escapeHtml(s.activityTitle)}</p>
+                        <p class="text-secondary mb-2" style="font-size: 0.875rem;">${PE.Utils.escapeHtml(s.activity_title || s.activityTitle)}</p>
                         <button class="btn btn-sm btn-primary" onclick="reviewSubmission('${s.id}')">Corregir</button>
                     </div>
                 `).join('');
@@ -278,7 +304,8 @@
                 studentContainer.innerHTML = '<p class="text-secondary text-center">No hay estudiantes registrados.</p>';
             } else {
                 studentContainer.innerHTML = students.map(s => {
-                    const studentSubmissions = submissions.filter(sub => String(sub.userId) === String(s.id));
+                    const studentSubmissions = submissions.filter(sub => String(sub.user_id || sub.userId) === String(s.id));
+                    const submissionCount = s.submissions_count || studentSubmissions.length;
                     return `
                         <div class="submission-item">
                             <div class="submission-header">
@@ -286,7 +313,7 @@
                                 <span class="badge badge-primary">${s.level || 'C2'}</span>
                             </div>
                             <p class="text-secondary mb-0" style="font-size: 0.875rem;">
-                                ${s.email} - ${studentSubmissions.length} entregas
+                                ${s.email} - ${submissionCount} entregas
                             </p>
                         </div>
                     `;
