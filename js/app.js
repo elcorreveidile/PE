@@ -441,6 +441,15 @@ const Auth = {
 
     // Obtener usuario actual
     getCurrentUser() {
+        // Si no está en memoria, intentar leer de localStorage
+        if (!AppState.user) {
+            const storedUser = Utils.storage.get('currentUser');
+            if (storedUser) {
+                AppState.user = storedUser;
+                AppState.token = Utils.storage.get('token');
+                AppState.isAdmin = storedUser.role === 'admin';
+            }
+        }
         return AppState.user;
     },
 
