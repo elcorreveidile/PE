@@ -498,14 +498,20 @@
             // Función de exportación (global para que pueda ser llamada desde el HTML)
             window.exportData = async (format) => {
                 try {
+                    const token = Utils.storage.get('token');
+                    if (!token) {
+                        throw new Error('No hay sesión activa');
+                    }
+
                     const response = await fetch(`${CONFIG.API_URL}/api/admin/export/students?format=${format}`, {
                         headers: {
-                            'Authorization': `Bearer ${PE.Auth.getToken()}`
+                            'Authorization': `Bearer ${token}`
                         }
                     });
 
                     if (!response.ok) {
-                        throw new Error('Error al exportar datos');
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.error || 'Error al exportar datos');
                     }
 
                     // Descargar archivo
@@ -522,7 +528,7 @@
                     PE.UI.notify(`Datos exportados a ${format.toUpperCase()} correctamente`, 'success');
                 } catch (error) {
                     console.error('Error exportando:', error);
-                    PE.UI.notify('Error al exportar datos', 'error');
+                    PE.UI.notify(error.message || 'Error al exportar datos', 'error');
                 }
             };
         });

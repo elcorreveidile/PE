@@ -343,14 +343,22 @@
 
         async function exportStats(format) {
             try {
-                const response = await fetch(`${window.CONFIG.API_URL}/api/admin/export/stats?format=${format}`, {
+                const CONFIG = window.CONFIG || {};
+                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+
+                if (!token) {
+                    throw new Error('No hay sesión activa');
+                }
+
+                const response = await fetch(`${CONFIG.API_URL}/api/admin/export/stats?format=${format}`, {
                     headers: {
-                        'Authorization': `Bearer ${PE.Auth.getToken()}`
+                        'Authorization': `Bearer ${token}`
                     }
                 });
 
                 if (!response.ok) {
-                    throw new Error('Error al exportar estadísticas');
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || 'Error al exportar estadísticas');
                 }
 
                 // Descargar archivo
@@ -367,7 +375,7 @@
                 PE.UI.notify(`Estadísticas exportadas a ${format.toUpperCase()} correctamente`, 'success');
             } catch (error) {
                 console.error('Error exportando:', error);
-                PE.UI.notify('Error al exportar estadísticas', 'error');
+                PE.UI.notify(error.message || 'Error al exportar estadísticas', 'error');
             }
         }
     </script>

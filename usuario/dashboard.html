@@ -204,6 +204,9 @@
                 </div>
             `;
 
+            // Cargar notificaciones desde la API
+            loadNotifications();
+
             // Entregas recientes
             const recentSubmissions = submissions.slice(-3).reverse();
             const submissionsContainer = document.getElementById('recent-submissions');
@@ -281,6 +284,65 @@
                     { text: 'Cerrar' }
                 ]);
             }
+
+            // Cargar notificaciones desde la API
+            async function loadNotifications() {
+                try {
+                    const response = await fetch(`${window.PE_CONFIG.API_URL}/api/notifications`, {
+                        headers: {
+                            'Authorization': `Bearer ${PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token')}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        const notifications = data.notifications || [];
+                        const container = document.getElementById('notifications-list');
+
+                        if (notifications.length === 0) {
+                            container.innerHTML = `
+                                <div class="alert alert-info">
+                                    <div class="alert-content">
+                                        <strong>Bienvenido/a al curso</strong>
+                                        <p style="margin: 0.5rem 0 0;">No tienes notificaciones nuevas.</p>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            container.innerHTML = notifications.map(notif => `
+                                <div class="alert ${notif.read ? 'alert-secondary' : 'alert-warning'}" style="cursor: pointer;" onclick="markAsRead(${notif.id})">
+                                    <div class="alert-content">
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                            <strong>${PE.Utils.escapeHtml(notif.title)}</strong>
+                                            <small class="text-secondary">${PE.Utils.formatDate(notif.created_at, 'short')}</small>
+                                        </div>
+                                        <p style="margin: 0.5rem 0 0; white-space: pre-wrap;">${PE.Utils.escapeHtml(notif.message)}</p>
+                                        ${!notif.read ? '<span class="badge badge-warning" style="font-size: 0.75rem;">Nueva</span>' : ''}
+                                    </div>
+                                </div>
+                            `).join('');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error cargando notificaciones:', error);
+                }
+            }
+
+            // Marcar notificación como leída
+            window.markAsRead = async (id) => {
+                try {
+                    await fetch(`${window.PE_CONFIG.API_URL}/api/notifications/${id}/read`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token')}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    loadNotifications(); // Recargar
+                } catch (error) {
+                    console.error('Error marcando notificación:', error);
+                }
+            };
         }
     </script>
 </body>
