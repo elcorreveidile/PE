@@ -154,7 +154,9 @@
                     console.error('Error cargando datos:', e);
                     users = [];
                 }
-                document.getElementById('total-users').textContent = users.length + ' usuarios';
+                // Contar solo estudiantes (excluir admin)
+                const studentCount = users.filter(u => (u.role || 'student') !== 'admin').length;
+                document.getElementById('total-users').textContent = studentCount + ' estudiantes';
             }
 
             function getStatsForUser(current) {
@@ -177,6 +179,12 @@
 
             function renderUsers(filter = {}) {
                 let filtered = [...users];
+
+                // Por defecto, excluir administradores (profesores) de la lista
+                // Solo mostrarlos si el filtro de rol específicamente lo pide
+                if (!filter.role || filter.role !== 'admin') {
+                    filtered = filtered.filter(u => (u.role || 'student') !== 'admin');
+                }
 
                 if (filter.search) {
                     const search = filter.search.toLowerCase();
