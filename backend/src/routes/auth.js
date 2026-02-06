@@ -14,7 +14,6 @@ const { generateToken, authenticateToken } = require('../middleware/auth');
 const router = express.Router();
 
 const FRONTEND_URL = (process.env.FRONTEND_URL || 'https://www.cognoscencia.com').replace(/\/$/, '');
-const PASSWORD_RESET_NEUTRAL_MESSAGE = 'Si el email existe, recibiras instrucciones para restablecer la contrasena';
 
 function buildResetLink(token) {
     return `${FRONTEND_URL}/auth/reset-password.html?token=${token}`;
@@ -341,7 +340,7 @@ router.post('/forgot-password', [
 
         if (result.rows.length === 0) {
             // Por seguridad, no revelamos si el email existe
-            return res.json({ message: PASSWORD_RESET_NEUTRAL_MESSAGE });
+            return res.json({ message: 'Si el email existe, recibiras instrucciones para restablecer la contrasena' });
         }
 
         const user = result.rows[0];
@@ -362,6 +361,9 @@ router.post('/forgot-password', [
             VALUES ($1, $2, $3)
         `, [user.id, resetToken, expiresAt]);
 
+        console.log(`[Password Reset] Token for ${email}: ${resetToken}`);
+        console.log(`[Password Reset] Reset link: https://www.cognoscencia.com/auth/reset-password.html?token=${resetToken}`);
+
         let emailSent = false;
         try {
             emailSent = await sendPasswordResetEmail({
@@ -381,7 +383,7 @@ router.post('/forgot-password', [
         }
 
         if (!isDevelopment) {
-            return res.json({ message: PASSWORD_RESET_NEUTRAL_MESSAGE });
+            return res.json({ message: 'Si el email existe, recibiras instrucciones para restablecer la contrasena' });
         }
 
         res.json({
