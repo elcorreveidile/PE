@@ -391,16 +391,16 @@ router.post('/forgot-password', [
             resetLink
         });
 
-        if (!isDevelopment) {
-            return res.json({ message: PASSWORD_RESET_GENERIC_MESSAGE });
+        if (isDevelopment) {
+            return res.json({
+                message: 'Token de recuperacion generado (modo desarrollo)',
+                devToken: resetToken,
+                resetLink: `https://www.cognoscencia.com/auth/reset-password.html?token=${resetToken}`,
+                isDevelopment: true
+            });
         }
 
-        res.json({
-            message: 'Token de recuperacion generado (modo desarrollo)',
-            devToken: resetToken,
-            resetLink: `https://www.cognoscencia.com/auth/reset-password.html?token=${resetToken}`,
-            isDevelopment: true
-        });
+        return res.json({ message: PASSWORD_RESET_GENERIC_MESSAGE });
 
     } catch (error) {
         console.error('Error en solicitud de recuperacion:', error);
