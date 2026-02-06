@@ -58,8 +58,9 @@ const CONFIG = (() => {
         API_URL: (!isLocal ? (productionApiUrl || resolvedOrigin) : (storedApiUrl || resolvedOrigin)),
         // En producción forzamos API para evitar datos inconsistentes
         ENFORCE_API: !isLocal,
-        // Si está vacío, usa localStorage como fallback (solo en local)
-        USE_API: false, // Se actualiza automáticamente si la API responde
+        // SIEMPRE usar API en producción, nunca localStorage
+        // Esto es CRÍTICO para evitar que los datos se guarden localmente
+        USE_API: !isLocal, // En producción siempre true, en local se actualiza dinámicamente
         // Código de inscripción (solo para modo localStorage)
         REGISTRATION_CODE: (typeof window !== 'undefined' && window.PE_CONFIG && window.PE_CONFIG.registrationCode)
             ? window.PE_CONFIG.registrationCode
@@ -91,14 +92,29 @@ const API = {
     async checkAvailability() {
         if (!CONFIG.API_URL) return false;
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos
+
             const response = await fetch(`${CONFIG.API_URL}/api/health`, {
                 method: 'GET',
-                timeout: 3000
+                signal: controller.signal
             });
-            CONFIG.USE_API = response.ok;
+
+            clearTimeout(timeoutId);
+
+            // En producción, SIEMPRE usar API aunque falle una petición
+            // No cambiar USE_API a false en producción
+            if (!response.ok && !CONFIG.ENFORCE_API) {
+                CONFIG.USE_API = false;
+            }
+
             return response.ok;
-        } catch {
-            CONFIG.USE_API = false;
+        } catch (error) {
+            // En producción, NO cambiar a localStorage aunque falle
+            // El error se manejará en ensureAvailability
+            if (!CONFIG.ENFORCE_API) {
+                CONFIG.USE_API = false;
+            }
             return false;
         }
     },
@@ -113,9 +129,12 @@ const API = {
 
         const available = await this._availabilityPromise;
         this._availabilityPromise = null;
+
         if (CONFIG.ENFORCE_API && !available) {
-            throw new Error('Backend no disponible. No se puede usar el modo local en producción.');
+            // En producción, mostrar error claro en lugar de cambiar a localStorage
+            throw new Error('El servidor no está disponible en este momento. Por favor, inténtalo de nuevo en unos segundos. Si el problema persiste, contacta al profesor.');
         }
+
         return available;
     },
 
@@ -304,101 +323,60 @@ const Auth = {
     // Registrar usuario
     async register(userData) {
         await API.ensureAvailability();
-        if (CONFIG.USE_API) {
-            const response = await API.post('/auth/register', userData);
-            const user = response.user || response.data || response;
 
-            if (response.token) {
-                AppState.token = response.token;
-                Utils.storage.set('token', response.token);
+        if (!CONFIG.USE_API) {
+            if (CONFIG.ENFORCE_API) {
+                throw new Error('El servidor no está disponible. No se puede completar el registro. Por favor, inténtalo de nuevo en unos segundos.');
             }
-
-            if (user) {
-                Utils.storage.set('currentUser', user);
-                AppState.user = user;
-                AppState.isAdmin = user.role === 'admin';
-            }
-
-            return user;
+            // Solo en modo desarrollo local, permitir localStorage
+            throw new Error('El modo localStorage solo está disponible en desarrollo local.');
         }
 
-        if (CONFIG.ENFORCE_API) {
-            throw new Error('El backend no está disponible. No se permite el registro en modo local en producción.');
+        // SIEMPRE usar API en producción
+        const response = await API.post('/auth/register', userData);
+        const user = response.user || response.data || response;
+
+        if (response.token) {
+            AppState.token = response.token;
+            Utils.storage.set('token', response.token);
         }
 
-        // Fallback localStorage
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                const users = Utils.storage.get('users') || [];
+        if (user) {
+            Utils.storage.set('currentUser', user);
+            AppState.user = user;
+            AppState.isAdmin = user.role === 'admin';
+        }
 
-                if (users.find(u => u.email === userData.email)) {
-                    reject(new Error('Este email ya está registrado'));
-                    return;
-                }
-
-                const newUser = {
-                    id: Utils.generateId(),
-                    email: userData.email,
-                    password: userData.password,
-                    name: userData.name,
-                    role: 'student',
-                    level: userData.level || 'C2',
-                    createdAt: new Date().toISOString()
-                };
-
-                users.push(newUser);
-                Utils.storage.set('users', users);
-
-                const { password, ...safeUser } = newUser;
-                resolve(safeUser);
-            }, 300);
-        });
+        return user;
     },
 
     // Iniciar sesión
     async login(email, password) {
         await API.ensureAvailability();
-        if (CONFIG.USE_API) {
-            const response = await API.post('/auth/login', { email, password });
 
-            const user = response.user || response.data || response;
-            if (response.token) {
-                AppState.token = response.token;
-                Utils.storage.set('token', response.token);
+        if (!CONFIG.USE_API) {
+            if (CONFIG.ENFORCE_API) {
+                throw new Error('El servidor no está disponible. No se puede iniciar sesión. Por favor, inténtalo de nuevo en unos segundos.');
             }
-
-            if (user) {
-                Utils.storage.set('currentUser', user);
-                AppState.user = user;
-                AppState.isAdmin = user.role === 'admin';
-            }
-
-            return user;
+            throw new Error('El modo localStorage solo está disponible en desarrollo local.');
         }
 
-        if (CONFIG.ENFORCE_API) {
-            throw new Error('El backend no está disponible. No se permite el inicio de sesión en modo local en producción.');
+        // SIEMPRE usar API en producción
+        const response = await API.post('/auth/login', { email, password });
+
+        const user = response.user || response.data || response;
+        if (response.token) {
+            AppState.token = response.token;
+            Utils.storage.set('token', response.token);
         }
 
-        // Fallback localStorage
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                const users = Utils.storage.get('users') || [];
-                const user = users.find(u => u.email === email && u.password === password);
+        if (user) {
+            Utils.storage.set('currentUser', user);
+            AppState.user = user;
+            AppState.isAdmin = user.role === 'admin';
+        }
 
-                if (!user) {
-                    reject(new Error('Email o contraseña incorrectos'));
-                    return;
-                }
-
-                const { password: _, ...safeUser } = user;
-                Utils.storage.set('currentUser', safeUser);
-                AppState.user = safeUser;
-                AppState.isAdmin = user.role === 'admin';
-
-                resolve(safeUser);
-            }, 300);
-        });
+        return user;
     },
 
     // Cerrar sesión
@@ -585,48 +563,23 @@ const Submissions = {
     // Crear nueva entrega
     async create(submissionData) {
         await API.ensureAvailability();
-        if (CONFIG.USE_API) {
-            const response = await API.post('/submissions', {
-                session_id: submissionData.sessionId,
-                activity_id: submissionData.activityId,
-                activity_title: submissionData.activityTitle,
-                content: submissionData.content
-            });
-            const created = response.submission || response.data || response;
-            return this.normalize(created);
+
+        if (!CONFIG.USE_API) {
+            if (CONFIG.ENFORCE_API) {
+                throw new Error('El servidor no está disponible. No se puede enviar la tarea. Por favor, inténtalo de nuevo en unos segundos.');
+            }
+            throw new Error('El modo localStorage solo está disponible en desarrollo local.');
         }
 
-        if (CONFIG.ENFORCE_API) {
-            throw new Error('Backend no disponible. No se permiten entregas en modo local en producción.');
-        }
-
-        // Fallback localStorage
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                const submissions = Utils.storage.get('submissions') || [];
-
-                const newSubmission = {
-                    id: Utils.generateId(),
-                    userId: AppState.user?.id,
-                    userName: AppState.user?.name,
-                    sessionId: submissionData.sessionId,
-                    activityId: submissionData.activityId,
-                    activityTitle: submissionData.activityTitle,
-                    content: submissionData.content,
-                    wordCount: Utils.countWords(submissionData.content),
-                    status: 'pending',
-                    feedback: null,
-                    grade: null,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                };
-
-                submissions.push(newSubmission);
-                Utils.storage.set('submissions', submissions);
-
-                resolve(newSubmission);
-            }, 300);
+        // SIEMPRE usar API en producción
+        const response = await API.post('/submissions', {
+            session_id: submissionData.sessionId,
+            activity_id: submissionData.activityId,
+            activity_title: submissionData.activityTitle,
+            content: submissionData.content
         });
+        const created = response.submission || response.data || response;
+        return this.normalize(created);
     },
 
     // Actualizar entrega
