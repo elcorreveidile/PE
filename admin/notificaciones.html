@@ -337,7 +337,7 @@
             try {
                 const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
 
-                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/admin/notifications/${id}`, {
+                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/admin/notifications/broadcast/${id}`, {
                     method: 'DELETE',
                     headers: {
                         'Authorization': `Bearer ${token}`
