@@ -350,7 +350,7 @@
                     throw new Error('No hay sesión activa');
                 }
 
-                const response = await fetch(`${CONFIG.API_URL}/api/admin/export/stats?format=${format}`, {
+                const response = await fetch(`${CONFIG.API_URL}/api/users/export/stats?format=${format}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }

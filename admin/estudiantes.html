@@ -507,7 +507,7 @@
                         throw new Error('No hay sesión activa');
                     }
 
-                    const url = `${CONFIG.API_URL}/api/admin/export/students?format=${format}`;
+                    const url = `${CONFIG.API_URL}/api/users/export/students?format=${format}`;
                     console.log('[EXPORT] URL de petición:', url);
 
                     const response = await fetch(url, {
