@@ -19,6 +19,27 @@ function buildResetLink(token) {
     return `${FRONTEND_URL}/auth/reset-password.html?token=${token}`;
 }
 
+const PASSWORD_RESET_GENERIC_MESSAGE = 'Si el email existe, recibiras instrucciones para restablecer la contrasena';
+
+async function sendResetEmailByEnvironment({ isDevelopment, user, resetLink }) {
+    const sendResetEmail = () => sendPasswordResetEmail({
+        email: user.email,
+        name: user.name,
+        resetLink
+    });
+
+    if (!isDevelopment) {
+        sendResetEmail().catch((emailError) => {
+            console.error('Error enviando email de recuperacion:', emailError);
+        });
+        return;
+    }
+
+    await sendResetEmail().catch((emailError) => {
+        console.error('Error enviando email de recuperacion:', emailError);
+    });
+}
+
 async function sendPasswordResetEmail({ email, name, resetLink }) {
     const smtpHost = process.env.SMTP_HOST;
     const smtpPort = Number(process.env.SMTP_PORT || 587);
@@ -340,7 +361,7 @@ router.post('/forgot-password', [
 
         if (result.rows.length === 0) {
             // Por seguridad, no revelamos si el email existe
-            return res.json({ message: 'Si el email existe, recibiras instrucciones para restablecer la contrasena' });
+            return res.json({ message: PASSWORD_RESET_GENERIC_MESSAGE });
         }
 
         const user = result.rows[0];
@@ -364,23 +385,15 @@ router.post('/forgot-password', [
         console.log(`[Password Reset] Token for ${email}: ${resetToken}`);
         console.log(`[Password Reset] Reset link: https://www.cognoscencia.com/auth/reset-password.html?token=${resetToken}`);
 
-        const sendResetEmail = () => sendPasswordResetEmail({
-            email: user.email,
-            name: user.name,
+        await sendResetEmailByEnvironment({
+            isDevelopment,
+            user,
             resetLink
         });
 
         if (!isDevelopment) {
-            sendResetEmail().catch((emailError) => {
-                console.error('Error enviando email de recuperacion:', emailError);
-            });
-
-            return res.json({ message: 'Si el email existe, recibiras instrucciones para restablecer la contrasena' });
+            return res.json({ message: PASSWORD_RESET_GENERIC_MESSAGE });
         }
-
-        await sendResetEmail().catch((emailError) => {
-            console.error('Error enviando email de recuperacion:', emailError);
-        });
 
         res.json({
             message: 'Token de recuperacion generado (modo desarrollo)',
