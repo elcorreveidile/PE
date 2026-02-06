@@ -10,6 +10,15 @@ const { authenticateToken, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
+function isUndefinedTableError(error) {
+    return error && (error.code === '42P01' || String(error.message || '').includes('relation "attendance" does not exist'));
+}
+
+function isNotNullUserIdError(error) {
+    const message = String(error?.message || '').toLowerCase();
+    return error && error.code === '23502' && message.includes('user_id');
+}
+
 /**
  * Generar código de verificación único
  */
@@ -70,8 +79,10 @@ router.post('/generate', authenticateToken, requireAdmin, async (req, res) => {
         if (!targetSessionId) {
             const sessionResult = await query(`
                 SELECT id FROM course_sessions
-                WHERE date >= CURRENT_DATE
-                ORDER BY date ASC
+                WHERE
+                    date::text ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+                    AND (date::text)::date >= CURRENT_DATE
+                ORDER BY (date::text)::date ASC
                 LIMIT 1
             `);
 
@@ -96,6 +107,11 @@ router.post('/generate', authenticateToken, requireAdmin, async (req, res) => {
 
     } catch (error) {
         console.error('Error generando código de asistencia:', error);
+        if (isUndefinedTableError(error) || isNotNullUserIdError(error)) {
+            return res.status(500).json({
+                error: 'La tabla de asistencia requiere migración. Ejecuta POST /api/migrate/attendance y vuelve a intentar.'
+            });
+        }
         res.status(500).json({ error: 'Error al generar código de asistencia' });
     }
 });
@@ -308,9 +324,11 @@ router.get('/stats', authenticateToken, requireAdmin, async (req, res) => {
                 COUNT(a.id) as attendance_count
             FROM course_sessions cs
             LEFT JOIN attendance a ON cs.id = a.session_id
-            WHERE cs.date <= CURRENT_DATE
+            WHERE
+                cs.date::text ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+                AND (cs.date::text)::date <= CURRENT_DATE
             GROUP BY cs.id, cs.title, cs.date
-            ORDER BY cs.date
+            ORDER BY (cs.date::text)::date
         `);
 
         res.json({
@@ -322,6 +340,15 @@ router.get('/stats', authenticateToken, requireAdmin, async (req, res) => {
 
     } catch (error) {
         console.error('Error obteniendo estadísticas:', error);
+        if (isUndefinedTableError(error)) {
+            const totalStudents = await query(`SELECT COUNT(*) as count FROM users WHERE role = 'student'`);
+            return res.json({
+                totalStudents: parseInt(totalStudents.rows[0].count),
+                todayAttendance: 0,
+                weekAttendance: 0,
+                bySession: []
+            });
+        }
         res.status(500).json({ error: 'Error al obtener estadísticas' });
     }
 });
