@@ -228,14 +228,19 @@
                         `;
                     } else {
                         container.innerHTML = notifications.map(notif => `
-                            <div class="alert ${notif.read ? 'alert-secondary' : 'alert-warning'}" style="cursor: pointer;" onclick="markAsRead(${notif.id})">
+                            <div class="alert ${notif.read ? 'alert-secondary' : 'alert-warning'}">
                                 <div class="alert-content">
                                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                                        <strong>${PE.Utils.escapeHtml(notif.title)}</strong>
-                                        <small class="text-secondary">${PE.Utils.formatDate(notif.created_at, 'short')}</small>
+                                        <div style="flex: 1; cursor: pointer;" onclick="markAsRead(${notif.id})">
+                                            <strong>${PE.Utils.escapeHtml(notif.title)}</strong>
+                                            <p style="margin: 0.5rem 0 0; white-space: pre-wrap;">${PE.Utils.escapeHtml(notif.message)}</p>
+                                            <div style="margin-top: 0.5rem;">
+                                                <small class="text-secondary">${PE.Utils.formatDate(notif.created_at, 'short')}</small>
+                                                ${!notif.read ? '<span class="badge badge-warning" style="font-size: 0.75rem; margin-left: 0.5rem;">Nueva</span>' : ''}
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-sm btn-ghost" onclick="deleteNotification(${notif.id})" style="color: var(--danger-color);" title="Eliminar notificación">✕</button>
                                     </div>
-                                    <p style="margin: 0.5rem 0 0; white-space: pre-wrap;">${PE.Utils.escapeHtml(notif.message)}</p>
-                                    ${!notif.read ? '<span class="badge badge-warning" style="font-size: 0.75rem;">Nueva</span>' : ''}
                                 </div>
                             </div>
                         `).join('');
@@ -272,6 +277,34 @@
                     loadNotifications(); // Recargar
                 } catch (error) {
                     console.error('Error marcando notificación:', error);
+                }
+            };
+
+            // Eliminar notificación
+            window.deleteNotification = async (id) => {
+                if (!confirm('¿Estás seguro de que quieres eliminar esta notificación?')) {
+                    return;
+                }
+
+                try {
+                    const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+
+                    const response = await fetch(`${window.PE_CONFIG.API_URL}/api/notifications/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Error al eliminar notificación');
+                    }
+
+                    PE.UI.notify('Notificación eliminada', 'success');
+                    loadNotifications(); // Recargar
+                } catch (error) {
+                    console.error('Error eliminando notificación:', error);
+                    PE.UI.notify('Error al eliminar notificación', 'error');
                 }
             };
 

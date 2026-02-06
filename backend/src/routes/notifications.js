@@ -266,4 +266,44 @@ router.get('/sent', authenticateToken, requireAdmin, async (req, res) => {
     }
 });
 
+/**
+ * DELETE /api/admin/notifications/:id
+ * Eliminar todas las notificaciones de un broadcast (solo admin)
+ */
+router.delete('/:id', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const notificationId = req.params.id;
+
+        // Verificar que existe y es un broadcast
+        const notifResult = await query(`
+            SELECT title, message, type, created_at
+            FROM notifications
+            WHERE id = $1 AND type = 'broadcast'
+        `, [notificationId]);
+
+        if (notifResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Notificación no encontrada' });
+        }
+
+        const notif = notifResult.rows[0];
+
+        // Eliminar todas las notificaciones del mismo broadcast
+        // (mismo title, message, type y created_at)
+        const deleteResult = await query(`
+            DELETE FROM notifications
+            WHERE title = $1 AND message = $2 AND type = $3 AND created_at = $4
+            RETURNING id
+        `, [notif.title, notif.message, notif.type, notif.created_at]);
+
+        res.json({
+            message: 'Notificación eliminada correctamente',
+            deleted: deleteResult.rowCount
+        });
+
+    } catch (error) {
+        console.error('Error al eliminar notificación:', error);
+        res.status(500).json({ error: 'Error al eliminar notificación' });
+    }
+});
+
 module.exports = router;

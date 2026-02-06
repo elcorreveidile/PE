@@ -328,6 +328,35 @@
             document.getElementById('preview-content').style.color = 'var(--text-secondary)';
         }
 
+        // Función global para eliminar notificación
+        window.deleteNotification = async (id) => {
+            const confirmed = confirm('¿Estás seguro de que quieres eliminar esta notificación? Se eliminará para todos los destinatarios.');
+
+            if (!confirmed) return;
+
+            try {
+                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+
+                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/admin/notifications/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error al eliminar notificación');
+                }
+
+                const data = await response.json();
+                PE.UI.notify(`Notificación eliminada (${data.deleted} destinatarios afectados)`, 'success');
+                loadHistory(); // Recargar historial
+            } catch (error) {
+                console.error('Error eliminando notificación:', error);
+                PE.UI.notify('Error al eliminar notificación', 'error');
+            }
+        };
+
         async function loadHistory() {
             const container = document.getElementById('sent-history');
 
@@ -373,7 +402,10 @@
                             <div class="card-body">
                                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
                                     <h6 style="margin: 0;">${PE.Utils.escapeHtml(notif.title)}</h6>
-                                    <span class="badge badge-primary">${notif.recipients_count} destinatarios</span>
+                                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                        <span class="badge badge-primary">${notif.recipients_count} destinatarios</span>
+                                        <button class="btn btn-sm btn-ghost" onclick="deleteNotification(${notif.id})" style="color: var(--danger-color);" title="Eliminar notificación">✕</button>
+                                    </div>
                                 </div>
                                 <p style="margin: 0.5rem 0; white-space: pre-wrap; font-size: 0.875rem;">${PE.Utils.escapeHtml(notif.message.substring(0, 200))}${notif.message.length > 200 ? '...' : ''}</p>
                                 <small class="text-secondary">Enviado: ${PE.Utils.formatDate(notif.created_at, 'long')}</small>
