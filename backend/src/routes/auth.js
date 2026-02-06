@@ -20,7 +20,13 @@ router.post('/register', [
     body('password').isLength({ min: 6 }).withMessage('La contrasena debe tener al menos 6 caracteres'),
     body('name').trim().isLength({ min: 2 }).withMessage('El nombre debe tener al menos 2 caracteres'),
     body('level').optional().isIn(['C2-8', 'C2-9', 'C2']).withMessage('Nivel invalido'),
-    body('registration_code').notEmpty().withMessage('Codigo de registro requerido')
+    body().custom((value, { req }) => {
+        const registrationCode = req.body.registration_code ?? req.body.registrationCode;
+        if (!registrationCode || !String(registrationCode).trim()) {
+            throw new Error('Codigo de registro requerido');
+        }
+        return true;
+    })
 ], async (req, res) => {
     try {
         // Validar entrada
@@ -29,11 +35,12 @@ router.post('/register', [
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { email, password, name, level, motivation, registration_code } = req.body;
+        const { email, password, name, level, motivation } = req.body;
+        const registrationCode = (req.body.registration_code ?? req.body.registrationCode ?? '').toString().trim();
 
         // Verificar codigo de registro
         const validCode = process.env.REGISTRATION_CODE || 'PIO7-2026-CLM';
-        if (registration_code !== validCode) {
+        if (registrationCode !== validCode) {
             return res.status(400).json({ error: 'Codigo de registro invalido' });
         }
 
