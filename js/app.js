@@ -1501,6 +1501,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
+    // Mostrar fecha actual en el header
+    const dateElement = document.getElementById('current-date');
+    if (dateElement) {
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const today = new Date().toLocaleDateString('es-ES', options);
+        // Capitalizar primera letra
+        const formattedDate = today.charAt(0).toUpperCase() + today.slice(1);
+        dateElement.textContent = formattedDate;
+    }
+
     console.log('Producción Escrita C2 - Aplicación iniciada');
 });
 

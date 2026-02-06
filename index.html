@@ -22,7 +22,7 @@
     <header class="header">
         <div class="header-top">
             <div class="container">
-                <span>Nivel C2 | Febrero - Mayo 2026</span>
+                <span>Nivel C2 | Febrero - Mayo 2026 | <span id="current-date"></span></span>
                 <div class="header-top-links">
                     <a href="recursos/index.html">Recursos</a>
                     <a href="calendario.html">Calendario</a>
@@ -625,6 +625,16 @@
             document.querySelectorAll('[data-current-session-link]').forEach(link => {
                 link.setAttribute('href', href);
             });
+
+            // Mostrar fecha actual
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const today = new Date().toLocaleDateString('es-ES', options);
+            const dateElement = document.getElementById('current-date');
+            if (dateElement) {
+                // Capitalizar primera letra
+                const formattedDate = today.charAt(0).toUpperCase() + today.slice(1);
+                dateElement.textContent = formattedDate;
+            }
         });
     </script>
 </body>
