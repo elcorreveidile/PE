@@ -15,12 +15,16 @@ const router = express.Router();
  */
 router.get('/', authenticateToken, async (req, res) => {
     try {
+        console.log('[NOTIFICATIONS] Fetching notifications for user:', req.user.id, 'type:', typeof req.user.id);
+
         const result = await query(`
             SELECT * FROM notifications
             WHERE user_id = $1
             ORDER BY created_at DESC
             LIMIT 50
         `, [req.user.id]);
+
+        console.log('[NOTIFICATIONS] Found:', result.rows.length, 'notifications');
 
         // Contar no leídas
         const unreadResult = await query(`
@@ -177,6 +181,8 @@ router.post('/broadcast', authenticateToken, requireAdmin, [
         if (recipients.length === 0) {
             return res.status(400).json({ error: 'No hay destinatarios para esta notificación' });
         }
+
+        console.log('[NOTIFICATIONS] Broadcasting to', recipients.length, 'recipients:', recipients);
 
         // Insertar notificaciones para todos los recipientes
         let insertedCount = 0;
