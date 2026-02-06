@@ -162,6 +162,11 @@ router.post('/check-in', authenticateToken, [
         const { verificationCode } = req.body;
         const userId = req.user.id;
 
+        // Verificar que el usuario es estudiante
+        if (req.user.role !== 'student') {
+            return res.status(403).json({ error: 'Solo estudiantes pueden registrar asistencia' });
+        }
+
         // Verificar que el código es válido
         const codeResult = await query(`
             SELECT id, session_id, date
@@ -176,6 +181,12 @@ router.post('/check-in', authenticateToken, [
         }
 
         const attendanceRecord = codeResult.rows[0];
+
+        // Verificar que el código es del día de hoy (los códigos expiran al día siguiente)
+        const today = new Date().toISOString().split('T')[0];
+        if (attendanceRecord.date !== today) {
+            return res.status(404).json({ error: 'Código expirado. Los códigos solo son válidos el día de generación.' });
+        }
 
         // Verificar si el usuario ya tiene asistencia registrada hoy
         const existingAttendance = await query(`
