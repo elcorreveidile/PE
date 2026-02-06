@@ -308,7 +308,9 @@
                 if (response.message) {
                     PE.UI.notify(`✅ ${response.message} (${response.recipients} destinatarios)`, 'success');
                     clearForm();
+                    // Recargar historial y estadísticas
                     loadHistory();
+                    loadData();
                 }
 
             } catch (error) {
@@ -330,26 +332,59 @@
             const container = document.getElementById('sent-history');
 
             try {
-                // Obtener notificaciones recientes del sistema
-                // Nota: El endpoint actual no devuelve historial de envíos, así que mostramos un mensaje
-                container.innerHTML = `
-                    <p class="text-secondary">
-                        ℹ️ Las notificaciones se envían instantáneamente a los estudiantes.
-                        Los estudiantes pueden verlas en su panel personal.
-                    </p>
-                    <div style="margin-top: 1rem; padding: 1rem; background: var(--bg-light); border-radius: 0.5rem;">
-                        <h6 style="margin-bottom: 0.5rem;">💡 Sugerencias de uso:</h6>
-                        <ul style="margin: 0; padding-left: 1.25rem;">
-                            <li>Recordatorios de entregas pendientes</li>
-                            <li>Anuncios de cambios en el horario o ubicación</li>
-                            <li>Motivación para estudiantes inactivos</li>
-                            <li>Felicitaciones por progreso destacado</li>
-                        </ul>
-                    </div>
-                `;
+                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+
+                if (!token) {
+                    container.innerHTML = '<p class="text-secondary">No hay sesión activa</p>';
+                    return;
+                }
+
+                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/admin/notifications/sent?limit=10`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error al cargar historial');
+                }
+
+                const data = await response.json();
+                const notifications = data.notifications || [];
+
+                if (notifications.length === 0) {
+                    container.innerHTML = `
+                        <p class="text-secondary">
+                            ℹ️ No hay notificaciones enviadas todavía.
+                        </p>
+                        <div style="margin-top: 1rem; padding: 1rem; background: var(--bg-light); border-radius: 0.5rem;">
+                            <h6 style="margin-bottom: 0.5rem;">💡 Sugerencias de uso:</h6>
+                            <ul style="margin: 0; padding-left: 1.25rem;">
+                                <li>Recordatorios de entregas pendientes</li>
+                                <li>Anuncios de cambios en el horario o ubicación</li>
+                                <li>Motivación para estudiantes inactivos</li>
+                                <li>Felicitaciones por progreso destacado</li>
+                            </ul>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = notifications.map(notif => `
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                                    <h6 style="margin: 0;">${PE.Utils.escapeHtml(notif.title)}</h6>
+                                    <span class="badge badge-primary">${notif.recipients_count} destinatarios</span>
+                                </div>
+                                <p style="margin: 0.5rem 0; white-space: pre-wrap; font-size: 0.875rem;">${PE.Utils.escapeHtml(notif.message.substring(0, 200))}${notif.message.length > 200 ? '...' : ''}</p>
+                                <small class="text-secondary">Enviado: ${PE.Utils.formatDate(notif.created_at, 'long')}</small>
+                            </div>
+                        </div>
+                    `).join('');
+                }
 
             } catch (error) {
                 console.error('Error cargando historial:', error);
+                container.innerHTML = '<p class="text-secondary">Error al cargar el historial</p>';
             }
         }
     </script>

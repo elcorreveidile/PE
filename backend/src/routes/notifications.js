@@ -226,4 +226,38 @@ router.get('/stats', authenticateToken, requireAdmin, async (req, res) => {
     }
 });
 
+/**
+ * GET /api/admin/notifications/sent
+ * Obtener historial de notificaciones enviadas (solo admin)
+ */
+router.get('/sent', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 20;
+
+        const result = await query(`
+            SELECT
+                n.id,
+                n.title,
+                n.message,
+                n.type,
+                n.created_at,
+                COUNT(DISTINCT n.user_id) as recipients_count
+            FROM notifications n
+            WHERE n.type = 'broadcast'
+            GROUP BY n.id, n.title, n.message, n.type, n.created_at
+            ORDER BY n.created_at DESC
+            LIMIT $1
+        `, [limit]);
+
+        res.json({
+            notifications: result.rows,
+            total: result.rows.length
+        });
+
+    } catch (error) {
+        console.error('Error al obtener historial de notificaciones:', error);
+        res.status(500).json({ error: 'Error al obtener historial' });
+    }
+});
+
 module.exports = router;
