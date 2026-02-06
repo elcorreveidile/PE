@@ -56,9 +56,6 @@
             max-height: 400px;
             overflow-y: auto;
         }
-        .qr-quick-card {
-            border-left: 4px solid #c53030;
-        }
     </style>
 </head>
 <body>
@@ -106,7 +103,6 @@
                             <li><a href="estudiantes.html">Estudiantes</a></li>
                             <li><a href="correcciones.html">Correcciones</a></li>
                             <li><a href="notificaciones.html">Notificaciones</a></li>
-                            <li><a href="asistencia.html">Asistencia QR</a></li>
                             <li><a href="tareas.html">Gestión de tareas</a></li>
                             <li><a href="estadisticas.html">Estadísticas</a></li>
                         </ul>
@@ -190,17 +186,6 @@
                         </div>
                     </div>
 
-                    <!-- Asistencia QR -->
-                    <div class="card mt-4 qr-quick-card">
-                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                            <h3 style="margin: 0;">Asistencia QR</h3>
-                            <a href="asistencia.html" class="btn btn-sm btn-primary">Abrir módulo</a>
-                        </div>
-                        <div class="card-body">
-                            <p class="text-secondary mb-0">Genera códigos de asistencia y consulta los registros del día.</p>
-                        </div>
-                    </div>
-
                     <!-- Acciones rápidas -->
                     <div class="card mt-4">
                         <div class="card-header">
@@ -209,7 +194,6 @@
                         <div class="card-body">
                             <div style="display: flex; gap: var(--spacing-md); flex-wrap: wrap;">
                                 <a href="correcciones.html" class="btn btn-primary">Corregir entregas</a>
-                                <a href="asistencia.html" class="btn btn-primary">Asistencia QR</a>
                                 <a href="../sesiones/index.html" class="btn btn-outline">Ver sesiones</a>
                                 <a href="../calendario.html" class="btn btn-outline">Calendario</a>
                                 <button onclick="exportData()" class="btn btn-outline">Exportar datos</button>
