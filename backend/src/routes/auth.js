@@ -5,11 +5,59 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 const { body, validationResult } = require('express-validator');
 const { query } = require('../database/db');
 const { generateToken, authenticateToken } = require('../middleware/auth');
 
+
 const router = express.Router();
+
+const FRONTEND_URL = (process.env.FRONTEND_URL || 'https://www.cognoscencia.com').replace(/\/$/, '');
+
+function buildResetLink(token) {
+    return `${FRONTEND_URL}/auth/reset-password.html?token=${token}`;
+}
+
+async function sendPasswordResetEmail({ email, name, resetLink }) {
+    const smtpHost = process.env.SMTP_HOST;
+    const smtpPort = Number(process.env.SMTP_PORT || 587);
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+    const smtpFrom = process.env.SMTP_FROM || smtpUser;
+
+    if (!smtpHost || !smtpUser || !smtpPass || !smtpFrom) {
+        return false;
+    }
+
+    const transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: smtpPort,
+        secure: process.env.SMTP_SECURE === 'true' || smtpPort === 465,
+        auth: { user: smtpUser, pass: smtpPass }
+    });
+
+    await transporter.sendMail({
+        from: smtpFrom,
+        to: email,
+        subject: 'Restablecer contrasena - Cognoscencia',
+        text: `Hola ${name || ''}.
+
+Para restablecer tu contrasena visita: ${resetLink}
+
+Este enlace expira en 1 hora.
+Si no solicitaste este cambio, ignora este mensaje.`,
+        html: `
+            <p>Hola ${name || ''},</p>
+            <p>Hemos recibido una solicitud para restablecer tu contrasena.</p>
+            <p><a href="${resetLink}">Haz clic aqui para restablecer tu contrasena</a></p>
+            <p>Este enlace expira en 1 hora.</p>
+            <p>Si no solicitaste este cambio, ignora este correo.</p>
+        `
+    });
+
+    return true;
+}
 
 /**
  * POST /api/auth/register
@@ -299,6 +347,7 @@ router.post('/forgot-password', [
 
         // Generar token seguro
         const resetToken = crypto.randomBytes(32).toString('hex');
+        const resetLink = buildResetLink(resetToken);
 
         // Expiracion: 1 hora
         const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
@@ -314,6 +363,19 @@ router.post('/forgot-password', [
 
         console.log(`[Password Reset] Token for ${email}: ${resetToken}`);
         console.log(`[Password Reset] Reset link: https://www.cognoscencia.com/auth/reset-password.html?token=${resetToken}`);
+        try {
+            await sendPasswordResetEmail({
+                email: user.email,
+                name: user.name,
+                resetLink
+            });
+        } catch (emailError) {
+            console.error('Error enviando email de recuperacion:', emailError);
+        }
+
+        if (!isDevelopment) {
+            return res.json({ message: 'Si el email existe, recibiras instrucciones para restablecer la contrasena' });
+        }
 
         if (!isDevelopment) {
             return res.json({ message: 'Si el email existe, recibiras instrucciones para restablecer la contrasena' });
