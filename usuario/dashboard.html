@@ -183,32 +183,23 @@
                 try {
                     const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
 
-                    console.log('[DASHBOARD] Loading notifications...');
-                    console.log('[DASHBOARD] Token exists:', !!token);
-
                     if (!token) {
-                        console.warn('[DASHBOARD] No hay token para cargar notificaciones');
+                        console.warn('No hay token para cargar notificaciones');
                         return;
                     }
 
-                    const url = `${window.PE_CONFIG.API_URL}/api/notifications`;
-                    console.log('[DASHBOARD] Fetching from:', url);
-
-                    const response = await fetch(url, {
+                    const response = await fetch(`${window.PE_CONFIG.API_URL}/api/notifications`, {
                         headers: {
                             'Authorization': `Bearer ${token}`
                         }
                     });
 
-                    console.log('[DASHBOARD] Response status:', response.status);
-
                     if (!response.ok) {
-                        console.warn('[DASHBOARD] Error al cargar notificaciones:', response.status);
+                        console.warn('Error al cargar notificaciones:', response.status);
                         return;
                     }
 
                     const data = await response.json();
-                    console.log('[DASHBOARD] Notifications data:', data);
                     const notifications = data.notifications || [];
                     const container = document.getElementById('notifications-list');
 
