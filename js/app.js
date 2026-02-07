@@ -1372,15 +1372,6 @@ const Forms = {
         }
     },
 
-    isSafeRedirect(redirectUrl) {
-        try {
-            const target = new URL(redirectUrl, window.location.origin);
-            return target.origin === window.location.origin;
-        } catch {
-            return false;
-        }
-    },
-
     // Manejar envío de formulario de login
     async handleLogin(e) {
         e.preventDefault();
@@ -1413,7 +1404,7 @@ const Forms = {
                 const redirect = params.get('redirect');
                 const pendingCheckinCode = sessionStorage.getItem('pendingCheckinCode');
 
-                if (redirect && user.role !== 'admin' && Forms.isSafeRedirect(redirect)) {
+                if (redirect && user.role !== 'admin') {
                     window.location.href = redirect;
                     return;
                 }
