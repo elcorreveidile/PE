@@ -562,10 +562,16 @@ const Auth = {
 
     // Login con Google
     loginWithGoogle() {
+        console.log('[Google OAuth] Iniciando login con Google');
+        console.log('[Google OAuth] window.PE_CONFIG:', window.PE_CONFIG);
+
         if (!window.PE_CONFIG?.GOOGLE_CLIENT_ID) {
+            console.error('[Google OAuth] GOOGLE_CLIENT_ID no encontrado');
             UI.notify('Configuración de Google no disponible', 'error');
             return;
         }
+
+        console.log('[Google OAuth] Cliente ID encontrado:', window.PE_CONFIG.GOOGLE_CLIENT_ID);
         this._initiateOAuthFlow('google');
     },
 
@@ -577,12 +583,16 @@ const Auth = {
 
     // Iniciar flujo OAuth
     _initiateOAuthFlow(provider) {
+        console.log(`[OAuth] Iniciando flujo para provider: ${provider}`);
+
         const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
         const redirectUri = `${window.location.origin}${basePath}/auth/oauth-callback.html`;
         const width = 500;
         const height = 600;
         const left = (window.screen.width - width) / 2;
         const top = (window.screen.height - height) / 2;
+
+        console.log(`[OAuth] redirectUri: ${redirectUri}`);
 
         // Construir URL de autorización según el provider
         let authUrl;
@@ -594,10 +604,14 @@ const Auth = {
                 `response_type=code&` +
                 `scope=${encodeURIComponent(scopes)}&` +
                 `access_type=offline`;
+            console.log(`[OAuth] URL de autorización Google generada`);
         } else {
+            console.error(`[OAuth] Provider ${provider} no soportado`);
             UI.notify(`Provider ${provider} no soportado`, 'error');
             return;
         }
+
+        console.log(`[OAuth] Abriendo popup...`);
 
         // Abrir popup
         this._oauthWindow = window.open(
@@ -607,9 +621,12 @@ const Auth = {
         );
 
         if (!this._oauthWindow) {
-            UI.notify('No se pudo abrir la ventana de autenticación. Verifica los bloqueadores de popup.', 'error');
+            console.error('[OAuth] No se pudo abrir el popup (probablemente bloqueado)');
+            UI.notify('No se pudo abrir la ventana de autenticación. Verifica los bloqueadores de popup y permite ventanas emergentes para este sitio.', 'error');
             return;
         }
+
+        console.log('[OAuth] Popup abierto correctamente');
 
         // Esperar mensaje del popup
         this._waitForOAuthCallback(provider);
