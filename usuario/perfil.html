@@ -154,80 +154,59 @@
             }
 
             // Cargar datos del perfil
+            const createdAt = user.created_at || user.createdAt;
             document.getElementById('profile-name').value = user.name || '';
             document.getElementById('profile-email').value = user.email || '';
             document.getElementById('profile-level').value = user.level || 'C2';
-            document.getElementById('account-created').textContent = user.createdAt ? PE.Utils.formatDate(user.createdAt, 'long') : '-';
+            document.getElementById('account-created').textContent = createdAt ? PE.Utils.formatDate(createdAt, 'long') : '-';
             document.getElementById('account-type').textContent = user.role === 'admin' ? 'Profesor/Administrador' : 'Estudiante';
 
             // Formulario de perfil
-            document.getElementById('profile-form').addEventListener('submit', (e) => {
+            document.getElementById('profile-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const messageDiv = document.getElementById('profile-message');
                 const name = document.getElementById('profile-name').value.trim();
-                const level = document.getElementById('profile-level').value;
 
                 if (name.length < 2) {
                     messageDiv.innerHTML = '<div class="alert alert-error">El nombre debe tener al menos 2 caracteres</div>';
                     return;
                 }
 
-                // Actualizar usuario en localStorage
-                const users = PE.Utils.storage.get('users') || [];
-                const userIndex = users.findIndex(u => u.id === user.id);
-                if (userIndex !== -1) {
-                    users[userIndex].name = name;
-                    users[userIndex].level = level;
-                    PE.Utils.storage.set('users', users);
-
-                    // Actualizar sesion actual
-                    const currentUser = PE.Utils.storage.get('currentUser');
-                    currentUser.name = name;
-                    currentUser.level = level;
-                    PE.Utils.storage.set('currentUser', currentUser);
+                try {
+                    await PE.Auth.updateProfile({ name });
+                    messageDiv.innerHTML = '<div class="alert alert-success">Perfil actualizado correctamente</div>';
+                    setTimeout(() => { messageDiv.innerHTML = ''; }, 3000);
+                } catch (error) {
+                    messageDiv.innerHTML = `<div class="alert alert-error">${error.message || 'Error al actualizar el perfil'}</div>`;
                 }
-
-                messageDiv.innerHTML = '<div class="alert alert-success">Perfil actualizado correctamente</div>';
-                setTimeout(() => { messageDiv.innerHTML = ''; }, 3000);
             });
 
-            // Formulario de contrasena
-            document.getElementById('password-form').addEventListener('submit', (e) => {
+            // Formulario de contraseña
+            document.getElementById('password-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const messageDiv = document.getElementById('password-message');
                 const currentPassword = document.getElementById('current-password').value;
                 const newPassword = document.getElementById('new-password').value;
                 const confirmPassword = document.getElementById('confirm-password').value;
 
-                // Verificar contrasena actual
-                const users = PE.Utils.storage.get('users') || [];
-                const fullUser = users.find(u => String(u.id) === String(user.id));
-
-                if (!fullUser || fullUser.password !== currentPassword) {
-                    messageDiv.innerHTML = '<div class="alert alert-error">La contrasena actual es incorrecta</div>';
-                    return;
-                }
-
                 if (newPassword.length < 6) {
-                    messageDiv.innerHTML = '<div class="alert alert-error">La nueva contrasena debe tener al menos 6 caracteres</div>';
+                    messageDiv.innerHTML = '<div class="alert alert-error">La nueva contraseña debe tener al menos 6 caracteres</div>';
                     return;
                 }
 
                 if (newPassword !== confirmPassword) {
-                    messageDiv.innerHTML = '<div class="alert alert-error">Las contrasenas no coinciden</div>';
+                    messageDiv.innerHTML = '<div class="alert alert-error">Las contraseñas no coinciden</div>';
                     return;
                 }
 
-                // Actualizar contrasena
-                const userIndex = users.findIndex(u => u.id === user.id);
-                if (userIndex !== -1) {
-                    users[userIndex].password = newPassword;
-                    PE.Utils.storage.set('users', users);
+                try {
+                    await PE.Auth.changePassword(currentPassword, newPassword);
+                    messageDiv.innerHTML = '<div class="alert alert-success">Contraseña actualizada correctamente</div>';
+                    document.getElementById('password-form').reset();
+                    setTimeout(() => { messageDiv.innerHTML = ''; }, 3000);
+                } catch (error) {
+                    messageDiv.innerHTML = `<div class="alert alert-error">${error.message || 'Error al cambiar la contraseña'}</div>`;
                 }
-
-                messageDiv.innerHTML = '<div class="alert alert-success">Contrasena actualizada correctamente</div>';
-                document.getElementById('password-form').reset();
-                setTimeout(() => { messageDiv.innerHTML = ''; }, 3000);
             });
         });
     </script>
