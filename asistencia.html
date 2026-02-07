@@ -150,8 +150,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const codeFromUrl = urlParams.get('code');
-            const pendingCode = sessionStorage.getItem('pendingCheckinCode');
-            const code = (codeFromUrl || pendingCode || '').toUpperCase();
+            const code = (codeFromUrl || '').toUpperCase();
 
             if (!code) {
                 return;
@@ -249,9 +248,9 @@
             // Verificar autenticación
             const user = PE.Auth.getCurrentUser();
             if (!user) {
-                // Guardar código y redirigir a login
-                sessionStorage.setItem('pendingCheckinCode', code);
-                window.location.href = 'auth/login.html?redirect=' + encodeURIComponent(window.location.href);
+                // Redirigir a login preservando el código en la URL para retomar el check-in
+                const attendanceUrl = `${window.location.origin}${window.location.pathname}?code=${encodeURIComponent(code)}`;
+                window.location.href = 'auth/login.html?redirect=' + encodeURIComponent(attendanceUrl);
                 return;
             }
 
@@ -299,16 +298,9 @@
                     <p><strong>Hora:</strong> ${new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</p>
                 `;
 
-                // Limpiar código pendiente
-                sessionStorage.removeItem('pendingCheckinCode');
-
             } catch (error) {
                 console.error('Error en check-in:', error);
                 PE.UI.notify(error.message || 'Error al confirmar asistencia', 'error');
-
-                if ((error.message || '').toLowerCase().includes('expir')) {
-                    sessionStorage.removeItem('pendingCheckinCode');
-                }
 
                 // Ocultar info de sesión si hay error
                 document.getElementById('session-info').style.display = 'none';

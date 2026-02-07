@@ -1402,17 +1402,8 @@ const Forms = {
                 const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
                 const params = new URLSearchParams(window.location.search);
                 const redirect = params.get('redirect');
-                const pendingCheckinCode = sessionStorage.getItem('pendingCheckinCode');
-
                 if (redirect && user.role !== 'admin') {
                     window.location.href = redirect;
-                    return;
-                }
-
-                if (pendingCheckinCode && user.role !== 'admin') {
-                    // Consumir el código una sola vez para evitar bucles de redirección
-                    sessionStorage.removeItem('pendingCheckinCode');
-                    window.location.href = `${basePath}/asistencia.html?code=${encodeURIComponent(pendingCheckinCode)}`;
                     return;
                 }
 
