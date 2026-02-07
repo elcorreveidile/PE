@@ -197,10 +197,12 @@
         async function tryAttendanceCheckIn(paths, token, code) {
             let lastError = null;
             let saw404 = false;
+            let sawNon404Failure = false;
 
             for (const path of paths) {
+                let response;
                 try {
-                    const response = await fetch(`${window.PE_CONFIG.API_URL}${path}`, {
+                    response = await fetch(`${window.PE_CONFIG.API_URL}${path}`, {
                         method: 'POST',
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -211,27 +213,28 @@
                             code
                         })
                     });
-
-                    if (response.ok) {
-                        return await response.json();
-                    }
-
-                    const errorData = await response.json().catch(() => ({}));
-                    const message = errorData.error || `HTTP ${response.status}`;
-
-                    if (response.status === 404) {
-                        saw404 = true;
-                        lastError = new Error(message);
-                        continue;
-                    }
-
-                    throw new Error(message);
                 } catch (error) {
+                    sawNon404Failure = true;
                     lastError = error;
+                    continue;
                 }
+
+                if (response.ok) {
+                    return await response.json();
+                }
+
+                const errorData = await response.json().catch(() => ({}));
+                const message = errorData.error || `HTTP ${response.status}`;
+
+                if (response.status === 404) {
+                    saw404 = true;
+                    continue;
+                }
+
+                throw new Error(message);
             }
 
-            if (saw404) {
+            if (saw404 && !sawNon404Failure) {
                 throw new Error('No se encontró un endpoint de check-in compatible en el servidor. Contacta con el profesor para revisar la API de asistencia.');
             }
 
