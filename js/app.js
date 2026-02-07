@@ -1410,6 +1410,8 @@ const Forms = {
                 }
 
                 if (pendingCheckinCode && user.role !== 'admin') {
+                    // Consumir el código una sola vez para evitar bucles de redirección
+                    sessionStorage.removeItem('pendingCheckinCode');
                     window.location.href = `${basePath}/asistencia.html?code=${encodeURIComponent(pendingCheckinCode)}`;
                     return;
                 }
