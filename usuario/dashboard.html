@@ -123,12 +123,43 @@
                     <!-- Asistencia por QR -->
                     <div class="card mb-4">
                         <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                            <h3 style="margin: 0;">Asistencia de hoy</h3>
-                            <a href="../asistencia.html" class="btn btn-sm btn-primary">Confirmar asistencia</a>
+                            <h3 style="margin: 0;">📱 Confirmar asistencia</h3>
+                            <span class="badge badge-info" id="attendance-status">Pendiente</span>
                         </div>
                         <div class="card-body">
-                            <p class="text-secondary mb-3">Si el profesor ha mostrado el código QR o el código de verificación, confirma tu asistencia desde aquí.</p>
-                            <a href="../asistencia.html" class="btn btn-outline">Ir a asistencia por QR</a>
+                            <p class="text-secondary mb-3">Si el profesor ha mostrado el código QR o el código de verificación de 8 caracteres, ingrésalo aquí.</p>
+                            
+                            <div id="attendance-form">
+                                <div class="form-group">
+                                    <label class="form-label">Código de verificación</label>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <input 
+                                            type="text" 
+                                            id="attendance-code" 
+                                            class="form-control" 
+                                            placeholder="Ejemplo: ABC12345"
+                                            maxlength="8"
+                                            style="text-transform: uppercase; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.1em; flex: 1;"
+                                        >
+                                        <button class="btn btn-primary" onclick="confirmAttendance()">Confirmar</button>
+                                    </div>
+                                    <small class="text-secondary">Ingresa el código de 8 caracteres que mostró el profesor</small>
+                                </div>
+                            </div>
+
+                            <div id="attendance-success" style="display: none;" class="alert alert-success">
+                                <h4 style="margin: 0 0 0.5rem 0;">✅ Asistencia confirmada</h4>
+                                <p style="margin: 0;">Has registrado tu asistencia para el día de hoy.</p>
+                            </div>
+
+                            <div id="attendance-already" style="display: none;" class="alert alert-info">
+                                <h4 style="margin: 0 0 0.5rem 0;">ℹ️ Ya registrada</h4>
+                                <p style="margin: 0;">Ya tienes registrada tu asistencia de hoy.</p>
+                            </div>
+
+                            <div id="attendance-error" style="display: none;" class="alert alert-error">
+                                <p style="margin: 0;" id="attendance-error-msg"></p>
+                            </div>
                         </div>
                     </div>
                     <!-- Mis entregas recientes -->
@@ -341,6 +372,9 @@
             // Cargar notificaciones (ahora la función ya está declarada)
             loadNotifications();
 
+            // Cargar estado de asistencia
+            checkAttendanceStatus();
+
             // Entregas recientes
             const recentSubmissions = submissions.slice(-3).reverse();
             const submissionsContainer = document.getElementById('recent-submissions');
@@ -385,6 +419,87 @@
                 `;
             }
         });
+
+        // Verificar estado de asistencia
+        async function checkAttendanceStatus() {
+            try {
+                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+                const today = new Date().toISOString().split('T')[0];
+
+                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/attendance?date=${today}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const attendance = await response.json();
+                    const myAttendance = attendance.find(a => a.user_email === user.email);
+
+                    if (myAttendance) {
+                        // El usuario ya tiene asistencia hoy
+                        document.getElementById('attendance-form').style.display = 'none';
+                        document.getElementById('attendance-already').style.display = 'block';
+                        document.getElementById('attendance-status').textContent = 'Registrada';
+                        document.getElementById('attendance-status').className = 'badge badge-success';
+                    }
+                }
+            } catch (error) {
+                console.error('Error verificando asistencia:', error);
+            }
+        }
+
+        // Confirmar asistencia
+        window.confirmAttendance = async function() {
+            const codeInput = document.getElementById('attendance-code');
+            const verificationCode = codeInput.value.trim().toUpperCase();
+
+            if (!verificationCode) {
+                document.getElementById('attendance-error').style.display = 'block';
+                document.getElementById('attendance-error-msg').textContent = 'Por favor, ingresa el código de verificación';
+                return;
+            }
+
+            if (verificationCode.length !== 8) {
+                document.getElementById('attendance-error').style.display = 'block';
+                document.getElementById('attendance-error-msg').textContent = 'El código debe tener 8 caracteres';
+                return;
+            }
+
+            document.getElementById('attendance-error').style.display = 'none';
+
+            try {
+                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+
+                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/attendance/check-in`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ verificationCode })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Asistencia confirmada
+                    document.getElementById('attendance-form').style.display = 'none';
+                    document.getElementById('attendance-success').style.display = 'block';
+                    document.getElementById('attendance-status').textContent = 'Confirmada';
+                    document.getElementById('attendance-status').className = 'badge badge-success';
+                    PE.UI.notify('Asistencia registrada correctamente', 'success');
+                } else {
+                    // Error
+                    document.getElementById('attendance-error').style.display = 'block';
+                    document.getElementById('attendance-error-msg').textContent = data.error || 'Error al confirmar asistencia';
+                }
+            } catch (error) {
+                console.error('Error confirmando asistencia:', error);
+                document.getElementById('attendance-error').style.display = 'block';
+                document.getElementById('attendance-error-msg').textContent = 'Error de conexión. Inténtalo de nuevo.';
+            }
+        };
 
         // Función global para ver entrega (accesible desde onclick)
         window.viewSubmission = async function(id) {

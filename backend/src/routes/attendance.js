@@ -193,7 +193,7 @@ router.post('/check-in', authenticateToken, [
 
         // Verificar que el código es válido
         const codeResult = await query(`
-            SELECT id, session_id, date
+            SELECT id, session_id, date, created_at
             FROM attendance
             WHERE verification_code = $1 AND user_id IS NULL
             ORDER BY created_at DESC
@@ -201,6 +201,7 @@ router.post('/check-in', authenticateToken, [
         `, [verificationCode]);
 
         if (codeResult.rows.length === 0) {
+            console.log('❌ Check-in fallido: Código no encontrado', { code: verificationCode });
             return res.status(404).json({ error: 'Código no válido o expirado' });
         }
 
@@ -208,7 +209,16 @@ router.post('/check-in', authenticateToken, [
 
         // Verificar que el código es del día de hoy (los códigos expiran al día siguiente)
         const today = new Date().toISOString().split('T')[0];
+        console.log('📅 Validando fecha:', { 
+            codeDate: attendanceRecord.date, 
+            today: today, 
+            match: attendanceRecord.date === today,
+            recordId: attendanceRecord.id,
+            createdAt: attendanceRecord.created_at 
+        });
+
         if (attendanceRecord.date !== today) {
+            console.log('❌ Código expirado:', { codeDate: attendanceRecord.date, today });
             return res.status(404).json({ error: 'Código expirado. Los códigos solo son válidos el día de generación.' });
         }
 
