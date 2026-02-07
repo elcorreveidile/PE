@@ -49,6 +49,13 @@
             padding: 1rem;
             margin-top: 1rem;
         }
+        .success {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(34, 197, 94, 0.5);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
     </style>
 </head>
 <body>
@@ -69,28 +76,81 @@
         const titleEl = document.getElementById('title');
         const messageEl = document.getElementById('message');
 
+        function updateUI(title, message, isError = false, isSuccess = false) {
+            titleEl.textContent = title;
+            if (isError) {
+                messageEl.innerHTML = `<div class="error">${message}</div>`;
+            } else if (isSuccess) {
+                messageEl.innerHTML = `<div class="success">${message}</div>`;
+            } else {
+                messageEl.textContent = message;
+            }
+        }
+
+        function closeWindowAfterDelay() {
+            // Esperar un poco para asegurar que el mensaje fue recibido
+            setTimeout(() => {
+                window.close();
+                // Si window.close() no funcionó (por políticas del navegador), mostrar mensaje
+                setTimeout(() => {
+                    if (!window.closed) {
+                        updateUI(
+                            'Puedes cerrar esta ventana',
+                            'La autenticación se completó correctamente. Ya puedes cerrar esta pestaña.',
+                            false,
+                            true
+                        );
+                    }
+                }, 1000);
+            }, 500);
+        }
+
         // Si hay error, mostrarlo
         if (error) {
-            titleEl.textContent = 'Error en la autenticación';
-            messageEl.innerHTML = `<div class="error">${errorDescription || error}</div>`;
-            messageEl.innerHTML += '<p style="margin-top: 1rem;"><a href="login.html" style="color: white; text-decoration: underline;">Volver a intentar</a></p>';
+            updateUI(
+                'Error en la autenticación',
+                `${errorDescription || error}` +
+                '<p style="margin-top: 1rem;"><a href="login.html" style="color: white; text-decoration: underline;">Volver a intentar</a></p>',
+                true
+            );
         } else if (!code) {
-            titleEl.textContent = 'Código no encontrado';
-            messageEl.textContent = 'No se recibió el código de autorización. Por favor, intenta de nuevo.';
-            messageEl.innerHTML += '<p style="margin-top: 1rem;"><a href="login.html" style="color: white; text-decoration: underline;">Volver a intentar</a></p>';
-        } else {
+            updateUI(
+                'Código no encontrado',
+                'No se recibió el código de autorización. Por favor, intenta de nuevo.' +
+                '<p style="margin-top: 1rem;"><a href="login.html" style="color: white; text-decoration: underline;">Volver a intentar</a></p>',
+                true
+            );
+        } else if (window.opener) {
             // Enviar el código al opener (ventana padre que abrió el popup)
-            if (window.opener) {
+            try {
+                // Verificar si el opener está accesible
+                if (window.opener.closed) {
+                    throw new Error('La ventana principal se cerró');
+                }
+
+                // Enviar mensaje con el código
                 window.opener.postMessage({
                     type: 'oauth-callback',
                     provider,
                     code
-                }, '*');
-                window.close();
-            } else {
-                // No hay opener, redirigir con el código
-                window.location.href = `login.html?provider=${provider}&code=${encodeURIComponent(code)}`;
+                }, '*'); // En producción, restringir a tu dominio
+
+                updateUI('Autenticación completa', 'Redirigiendo...', false, true);
+                closeWindowAfterDelay();
+
+            } catch (err) {
+                console.error('Error comunicando con ventana principal:', err);
+                updateUI(
+                    'Error de comunicación',
+                    'No se pudo comunicar con la ventana principal. ' +
+                    '<p style="margin-top: 1rem;"><a href="login.html" style="color: white; text-decoration: underline;">Volver a intentar</a></p>',
+                    true
+                );
             }
+        } else {
+            // No hay opener, redirigir con el código (fallback)
+            const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+            window.location.href = `${basePath}/auth/login.html?provider=${provider}&code=${encodeURIComponent(code)}`;
         }
     </script>
 </body>
