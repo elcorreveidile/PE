@@ -39,7 +39,7 @@ router.post('/generate', authenticateToken, requireAdmin, async (req, res) => {
 
         // Verificar si ya existe un código para hoy
         const existingResult = await query(`
-            SELECT verification_code, session_id
+            SELECT id, verification_code, session_id
             FROM attendance
             WHERE date = $1
             LIMIT 1
@@ -53,6 +53,14 @@ router.post('/generate', authenticateToken, requireAdmin, async (req, res) => {
                 date: today,
                 reused: true
             });
+        }
+
+        // Si force es true, eliminar el código existente del día
+        if (existingResult.rows.length > 0 && force) {
+            await query(`
+                DELETE FROM attendance
+                WHERE date = $1
+            `, [today]);
         }
 
         // Generar código único
