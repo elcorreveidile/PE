@@ -108,13 +108,25 @@ router.post('/grades', async (req, res) => {
         try {
             await query(`
                 ALTER TABLE feedback 
-                ADD COLUMN IF NOT EXISTS numeric_grade DECIMAL(3,2);
+                ADD COLUMN IF NOT EXISTS numeric_grade DECIMAL(4,2);
             `);
             console.log('[MIGRATION] Columna numeric_grade verificada/creada');
         } catch (error) {
             if (!error.message.includes('already exists')) {
                 throw error;
             }
+        }
+        
+        // Si la columna existe pero es DECIMAL(3,2), cambiarla a DECIMAL(4,2)
+        try {
+            await query(`
+                ALTER TABLE feedback 
+                ALTER COLUMN numeric_grade TYPE DECIMAL(4,2);
+            `);
+            console.log('[MIGRATION] Columna numeric_grade actualizada a DECIMAL(4,2)');
+        } catch (error) {
+            // Si no existe la columna o no se puede cambiar, continuar
+            console.log('[MIGRATION] No se pudo cambiar el tipo de columna (probablemente no existe):', error.message);
         }
 
         // Convertir calificaciones textuales a numéricas
