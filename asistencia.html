@@ -147,7 +147,7 @@
             API_URL: 'https://produccion-escrita-c2-api-production.up.railway.app'
         };
     </script>
-    <script src="js/app.js?v=20250207"></script>
+    <script src="js/app.js?v=20250207-2"></script>
     <script>
         // Verificar si hay código en la URL o pendiente tras login
         document.addEventListener('DOMContentLoaded', () => {
@@ -286,9 +286,7 @@
                 }
 
                 const result = await tryAttendanceCheckIn([
-                    '/api/attendance/check-in',
-                    '/api/attendance/checkin',
-                    '/api/attendance/confirm'
+                    '/api/attendance/check-in'
                 ], token, code);
 
                 // Mostrar éxito
