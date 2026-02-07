@@ -494,7 +494,7 @@
                 </div>
                 <div class="alert alert-info">
                     <strong>ℹ️ Información:</strong>
-                    <small class="mb-0">Creado: ${rubric.createdAt ? PE.Utils.formatDate(rubric.createdAt, 'long') : 'No disponible'}${rubric.updatedAt ? ` | Actualizado: ${PE.Utils.formatDate(rubric.updatedAt, 'long')}` : ''}</small>
+                    <small class="mb-0">Creado por: ${rubric.authorName || 'Profesor'}</small>
                 </div>
             `);
         }

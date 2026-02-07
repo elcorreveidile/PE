@@ -16,18 +16,20 @@ const router = express.Router();
 router.get('/', authenticateToken, async (req, res) => {
     try {
         const result = await query(`
-            SELECT 
-                id,
-                name,
-                description,
-                criteria,
-                max_points as maxPoints,
-                active,
-                is_template as isTemplate,
-                created_at as createdAt,
-                updated_at as updatedAt
-            FROM rubrics
-            ORDER BY created_at DESC
+            SELECT
+                r.id,
+                r.name,
+                r.description,
+                r.criteria,
+                r.max_points as maxPoints,
+                r.active,
+                r.is_template as isTemplate,
+                r.created_at as createdAt,
+                r.updated_at as updatedAt,
+                COALESCE(u.name, u.email) as authorName
+            FROM rubrics r
+            LEFT JOIN users u ON r.created_by = u.id
+            ORDER BY r.created_at DESC
         `);
 
         // Convertir criteria de JSON a objeto si está almacenado como texto
@@ -53,18 +55,20 @@ router.get('/:id', authenticateToken, async (req, res) => {
         const rubricId = req.params.id;
 
         const result = await query(`
-            SELECT 
-                id,
-                name,
-                description,
-                criteria,
-                max_points as maxPoints,
-                active,
-                is_template as isTemplate,
-                created_at as createdAt,
-                updated_at as updatedAt
-            FROM rubrics
-            WHERE id = $1
+            SELECT
+                r.id,
+                r.name,
+                r.description,
+                r.criteria,
+                r.max_points as maxPoints,
+                r.active,
+                r.is_template as isTemplate,
+                r.created_at as createdAt,
+                r.updated_at as updatedAt,
+                COALESCE(u.name, u.email) as authorName
+            FROM rubrics r
+            LEFT JOIN users u ON r.created_by = u.id
+            WHERE r.id = $1
         `, [rubricId]);
 
         if (result.rows.length === 0) {
