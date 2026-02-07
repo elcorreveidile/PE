@@ -192,8 +192,8 @@ router.post('/google', [
 
         // 6. Nuevo usuario → Verificar código de registro
         if (!registrationCode || registrationCode !== REGISTRATION_CODE) {
-            return res.status(400).json({
-                error: 'Código de registro requerido',
+            return res.json({
+                message: 'Código de registro requerido',
                 needsRegistrationCode: true,
                 email,
                 name,
@@ -339,8 +339,8 @@ router.post('/apple', [
 
         // 5. Nuevo usuario → Verificar código de registro
         if (!registrationCode || registrationCode !== REGISTRATION_CODE) {
-            return res.status(400).json({
-                error: 'Código de registro requerido',
+            return res.json({
+                message: 'Código de registro requerido',
                 needsRegistrationCode: true,
                 email: userEmail,
                 name,
