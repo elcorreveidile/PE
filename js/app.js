@@ -764,19 +764,19 @@ const Auth = {
             throw new Error('No hay registro pendiente');
         }
 
-        const { provider, providerId, email, name, avatarUrl } = this._pendingOAuth;
+        const { provider, pendingToken } = this._pendingOAuth;
 
         try {
             let response;
             if (provider === 'google') {
-                // Reintentar con el código de registro
+                // Enviar pendingToken en lugar del código de Google
                 response = await API.post('/auth/oauth/google', {
-                    code: providerId, // En Google, enviamos el code original
+                    pendingToken,
                     registrationCode
                 });
             } else if (provider === 'apple') {
                 response = await API.post('/auth/oauth/apple', {
-                    id_token: providerId,
+                    pendingToken,
                     registrationCode
                 });
             }

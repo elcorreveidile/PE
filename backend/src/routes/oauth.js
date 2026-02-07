@@ -11,6 +11,19 @@ const { generateToken } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Almacenamiento temporal para OAuth (para códigos de registro)
+const oauthPendingData = new Map();
+
+// Limpiar datos antiguos cada 10 minutos
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, value] of oauthPendingData.entries()) {
+        if (now - value.timestamp > 10 * 60 * 1000) { // 10 minutos
+            oauthPendingData.delete(key);
+        }
+    }
+}, 5 * 60 * 1000); // Cada 5 minutos
+
 // Configuración OAuth
 const FRONTEND_URL = (process.env.FRONTEND_URL || 'https://www.cognoscencia.com').replace(/\/$/, '');
 
@@ -97,7 +110,8 @@ async function verifyAppleToken(idToken) {
  * Login o registro con Google OAuth
  */
 router.post('/google', [
-    body('code').notEmpty().withMessage('Código de OAuth requerido'),
+    body('code').optional(),
+    body('pendingToken').optional(),
     body('registrationCode').optional().trim()
 ], async (req, res) => {
     try {
@@ -111,11 +125,43 @@ router.post('/google', [
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { code, registrationCode } = req.body;
-        console.log('Code received:', !!code);
+        const { code, pendingToken, registrationCode } = req.body;
+        console.log('Request with:', { hasCode: !!code, hasPendingToken: !!pendingToken, hasRegistrationCode: !!registrationCode });
 
-        // 1. Intercambiar código por access token
-        const tokenData = await getGoogleToken(code);
+        let googleId, email, name, avatarUrl;
+
+        // Si viene con pendingToken, usar los datos guardados
+        if (pendingToken && registrationCode) {
+            console.log('Using pending token:', pendingToken);
+
+            const pendingData = oauthPendingData.get(pendingToken);
+            if (!pendingData) {
+                return res.status(400).json({
+                    error: 'Sesión expirada. Por favor, inicia sesión de nuevo.'
+                });
+            }
+
+            // Verificar código de registro
+            if (registrationCode !== REGISTRATION_CODE) {
+                return res.status(400).json({
+                    error: 'Código de registro incorrecto'
+                });
+            }
+
+            // Usar los datos guardados
+            googleId = pendingData.googleId;
+            email = pendingData.email;
+            name = pendingData.name;
+            avatarUrl = pendingData.avatarUrl;
+
+            // Limpiar datos temporales
+            oauthPendingData.delete(pendingToken);
+
+        } else if (code) {
+            console.log('Code received, exchanging for token...');
+
+            // 1. Intercambiar código por access token
+            const tokenData = await getGoogleToken(code);
 
         // 2. Obtener perfil del usuario
         const profile = await getGoogleProfile(tokenData.access_token);
@@ -198,14 +244,25 @@ router.post('/google', [
 
         // 6. Nuevo usuario → Verificar código de registro
         if (!registrationCode || registrationCode !== REGISTRATION_CODE) {
+            // Generar token temporal y guardar datos
+            const pendingToken = crypto.randomBytes(32).toString('hex');
+
+            oauthPendingData.set(pendingToken, {
+                googleId,
+                email,
+                name,
+                avatarUrl,
+                timestamp: Date.now()
+            });
+
+            console.log('Generated pending token for new user');
+
             return res.json({
                 message: 'Código de registro requerido',
                 needsRegistrationCode: true,
+                pendingToken,
                 email,
-                name,
-                provider: 'google',
-                providerId: googleId,
-                avatarUrl
+                name
             });
         }
 
