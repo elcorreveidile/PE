@@ -1400,6 +1400,13 @@ const Forms = {
             UI.notify('Sesión iniciada correctamente', 'success');
             setTimeout(() => {
                 const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+                const params = new URLSearchParams(window.location.search);
+                const redirect = params.get('redirect');
+                if (redirect && user.role !== 'admin') {
+                    window.location.href = redirect;
+                    return;
+                }
+
                 window.location.href = user.role === 'admin' ? basePath + '/admin/index.html' : basePath + '/usuario/dashboard.html';
             }, 500);
         } catch (error) {
