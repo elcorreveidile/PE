@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparación de Estudiantes | Panel Admin - Producción Escrita C2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        .admin-header { background: linear-gradient(135deg, #c53030, #9b2c2c); }
+        .admin-badge { background: #c53030; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; margin-left: 0.5rem; }
+        
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: var(--spacing-lg);
+            margin-top: var(--spacing-lg);
+        }
+        
+        .student-comparison-card {
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-lg);
+            transition: all var(--transition-fast);
+            background: white;
+        }
+        
+        .student-comparison-card:hover {
+            border-color: var(--primary-light);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .student-header {
+            text-align: center;
+            padding-bottom: var(--spacing-md);
+            border-bottom: 2px solid var(--bg-light);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .student-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: white;
+            font-weight: 700;
+            margin: 0 auto var(--spacing-md);
+            border: 4px solid white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .student-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 0.25rem;
+        }
+        
+        .student-meta {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 0.75rem;
+            background: var(--bg-light);
+            border-radius: var(--border-radius-md);
+        }
+        
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            line-height: 1;
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+        
+        .progress-section {
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .analysis-section {
+            background: var(--bg-light);
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius-md);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .analysis-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: var(--spacing-sm);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .strengths-list, .improvements-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .strengths-list li {
+            padding: 0.5rem;
+            margin-bottom: 0.25rem;
+            background: rgba(40, 167, 69, 0.1);
+            border-left: 3px solid var(--success-color);
+            border-radius: 0 4px 4px 0;
+            font-size: 0.875rem;
+        }
+        
+        .improvements-list li {
+            padding: 0.5rem;
+            margin-bottom: 0.25rem;
+            background: rgba(255, 193, 7, 0.1);
+            border-left: 3px solid var(--warning-color);
+            border-radius: 0 4px 4px 0;
+            font-size: 0.875rem;
+        }
+        
+        .rank-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .rank-1 { background: linear-gradient(135deg, #ffd700, #ffed4e); color: #000; }
+        .rank-2 { background: linear-gradient(135deg, #c0c0c0, #e8e8e8); color: #000; }
+        .rank-3 { background: linear-gradient(135deg, #cd7f32, #daa06d); color: white; }
+        
+        .comparison-bar {
+            height: 24px;
+            background: var(--bg-light);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .comparison-bar-fill {
+            height: 100%;
+            border-radius: 12px;
+            transition: width 0.5s ease;
+        }
+        
+        .comparison-bar-label {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .student-selector {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            padding: 0.75rem;
+            background: var(--bg-light);
+            border-radius: var(--border-radius-md);
+            margin-bottom: 0.5rem;
+        }
+        
+        .student-selector-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .student-selector-info {
+            flex: 1;
+        }
+        
+        .student-selector-name {
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        .student-selector-meta {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        
+        .remove-student-btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="header admin-header">
+        <div class="header-main">
+            <div class="container">
+                <a href="../index.html" class="logo">
+                    <div class="logo-icon">C2</div>
+                    <div class="logo-text">
+                        <span class="logo-title">Panel de Administración <span class="admin-badge">ADMIN</span></span>
+                        <span class="logo-subtitle">CLM - UGR</span>
+                    </div>
+                </a>
+                <nav class="nav-main"><a href="../index.html">Ver curso</a><a href="../sesiones/index.html">Sesiones</a></nav>
+                <div class="nav-auth"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="section">
+        <div class="container">
+            <div class="page-with-sidebar">
+                <aside class="sidebar">
+                    <div class="sidebar-section">
+                        <h4 class="sidebar-title">Administración</h4>
+                        <ul class="sidebar-nav">
+                            <li><a href="index.html">Panel principal</a></li>
+                            <li><a href="estudiantes.html">Estudiantes</a></li>
+                            <li><a href="correcciones.html">Correcciones</a></li>
+                            <li><a href="notificaciones.html">Notificaciones</a></li>
+                            <li><a href="asistencia.html">Asistencia QR</a></li>
+                            <li><a href="tareas.html">Gestión de tareas</a></li>
+                            <li><a href="estadisticas.html">Estadísticas</a></li>
+                            <li><a href="comparacion.html" class="active">Comparación</a></li>
+                        </ul>
+                    </div>
+                    <div class="sidebar-section">
+                        <button onclick="PE.Auth.logout()" class="btn btn-outline btn-block">Cerrar sesión</button>
+                    </div>
+                </aside>
+
+                <div class="main-content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-xl);">
+                        <div>
+                            <h1 style="margin-bottom: 0.25rem;">📊 Comparación de Estudiantes</h1>
+                            <p class="text-secondary mb-0">Compara el progreso y rendimiento de los estudiantes</p>
+                        </div>
+                        <button class="btn btn-outline" onclick="exportComparison()" title="Exportar comparación">📥 Exportar</button>
+                    </div>
+
+                    <!-- Selector de estudiantes -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h3 class="mb-3">Seleccionar Estudiantes</h3>
+                            
+                            <div class="form-row mb-3">
+                                <div class="form-group" style="flex: 1;">
+                                    <label class="form-label">Buscar estudiante</label>
+                                    <select id="student-select" class="form-control form-select">
+                                        <option value="">Selecciona un estudiante...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="align-self: flex-end;">
+                                    <button class="btn btn-primary" onclick="addStudent()">+ Añadir</button>
+                                </div>
+                            </div>
+
+                            <div id="selected-students">
+                                <p class="text-secondary text-center" style="padding: 1rem;">No has seleccionado ningún estudiante. Selecciona hasta 4 estudiantes para comparar.</p>
+                            </div>
+
+                            <div style="margin-top: 1rem; text-align: center;">
+                                <button class="btn btn-lg btn-primary" onclick="generateComparison()" id="btn-generate" disabled>
+                                    🔄 Generar Comparación
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comparación -->
+                    <div id="comparison-results">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📊</div>
+                            <h3>Selecciona estudiantes para comenzar</h3>
+                            <p>Elige entre 2 y 4 estudiantes para ver una comparación detallada de su progreso.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom" style="border:none;padding-top:0;">
+                <span>&copy; 2026 Javier Benítez Láinez | CLM - UGR</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        window.PE_CONFIG = {
+            API_URL: 'https://produccion-escrita-c2-api-production.up.railway.app'
+        };
+    </script>
+    <script src="../js/app.js"></script>
+    <script>
+        let allUsers = [];
+        let selectedStudents = [];
+        let submissions = [];
+        let attendance = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = PE.Auth.getCurrentUser();
+            if (!user || user.role !== 'admin') {
+                window.location.href = '../auth/login.html';
+                return;
+            }
+
+            // Cargar datos
+            await loadData();
+            
+            // Poblar selector
+            populateStudentSelect();
+        });
+
+        async function loadData() {
+            try {
+                // Cargar usuarios
+                allUsers = await PE.API.get('/users');
+                allUsers = Array.isArray(allUsers) ? allUsers.filter(u => (u.role || 'student') !== 'admin') : [];
+
+                // Cargar entregas
+                submissions = await PE.Submissions.getAll();
+                submissions = Array.isArray(submissions) ? submissions : [];
+
+                // Cargar asistencia
+                try {
+                    const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+                    const response = await fetch(`${window.PE_CONFIG.API_URL}/api/attendance`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.ok) {
+                        attendance = await response.json();
+                        attendance = Array.isArray(attendance) ? attendance : [];
+                    }
+                } catch (error) {
+                    console.warn('No se pudo cargar asistencia:', error);
+                    attendance = [];
+                }
+
+            } catch (error) {
+                console.error('Error cargando datos:', error);
+                PE.UI.notify('Error al cargar los datos', 'error');
+            }
+        }
+
+        function populateStudentSelect() {
+            const select = document.getElementById('student-select');
+            allUsers.forEach(student => {
+                const option = document.createElement('option');
+                option.value = student.id;
+                option.textContent = `${student.name} (${student.level || 'C2'})`;
+                select.appendChild(option);
+            });
+        }
+
+        function addStudent() {
+            const select = document.getElementById('student-select');
+            const studentId = select.value;
+
+            if (!studentId) {
+                PE.UI.notify('Selecciona un estudiante', 'warning');
+                return;
+            }
+
+            if (selectedStudents.find(s => s.id === studentId)) {
+                PE.UI.notify('Este estudiante ya está seleccionado', 'warning');
+                return;
+            }
+
+            if (selectedStudents.length >= 4) {
+                PE.UI.notify('Máximo 4 estudiantes para comparar', 'warning');
+                return;
+            }
+
+            const student = allUsers.find(u => u.id === studentId);
+            if (student) {
+                selectedStudents.push(student);
+                renderSelectedStudents();
+                select.value = '';
+            }
+        }
+
+        function removeStudent(studentId) {
+            selectedStudents = selectedStudents.filter(s => s.id !== studentId);
+            renderSelectedStudents();
+        }
+
+        function renderSelectedStudents() {
+            const container = document.getElementById('selected-students');
+            const btnGenerate = document.getElementById('btn-generate');
+
+            if (selectedStudents.length === 0) {
+                container.innerHTML = '<p class="text-secondary text-center" style="padding: 1rem;">No has seleccionado ningún estudiante. Selecciona hasta 4 estudiantes para comparar.</p>';
+                btnGenerate.disabled = true;
+                return;
+            }
+
+            container.innerHTML = selectedStudents.map(s => {
+                const initials = s.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                const stats = getStudentStats(s.id);
+                return `
+                    <div class="student-selector">
+                        <div class="student-selector-avatar">${initials}</div>
+                        <div class="student-selector-info">
+                            <div class="student-selector-name">${PE.Utils.escapeHtml(s.name)}</div>
+                            <div class="student-selector-meta">${stats.submissions} entregas • ${stats.words} palabras</div>
+                        </div>
+                        <button class="btn btn-sm btn-ghost remove-student-btn" onclick="removeStudent('${s.id}')">✕</button>
+                    </div>
+                `;
+            }).join('');
+
+            btnGenerate.disabled = selectedStudents.length < 2;
+        }
+
+        function getStudentStats(studentId) {
+            const studentSubmissions = submissions.filter(s => String(s.userId) === String(studentId) || String(s.user_id) === String(studentId));
+            const words = studentSubmissions.reduce((sum, s) => sum + (s.wordCount || s.word_count || 0), 0);
+            const reviewed = studentSubmissions.filter(s => s.status === 'reviewed');
+            
+            // Calcular calificación media (mapear palabras clave a números)
+            const gradeMap = { 'Excelente': 10, 'Muy bien': 8.5, 'Bien': 7, 'Suficiente': 5, 'Necesita mejorar': 3 };
+            const grades = studentSubmissions
+                .filter(s => s.grade)
+                .map(s => gradeMap[s.grade] || 0);
+            const avgGrade = grades.length > 0 ? (grades.reduce((a, b) => a + b, 0) / grades.length).toFixed(1) : 0;
+
+            // Asistencia
+            const studentAttendance = attendance.filter(a => String(a.user_id) === String(studentId)).length;
+            const today = new Date();
+            const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+            const weeklyAttendance = attendance.filter(a => 
+                String(a.user_id) === String(studentId) && 
+                new Date(a.date) >= weekAgo
+            ).length;
+
+            // Calcular fortalezas y áreas de mejora
+            const { strengths, improvements } = analyzePerformance(studentSubmissions, avgGrade, studentAttendance);
+
+            return {
+                submissions: studentSubmissions.length,
+                words: words,
+                avgWords: studentSubmissions.length > 0 ? Math.round(words / studentSubmissions.length) : 0,
+                avgGrade: parseFloat(avgGrade),
+                reviewed: reviewed.length,
+                attendance: studentAttendance,
+                weeklyAttendance: weeklyAttendance,
+                strengths,
+                improvements
+            };
+        }
+
+        function analyzePerformance(studentSubmissions, avgGrade, attendanceCount) {
+            const strengths = [];
+            const improvements = [];
+
+            // Análisis de calificaciones
+            if (avgGrade >= 8) {
+                strengths.push('Excelente calidad de escritura');
+            } else if (avgGrade >= 6) {
+                strengths.push('Buena calidad general');
+            } else if (avgGrade > 0) {
+                improvements.push('Mejorar calidad de escritura');
+            }
+
+            // Análisis de volumen
+            const avgWords = studentSubmissions.length > 0 
+                ? studentSubmissions.reduce((sum, s) => sum + (s.wordCount || 0), 0) / studentSubmissions.length 
+                : 0;
+
+            if (avgWords >= 300) {
+                strengths.push('Buena extensión de textos');
+            } else if (avgWords >= 200) {
+                strengths.push('Extensión adecuada');
+            } else if (studentSubmissions.length > 0) {
+                improvements.push('Aumentar extensión de textos');
+            }
+
+            // Análisis de consistencia
+            if (studentSubmissions.length >= 15) {
+                strengths.push('Alta consistencia en entregas');
+            } else if (studentSubmissions.length >= 8) {
+                strengths.push('Buena regularidad');
+            } else {
+                improvements.push('Aumentar frecuencia de entregas');
+            }
+
+            // Análisis de asistencia
+            if (attendanceCount >= 10) {
+                strengths.push('Excelente asistencia');
+            } else if (attendanceCount >= 5) {
+                strengths.push('Buena asistencia');
+            } else if (attendanceCount > 0) {
+                improvements.push('Mejorar asistencia');
+            }
+
+            // Análisis de vocabulario (simulado basado en longitud de palabras)
+            if (avgWords >= 250) {
+                strengths.push('Vocabulario rico');
+            }
+
+            // Análisis de mejora temporal
+            if (studentSubmissions.length >= 3) {
+                const firstWords = studentSubmissions[0].wordCount || 0;
+                const lastWords = studentSubmissions[studentSubmissions.length - 1].wordCount || 0;
+                if (lastWords > firstWords * 1.2) {
+                    strengths.push('Mejora progresiva evidente');
+                }
+            }
+
+            // Asegurar que siempre haya al menos un elemento en cada lista
+            if (strengths.length === 0) strengths.push('En proceso de desarrollo');
+            if (improvements.length === 0) improvements.push('Continuar con buen trabajo');
+
+            return { strengths: strengths.slice(0, 3), improvements: improvements.slice(0, 3) };
+        }
+
+        async function generateComparison() {
+            if (selectedStudents.length < 2) {
+                PE.UI.notify('Selecciona al menos 2 estudiantes', 'warning');
+                return;
+            }
+
+            const container = document.getElementById('comparison-results');
+            container.innerHTML = '<div class="loader"></div>';
+
+            // Simular tiempo de carga
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Calcular estadísticas para cada estudiante
+            const studentsData = selectedStudents.map(s => ({
+                ...s,
+                stats: getStudentStats(s.id)
+            }));
+
+            // Ordenar por total de entregas
+            studentsData.sort((a, b) => b.stats.submissions - a.stats.submissions);
+
+            // Calcular máximos para barras comparativas
+            const maxSubmissions = Math.max(...studentsData.map(s => s.stats.submissions), 1);
+            const maxWords = Math.max(...studentsData.map(s => s.stats.words), 1);
+            const maxAvgWords = Math.max(...studentsData.map(s => s.stats.avgWords), 1);
+            const maxGrade = Math.max(...studentsData.map(s => s.stats.avgGrade), 10);
+
+            // Renderizar tarjetas
+            container.innerHTML = `
+                <div class="comparison-grid">
+                    ${studentsData.map((student, index) => {
+                        const initials = student.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                        const rank = index + 1;
+                        const rankClass = rank <= 3 ? `rank-${rank}` : '';
+                        
+                        return `
+                            <div class="student-comparison-card" style="position: relative;">
+                                ${rankClass ? `<div class="rank-badge ${rankClass}">#${rank}</div>` : ''}
+                                
+                                <div class="student-header">
+                                    <div class="student-avatar">${initials}</div>
+                                    <div class="student-name">${PE.Utils.escapeHtml(student.name)}</div>
+                                    <div class="student-meta">
+                                        <span class="badge badge-primary">${student.level || 'C2'}</span>
+                                        <span class="badge badge-info">${student.email}</span>
+                                    </div>
+                                </div>
+
+                                <div class="stats-grid">
+                                    <div class="stat-item">
+                                        <div class="stat-value">${student.stats.submissions}</div>
+                                        <div class="stat-label">Entregas</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-value">${student.stats.words.toLocaleString('es-ES')}</div>
+                                        <div class="stat-label">Palabras</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-value">${student.stats.avgWords}</div>
+                                        <div class="stat-label">Media/Entrega</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-value">${student.stats.avgGrade > 0 ? student.stats.avgGrade + '/10' : '-'}</div>
+                                        <div class="stat-label">Calificación</div>
+                                    </div>
+                                </div>
+
+                                <div class="progress-section">
+                                    <div class="progress-label">
+                                        <span>Progreso de entregas</span>
+                                        <span>${student.stats.submissions} / ${maxSubmissions}</span>
+                                    </div>
+                                    <div class="comparison-bar">
+                                        <div class="comparison-bar-fill" style="width: ${(student.stats.submissions / maxSubmissions) * 100}%; background: var(--primary-color);">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="progress-section">
+                                    <div class="progress-label">
+                                        <span>Media de palabras</span>
+                                        <span>${student.stats.avgWords} / ${maxAvgWords}</span>
+                                    </div>
+                                    <div class="comparison-bar">
+                                        <div class="comparison-bar-fill" style="width: ${(student.stats.avgWords / maxAvgWords) * 100}%; background: var(--success-color);">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="progress-section">
+                                    <div class="progress-label">
+                                        <span>Calificación media</span>
+                                        <span>${student.stats.avgGrade > 0 ? student.stats.avgGrade : 0} / 10</span>
+                                    </div>
+                                    <div class="comparison-bar">
+                                        <div class="comparison-bar-fill" style="width: ${student.stats.avgGrade > 0 ? (student.stats.avgGrade / maxGrade) * 100 : 0}%; background: var(--accent-color);">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="analysis-section">
+                                    <div class="analysis-title">✅ Fortalezas</div>
+                                    <ul class="strengths-list">
+                                        ${student.stats.strengths.map(s => `<li>${PE.Utils.escapeHtml(s)}</li>`).join('')}
+                                    </ul>
+                                </div>
+
+                                <div class="analysis-section">
+                                    <div class="analysis-title">⚠️ Áreas de mejora</div>
+                                    <ul class="improvements-list">
+                                        ${student.stats.improvements.map(i => `<li>${PE.Utils.escapeHtml(i)}</li>`).join('')}
+                                    </ul>
+                                </div>
+
+                                <div style="display: flex; gap: 0.5rem; margin-top: var(--spacing-md);">
+                                    <a href="estudiantes.html" class="btn btn-sm btn-outline" style="flex: 1;">Ver detalle</a>
+                                    <button class="btn btn-sm btn-primary" style="flex: 1;" onclick="viewStudentReport('${student.id}')">Reporte</button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+
+            PE.UI.notify('Comparación generada exitosamente', 'success');
+        }
+
+        function viewStudentReport(studentId) {
+            const student = selectedStudents.find(s => s.id === studentId);
+            if (!student) return;
+
+            const stats = getStudentStats(studentId);
+            const studentSubmissions = submissions.filter(s => 
+                String(s.userId) === String(studentId) || String(s.user_id) === String(studentId)
+            );
+
+            PE.UI.showModal(`📊 Reporte: ${student.name}`, `
+                <div class="mb-3">
+                    <strong>📧 Email:</strong> ${student.email}
+                </div>
+                <div class="mb-3">
+                    <strong>📚 Nivel:</strong> ${student.level || 'C2'}
+                </div>
+                <hr>
+                <h4 class="mt-3 mb-3">Resumen de Actividad</h4>
+                <div class="stats-grid mb-3">
+                    <div class="stat-item">
+                        <div class="stat-value">${stats.submissions}</div>
+                        <div class="stat-label">Total entregas</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">${stats.words.toLocaleString('es-ES')}</div>
+                        <div class="stat-label">Palabras escritas</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">${stats.attendance}</div>
+                        <div class="stat-label">Asistencias</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">${stats.avgGrade > 0 ? stats.avgGrade + '/10' : '-'}</div>
+                        <div class="stat-label">Calificación media</div>
+                    </div>
+                </div>
+                <h4 class="mb-3">Últimas Entregas</h4>
+                ${studentSubmissions.slice(-5).reverse().map(s => `
+                    <div style="padding: 0.75rem; background: var(--bg-light); border-radius: 0.5rem; margin-bottom: 0.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong>${PE.Utils.escapeHtml(s.activityTitle)}</strong>
+                            <span class="badge badge-${s.status === 'reviewed' ? 'success' : 'warning'}">${s.status === 'reviewed' ? 'Corregido' : 'Pendiente'}</span>
+                        </div>
+                        <small class="text-secondary">${PE.Utils.formatDate(s.createdAt)} • ${s.wordCount} palabras</small>
+                    </div>
+                `).join('') || '<p class="text-secondary">No hay entregas registradas</p>'}
+            `, [{ text: 'Cerrar' }]);
+        }
+
+        async function exportComparison() {
+            if (selectedStudents.length < 2) {
+                PE.UI.notify('Genera una comparación primero', 'warning');
+                return;
+            }
+
+            const studentsData = selectedStudents.map(s => ({
+                ...s,
+                stats: getStudentStats(s.id)
+            }));
+
+            const exportData = {
+                exportDate: new Date().toISOString(),
+                comparedStudents: studentsData.map(s => ({
+                    name: s.name,
+                    email: s.email,
+                    level: s.level,
+                    stats: s.stats
+                }))
+            };
+
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'comparacion_estudiantes_' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+
+            PE.UI.notify('Comparación exportada correctamente', 'success');
+        }
+    </script>
+</body>
+</html>
