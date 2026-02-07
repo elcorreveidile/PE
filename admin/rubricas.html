@@ -13,7 +13,7 @@
         .rubric-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .criterion-item { background: var(--bg-light); border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; }
         .criterion-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
-        .weight-badge { background: var(--primary-light); color: #2c3e50; padding: 0.25rem 0.75rem; border-radius: 12px; font-weight: 600; font-size: 0.875rem; }
+        .weight-badge { background: var(--primary-light); color: white; padding: 0.25rem 0.75rem; border-radius: 12px; font-weight: 600; font-size: 0.875rem; }
         .template-badge { background: var(--accent-color); color: white; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem; }
         .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-secondary); }
         .empty-icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.5; }
@@ -234,7 +234,7 @@
                                 <p class="text-secondary mb-2">${PE.Utils.escapeHtml(rubric.description || 'Sin descripción')}</p>
                                 <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
                                     <span class="badge badge-info">${rubric.criteria.length} criterios</span>
-                                    <span class="badge badge-primary">Max: ${rubric.maxPoints} puntos</span>
+                                    <span class="badge badge-primary">Max: ${rubric.maxPoints || 10} puntos</span>
                                     ${rubric.active ? '<span class="badge badge-success">Activo</span>' : '<span class="badge badge-secondary">Inactivo</span>'}
                                 </div>
                             </div>
