@@ -163,8 +163,8 @@ router.post('/google', [
             // 1. Intercambiar código por access token
             const tokenData = await getGoogleToken(code);
 
-        // 2. Obtener perfil del usuario
-        const profile = await getGoogleProfile(tokenData.access_token);
+            // 2. Obtener perfil del usuario
+            const profile = await getGoogleProfile(tokenData.access_token);
 
         const googleId = profile.id;
         const email = profile.email;
@@ -295,6 +295,7 @@ router.post('/google', [
             },
             token
         });
+        }
 
     } catch (error) {
         console.error('Error en OAuth Google:', error);
