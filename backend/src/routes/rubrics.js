@@ -265,16 +265,9 @@ router.delete('/:id', authenticateToken, requireAdmin, async (req, res) => {
         const rubricId = req.params.id;
 
         // Verificar que la rúbrica existe
-        const existingRubric = await query('SELECT id, is_template FROM rubrics WHERE id = $1', [rubricId]);
+        const existingRubric = await query('SELECT id FROM rubrics WHERE id = $1', [rubricId]);
         if (existingRubric.rows.length === 0) {
             return res.status(404).json({ error: 'Rúbrica no encontrada' });
-        }
-
-        // No eliminar plantillas predefinidas
-        if (existingRubric.rows[0].is_template) {
-            return res.status(400).json({ 
-                error: 'No se pueden eliminar las plantillas predefinidas' 
-            });
         }
 
         await query('DELETE FROM rubrics WHERE id = $1', [rubricId]);
