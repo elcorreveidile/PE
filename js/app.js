@@ -628,15 +628,18 @@ const Auth = {
                 `access_type=offline`;
             console.log(`[OAuth] URL de autorización Google generada`);
         } else if (provider === 'apple') {
-            const scopes = 'name email';
+            // Apple exige response_mode=form_post cuando se solicita name/email.
+            // Este flujo usa callback en popup con query params, por lo que evitamos scopes aquí.
+            const scopes = '';
             const state = 'apple';
             authUrl = `https://appleid.apple.com/auth/authorize?` +
                 `client_id=${encodeURIComponent(window.PE_CONFIG.APPLE_CLIENT_ID)}&` +
                 `redirect_uri=${encodeURIComponent(redirectUri)}&` +
                 `response_type=code&` +
-                `response_mode=query&` +
-                `scope=${encodeURIComponent(scopes)}&` +
                 `state=${encodeURIComponent(state)}`;
+            if (scopes) {
+                authUrl += `&scope=${encodeURIComponent(scopes)}`;
+            }
             console.log('[OAuth] URL de autorización Apple generada');
         } else {
             console.error(`[OAuth] Provider ${provider} no soportado`);
