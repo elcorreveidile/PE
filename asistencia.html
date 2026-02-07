@@ -194,51 +194,31 @@
             throw lastError || new Error('No se pudo validar el código de asistencia');
         }
 
-        async function tryAttendanceCheckIn(paths, token, code) {
-            let lastError = null;
-            let saw404 = false;
-            let sawNon404Failure = false;
+        async function tryAttendanceCheckIn(token, code) {
+            const response = await fetch(`${window.PE_CONFIG.API_URL}/api/attendance/check-in`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    verificationCode: code,
+                    code
+                })
+            });
 
-            for (const path of paths) {
-                let response;
-                try {
-                    response = await fetch(`${window.PE_CONFIG.API_URL}${path}`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            verificationCode: code,
-                            code
-                        })
-                    });
-                } catch (error) {
-                    sawNon404Failure = true;
-                    lastError = error;
-                    continue;
-                }
-
-                if (response.ok) {
-                    return await response.json();
-                }
-
-                const errorData = await response.json().catch(() => ({}));
-                const message = errorData.error || `HTTP ${response.status}`;
-
-                if (response.status === 404) {
-                    saw404 = true;
-                    continue;
-                }
-
-                throw new Error(message);
+            if (response.ok) {
+                return await response.json();
             }
 
-            if (saw404 && !sawNon404Failure) {
-                throw new Error('No se encontró un endpoint de check-in compatible en el servidor. Contacta con el profesor para revisar la API de asistencia.');
+            const errorData = await response.json().catch(() => ({}));
+            const message = errorData.error || `HTTP ${response.status}`;
+
+            if (response.status === 404) {
+                throw new Error('No se encontró el endpoint de check-in en el servidor. Contacta con el profesor para revisar la API de asistencia.');
             }
 
-            throw lastError || new Error('Error al registrar asistencia');
+            throw new Error(message);
         }
 
         async function checkIn(event) {
@@ -291,13 +271,7 @@
                     sessionInfo.style.display = 'block';
                 }
 
-                const result = await tryAttendanceCheckIn([
-                    '/api/attendance/check-in',
-                    '/api/attendance/checkin',
-                    '/api/attendance/confirm',
-                    '/api/attendance',
-                    '/api/attendance/verify'
-                ], token, code);
+                const result = await tryAttendanceCheckIn(token, code);
 
                 // Mostrar éxito
                 document.getElementById('checkin-form').style.display = 'none';

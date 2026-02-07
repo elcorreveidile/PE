@@ -162,13 +162,11 @@ router.get('/session/:code', authenticateToken, async (req, res) => {
     }
 });
 
-/**
- * POST /api/attendance/check-in
- * Registrar asistencia del estudiante
- */
-router.post('/check-in', authenticateToken, [
+const checkInValidation = [
     body('verificationCode').notEmpty().withMessage('El código es requerido')
-], async (req, res) => {
+];
+
+async function registerAttendance(req, res) {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -233,7 +231,21 @@ router.post('/check-in', authenticateToken, [
         console.error('Error registrando asistencia:', error);
         res.status(500).json({ error: 'Error al registrar asistencia' });
     }
-});
+}
+
+/**
+ * POST /api/attendance/check-in
+ * Registrar asistencia del estudiante
+ *
+ * Alias adicionales para compatibilidad histórica de frontend:
+ * - /checkin
+ * - /confirm
+ * - /verify
+ */
+router.post('/check-in', authenticateToken, checkInValidation, registerAttendance);
+router.post('/checkin', authenticateToken, checkInValidation, registerAttendance);
+router.post('/confirm', authenticateToken, checkInValidation, registerAttendance);
+router.post('/verify', authenticateToken, checkInValidation, registerAttendance);
 
 /**
  * GET /api/attendance
