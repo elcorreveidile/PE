@@ -636,6 +636,7 @@ const Auth = {
                 `client_id=${encodeURIComponent(window.PE_CONFIG.APPLE_CLIENT_ID)}&` +
                 `redirect_uri=${encodeURIComponent(redirectUri)}&` +
                 `response_type=code&` +
+                `response_mode=query&` +
                 `state=${encodeURIComponent(state)}`;
             if (scopes) {
                 authUrl += `&scope=${encodeURIComponent(scopes)}`;
