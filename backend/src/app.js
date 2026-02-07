@@ -14,6 +14,7 @@ const path = require('path');
 
 // Importar rutas
 const authRoutes = require('./routes/auth');
+const oauthRoutes = require('./routes/oauth');
 const usersRoutes = require('./routes/users');
 const submissionsRoutes = require('./routes/submissions');
 const notificationsRoutes = require('./routes/notifications');
@@ -88,6 +89,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Rutas de la API
 app.use('/api/auth', authRoutes);
+app.use('/api/auth/oauth', oauthRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/submissions', submissionsRoutes);
 app.use('/api/notifications', notificationsRoutes);

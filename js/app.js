@@ -269,6 +269,9 @@ const Utils = {
 // ==========================================================================
 
 const Auth = {
+    // Almacenamiento temporal de datos OAuth para registro
+    _pendingOAuth: null,
+
     // Inicializar usuarios de demostración (solo localStorage)
     init() {
         // Cargar token guardado
@@ -507,6 +510,303 @@ const Auth = {
         user.password = newPassword;
         Utils.storage.set('users', users);
         return { success: true };
+    },
+
+    // ==========================================================================
+    // OAuth 2.0 - Google y Apple Sign In
+    // ==========================================================================
+
+    /**
+     * Iniciar login con Google OAuth
+     */
+    loginWithGoogle() {
+        const clientId = (typeof window !== 'undefined' && window.PE_CONFIG && window.PE_CONFIG.GOOGLE_CLIENT_ID)
+            ? window.PE_CONFIG.GOOGLE_CLIENT_ID
+            : 'YOUR_GOOGLE_CLIENT_ID';
+        const redirectUri = `${window.location.origin}/auth/oauth-callback.html`;
+        const scope = 'openid profile email';
+
+        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` + new URLSearchParams({
+            client_id: clientId,
+            redirect_uri: redirectUri,
+            response_type: 'code',
+            scope: scope,
+            access_type: 'offline',
+            prompt: 'consent'
+        });
+
+        this._openOAuthPopup(authUrl, 'google');
+    },
+
+    /**
+     * Iniciar login con Apple Sign In
+     */
+    loginWithApple() {
+        // Apple Sign In requiere usar su SDK o redirigir a su endpoint
+        const clientId = (typeof window !== 'undefined' && window.PE_CONFIG && window.PE_CONFIG.APPLE_CLIENT_ID)
+            ? window.PE_CONFIG.APPLE_CLIENT_ID
+            : 'YOUR_APPLE_CLIENT_ID';
+        const redirectUri = `${window.location.origin}/auth/oauth-callback.html`;
+        const scope = 'name email';
+
+        const authUrl = `https://appleid.apple.com/auth/authorize?` + new URLSearchParams({
+            client_id: clientId,
+            redirect_uri: redirectUri,
+            response_type: 'code id_token',
+            scope: scope,
+            response_mode: 'fragment'
+        });
+
+        this._openOAuthPopup(authUrl, 'apple');
+    },
+
+    /**
+     * Abrir popup de OAuth y esperar respuesta
+     */
+    _openOAuthPopup(url, provider) {
+        const width = 500;
+        const height = 600;
+        const left = (window.screen.width - width) / 2;
+        const top = (window.screen.height - height) / 2;
+
+        const popup = window.open(
+            url,
+            `OAuth ${provider}`,
+            `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
+        );
+
+        if (!popup) {
+            UI.notify('No se pudo abrir la ventana de autorización. Habilita los popups para este sitio.', 'error');
+            return;
+        }
+
+        // Escuchar mensajes del popup
+        const messageHandler = (event) => {
+            // Verificar origen (en producción, verificar event.origin)
+            if (event.data && event.data.type === 'oauth-callback') {
+                popup.close();
+                window.removeEventListener('message', messageHandler);
+                this._handleOAuthCallback(event.data);
+            }
+        };
+
+        window.addEventListener('message', messageHandler);
+
+        // Verificar si el popup fue cerrado manualmente
+        const checkClosed = setInterval(() => {
+            if (popup.closed) {
+                clearInterval(checkClosed);
+                window.removeEventListener('message', messageHandler);
+            }
+        }, 1000);
+    },
+
+    /**
+     * Manejar callback de OAuth
+     */
+    async _handleOAuthCallback(data) {
+        const { provider, code } = data;
+
+        try {
+            UI.notify('Procesando autenticación...', 'info');
+
+            if (provider === 'google') {
+                await this._processGoogleOAuth(code);
+            } else if (provider === 'apple') {
+                await this._processAppleOAuth(code);
+            }
+        } catch (error) {
+            UI.notify(error.message, 'error');
+        }
+    },
+
+    /**
+     * Procesar OAuth de Google
+     */
+    async _processGoogleOAuth(code) {
+        try {
+            const response = await API.post('/auth/oauth/google', { code });
+
+            if (response.needsRegistrationCode) {
+                // Mostrar modal para código de registro
+                this._showRegistrationModal(response);
+                return;
+            }
+
+            // Login exitoso o registro con código correcto
+            const user = response.user || response.data || response;
+            if (response.token) {
+                AppState.token = response.token;
+                Utils.storage.set('token', response.token);
+            }
+
+            if (user) {
+                Utils.storage.set('currentUser', user);
+                AppState.user = user;
+                AppState.isAdmin = user.role === 'admin';
+            }
+
+            UI.notify('Inicio de sesión exitoso', 'success');
+            setTimeout(() => {
+                const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+                window.location.href = user.role === 'admin'
+                    ? basePath + '/admin/index.html'
+                    : basePath + '/usuario/dashboard.html';
+            }, 500);
+
+        } catch (error) {
+            if (error.message.includes('Código de registro requerido')) {
+                // Parsear la respuesta de error para obtener datos OAuth
+                try {
+                    const errorData = JSON.parse(error.message.match(/\{.*\}/)[0]);
+                    this._showRegistrationModal(errorData);
+                } catch {
+                    UI.notify('Error al procesar el registro', 'error');
+                }
+            } else {
+                UI.notify(error.message || 'Error al autenticar con Google', 'error');
+            }
+        }
+    },
+
+    /**
+     * Procesar OAuth de Apple
+     */
+    async _processAppleOAuth(code) {
+        // Apple Sign In es diferente, devuelve el token directamente en el URL fragment
+        // Necesitamos extraer el id_token del callback
+        const urlParams = new URLSearchParams(window.location.hash.substring(1));
+        const idToken = urlParams.get('id_token');
+        const firstName = urlParams.get('first_name');
+        const lastName = urlParams.get('last_name');
+
+        try {
+            const response = await API.post('/auth/oauth/apple', {
+                id_token: idToken || code,
+                firstName: firstName || '',
+                lastName: lastName || ''
+            });
+
+            if (response.needsRegistrationCode) {
+                this._showRegistrationModal(response);
+                return;
+            }
+
+            const user = response.user || response.data || response;
+            if (response.token) {
+                AppState.token = response.token;
+                Utils.storage.set('token', response.token);
+            }
+
+            if (user) {
+                Utils.storage.set('currentUser', user);
+                AppState.user = user;
+                AppState.isAdmin = user.role === 'admin';
+            }
+
+            UI.notify('Inicio de sesión exitoso', 'success');
+            setTimeout(() => {
+                const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+                window.location.href = user.role === 'admin'
+                    ? basePath + '/admin/index.html'
+                    : basePath + '/usuario/dashboard.html';
+            }, 500);
+
+        } catch (error) {
+            UI.notify(error.message || 'Error al autenticar con Apple', 'error');
+        }
+    },
+
+    /**
+     * Mostrar modal de código de registro
+     */
+    _showRegistrationModal(oauthData) {
+        this._pendingOAuth = oauthData;
+
+        const modal = document.getElementById('registration-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+
+        // Enfocar input del código
+        setTimeout(() => {
+            const input = document.getElementById('registration-code');
+            if (input) input.focus();
+        }, 100);
+    },
+
+    /**
+     * Cerrar modal de registro
+     */
+    closeRegistrationModal() {
+        this._pendingOAuth = null;
+        const modal = document.getElementById('registration-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+
+        const errorDiv = document.getElementById('registration-error');
+        if (errorDiv) {
+            errorDiv.style.display = 'none';
+        }
+
+        const input = document.getElementById('registration-code');
+        if (input) {
+            input.value = '';
+        }
+    },
+
+    /**
+     * Completar registro con código
+     */
+    async completeOAuthRegistration(registrationCode) {
+        if (!this._pendingOAuth) {
+            throw new Error('No hay registro pendiente');
+        }
+
+        const { provider, providerId, email, name, avatarUrl } = this._pendingOAuth;
+
+        try {
+            let response;
+            if (provider === 'google') {
+                // Reintentar con el código de registro
+                response = await API.post('/auth/oauth/google', {
+                    code: providerId, // En Google, enviamos el code original
+                    registrationCode
+                });
+            } else if (provider === 'apple') {
+                response = await API.post('/auth/oauth/apple', {
+                    id_token: providerId,
+                    registrationCode
+                });
+            }
+
+            const user = response.user || response.data || response;
+            if (response.token) {
+                AppState.token = response.token;
+                Utils.storage.set('token', response.token);
+            }
+
+            if (user) {
+                Utils.storage.set('currentUser', user);
+                AppState.user = user;
+                AppState.isAdmin = user.role === 'admin';
+            }
+
+            this.closeRegistrationModal();
+            UI.notify('Registro completado exitosamente', 'success');
+
+            setTimeout(() => {
+                const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+                window.location.href = user.role === 'admin'
+                    ? basePath + '/admin/index.html'
+                    : basePath + '/usuario/dashboard.html';
+            }, 500);
+
+        } catch (error) {
+            UI.notify(error.message || 'Error al completar el registro', 'error');
+            throw error;
+        }
     }
 };
 
@@ -1469,6 +1769,37 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (registerForm) {
         registerForm.addEventListener('submit', (e) => Forms.handleRegistration(e));
+    }
+
+    // Formulario de registro OAuth (código de inscripción)
+    const oauthRegistrationForm = document.getElementById('oauth-registration-form');
+    if (oauthRegistrationForm) {
+        oauthRegistrationForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = oauthRegistrationForm.querySelector('button[type="submit"]');
+            const errorDiv = document.getElementById('registration-error');
+            const codeInput = document.getElementById('registration-code');
+
+            const registrationCode = codeInput?.value.trim();
+
+            if (!registrationCode) {
+                errorDiv.textContent = 'Introduce el código de registro';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Verificando...';
+
+            try {
+                await Auth.completeOAuthRegistration(registrationCode);
+            } catch (error) {
+                errorDiv.textContent = error.message || 'Código de registro inválido';
+                errorDiv.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Completar registro';
+            }
+        });
     }
 
     // Formularios de entrega de actividades

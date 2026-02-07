@@ -1,0 +1,39 @@
+# Dependencias
+node_modules/
+package-lock.json
+
+# Variables de entorno (NUNCA commits esto)
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Base de datos local
+data/
+*.sqlite
+*.sqlite3
+
+# Archivos temporales
+.DS_Store
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Testing
+coverage/
+.nyc_output/
+
+# Build
+dist/
+build/

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAuth Callback | Producción Escrita C2</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
+            color: white;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+        }
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1.5rem;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        p {
+            opacity: 0.9;
+        }
+        .error {
+            background: rgba(220, 38, 38, 0.2);
+            border: 1px solid rgba(220, 38, 38, 0.5);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="loader"></div>
+        <h1 id="title">Iniciando sesión...</h1>
+        <p id="message">Por favor, espera mientras completamos el proceso de autenticación.</p>
+    </div>
+
+    <script>
+        // Obtener parámetros de la URL
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('code');
+        const provider = params.get('provider') || 'google';
+        const error = params.get('error');
+        const errorDescription = params.get('error_description');
+
+        const titleEl = document.getElementById('title');
+        const messageEl = document.getElementById('message');
+
+        // Si hay error, mostrarlo
+        if (error) {
+            titleEl.textContent = 'Error en la autenticación';
+            messageEl.innerHTML = `<div class="error">${errorDescription || error}</div>`;
+            messageEl.innerHTML += '<p style="margin-top: 1rem;"><a href="login.html" style="color: white; text-decoration: underline;">Volver a intentar</a></p>';
+        } else if (!code) {
+            titleEl.textContent = 'Código no encontrado';
+            messageEl.textContent = 'No se recibió el código de autorización. Por favor, intenta de nuevo.';
+            messageEl.innerHTML += '<p style="margin-top: 1rem;"><a href="login.html" style="color: white; text-decoration: underline;">Volver a intentar</a></p>';
+        } else {
+            // Enviar el código al opener (ventana padre que abrió el popup)
+            if (window.opener) {
+                window.opener.postMessage({
+                    type: 'oauth-callback',
+                    provider,
+                    code
+                }, '*');
+                window.close();
+            } else {
+                // No hay opener, redirigir con el código
+                window.location.href = `login.html?provider=${provider}&code=${encodeURIComponent(code)}`;
+            }
+        }
+    </script>
+</body>
+</html>
