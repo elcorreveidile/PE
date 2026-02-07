@@ -1372,6 +1372,15 @@ const Forms = {
         }
     },
 
+    isSafeRedirect(redirectUrl) {
+        try {
+            const target = new URL(redirectUrl, window.location.origin);
+            return target.origin === window.location.origin;
+        } catch {
+            return false;
+        }
+    },
+
     // Manejar envío de formulario de login
     async handleLogin(e) {
         e.preventDefault();
@@ -1400,6 +1409,20 @@ const Forms = {
             UI.notify('Sesión iniciada correctamente', 'success');
             setTimeout(() => {
                 const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+                const params = new URLSearchParams(window.location.search);
+                const redirect = params.get('redirect');
+                const pendingCheckinCode = sessionStorage.getItem('pendingCheckinCode');
+
+                if (redirect && user.role !== 'admin' && Forms.isSafeRedirect(redirect)) {
+                    window.location.href = redirect;
+                    return;
+                }
+
+                if (pendingCheckinCode && user.role !== 'admin') {
+                    window.location.href = `${basePath}/asistencia.html?code=${encodeURIComponent(pendingCheckinCode)}`;
+                    return;
+                }
+
                 window.location.href = user.role === 'admin' ? basePath + '/admin/index.html' : basePath + '/usuario/dashboard.html';
             }, 500);
         } catch (error) {
