@@ -50,27 +50,41 @@ async function runMigration() {
         console.log('📝 Ejecutando migración...');
         console.log('');
         
-        // Separar en comandos individuales
-        const statements = migrationSQL
-            .split(';')
-            .map(s => s.trim())
-            .filter(s => s.length > 0 && !s.startsWith('--'));
-        
-        // Ejecutar cada statement
-        for (let i = 0; i < statements.length; i++) {
-            const statement = statements[i];
-            try {
-                await client.query(statement);
-                console.log(`✅ Comando ${i + 1}/${statements.length} ejecutado`);
-            } catch (error) {
-                // Ignorar errores de "ya existe" o duplicados
-                if (error.message.includes('already exists') || 
-                    error.message.includes('duplicate key')) {
-                    console.log(`⚠️  Comando ${i + 1}/${statements.length} ya existe (OK)`);
-                } else {
-                    throw error;
-                }
-            }
+        // Ejecutar migración en orden correcto
+        console.log('1/5 Creando rubric_id...');
+        try {
+            await client.query(`ALTER TABLE submissions ADD COLUMN IF NOT EXISTS rubric_id VARCHAR(255) REFERENCES rubrics(id) ON DELETE SET NULL`);
+            console.log('   ✅ rubric_id creado o ya existe');
+        } catch (error) {
+            if (!error.message.includes('already exists')) throw error;
+            console.log('   ⚠️  rubric_id ya existe (OK)');
+        }
+
+        console.log('2/5 Creando criterion_scores...');
+        try {
+            await client.query(`ALTER TABLE submissions ADD COLUMN IF NOT EXISTS criterion_scores JSONB DEFAULT '{}'::jsonb`);
+            console.log('   ✅ criterion_scores creado o ya existe');
+        } catch (error) {
+            if (!error.message.includes('already exists')) throw error;
+            console.log('   ⚠️  criterion_scores ya existe (OK)');
+        }
+
+        console.log('3/5 Creando índice idx_submissions_rubric...');
+        try {
+            await client.query(`CREATE INDEX IF NOT EXISTS idx_submissions_rubric ON submissions(rubric_id)`);
+            console.log('   ✅ índice creado o ya existe');
+        } catch (error) {
+            if (!error.message.includes('already exists')) throw error;
+            console.log('   ⚠️  índice ya existe (OK)');
+        }
+
+        console.log('4/5 Añadiendo comentarios...');
+        try {
+            await client.query(`COMMENT ON COLUMN submissions.rubric_id IS 'ID de la rúbrica utilizada para evaluar esta entrega'`);
+            await client.query(`COMMENT ON COLUMN submissions.criterion_scores IS 'Puntuaciones por criterio en formato JSON: {"criterio1": 8.5, "criterio2": 7.0}'`);
+            console.log('   ✅ comentarios añadidos');
+        } catch (error) {
+            console.log('   ⚠️  no se pudieron añadir comentarios (no crítico)');
         }
         
         console.log('');
