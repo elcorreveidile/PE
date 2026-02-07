@@ -90,7 +90,7 @@ function buildAppleClientSecret() {
         throw new Error('Configuración de Apple OAuth incompleta en variables de entorno');
     }
 
-    const privateKey = APPLE_PRIVATE_KEY.replace(/\\n/g, '\n');
+    const privateKey = normalizeApplePrivateKey(APPLE_PRIVATE_KEY);
     const now = Math.floor(Date.now() / 1000);
 
     return jwt.sign(
@@ -107,6 +107,35 @@ function buildAppleClientSecret() {
             keyid: APPLE_KEY_ID
         }
     );
+}
+
+function normalizeApplePrivateKey(rawKey) {
+    let key = String(rawKey || '').trim();
+
+    // Quitar comillas externas si las hay en variables de entorno
+    if ((key.startsWith('"') && key.endsWith('"')) || (key.startsWith("'") && key.endsWith("'"))) {
+        key = key.slice(1, -1);
+    }
+
+    // Convertir \n literales a saltos reales
+    key = key.replace(/\\n/g, '\n').replace(/\r/g, '').trim();
+
+    // Reparar typo frecuente detectado en configuraciones manuales
+    key = key.replace('-----BEGIN PRIVATE:-----BEGIN PRIVATE KEY-----', '-----BEGIN PRIVATE KEY-----');
+
+    const pemMatch = key.match(/-----BEGIN PRIVATE KEY-----([\s\S]*?)-----END PRIVATE KEY-----/);
+    if (!pemMatch) {
+        throw new Error('APPLE_PRIVATE_KEY no está en formato PEM válido');
+    }
+
+    const body = pemMatch[1].replace(/\s+/g, '');
+    if (!body) {
+        throw new Error('APPLE_PRIVATE_KEY no contiene cuerpo de clave');
+    }
+
+    // Re-formatear PEM para asegurar saltos de línea válidos
+    const lines = body.match(/.{1,64}/g) || [];
+    return `-----BEGIN PRIVATE KEY-----\n${lines.join('\n')}\n-----END PRIVATE KEY-----`;
 }
 
 async function getAppleToken(code) {
