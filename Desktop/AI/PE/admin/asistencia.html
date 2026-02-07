@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Asistencia | Panel Admin - Producción Escrita C2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <style>
+        .admin-header { background: linear-gradient(135deg, #c53030, #9b2c2c); }
+        .qr-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            display: inline-block;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .qr-code {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-width: 256px;
+            min-height: 256px;
+        }
+        .verification-code {
+            font-size: 2rem;
+            font-weight: bold;
+            letter-spacing: 0.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            margin-top: 1rem;
+            color: var(--primary-color);
+        }
+        .stats-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <header class="header admin-header">
+        <div class="header-main">
+            <div class="container">
+                <a href="../index.html" class="logo">
+                    <div class="logo-icon">C2</div>
+                    <div class="logo-text">
+                        <span class="logo-title">Panel de Administración</span>
+                        <span class="logo-subtitle">CLM - UGR</span>
+                    </div>
+                </a>
+                <nav class="nav-main"><a href="../index.html">Ver curso</a><a href="../sesiones/index.html">Sesiones</a></nav>
+                <div class="nav-auth"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="section">
+        <div class="container">
+            <div class="page-with-sidebar">
+                <aside class="sidebar">
+                    <div class="sidebar-section">
+                        <h4 class="sidebar-title">Administración</h4>
+                        <ul class="sidebar-nav">
+                            <li><a href="index.html">Panel principal</a></li>
+                            <li><a href="estudiantes.html">Estudiantes</a></li>
+                            <li><a href="correcciones.html">Correcciones</a></li>
+                            <li><a href="notificaciones.html">Notificaciones</a></li>
+                            <li><a href="asistencia.html" class="active">Asistencia QR</a></li>
+                        </ul>
+                    </div>
+                    <div class="sidebar-section">
+                        <button onclick="PE.Auth.logout()" class="btn btn-outline btn-block">Cerrar sesión</button>
+                    </div>
+                </aside>
+
+                <div class="main-content">
+                    <h1>📱 Control de Asistencia</h1>
+                    <p class="text-secondary mb-4">Genera códigos QR para que los estudiantes registren su asistencia</p>
+
+                    <!-- Estadísticas rápidas -->
+                    <div class="sessions-grid mb-4" style="grid-template-columns: repeat(3, 1fr);">
+                        <div class="stats-card">
+                            <div class="stats-number" id="stat-today">0</div>
+                            <p class="text-secondary mb-0">Asistencias hoy</p>
+                        </div>
+                        <div class="stats-card">
+                            <div class="stats-number" id="stat-week">0</div>
+                            <p class="text-secondary mb-0">Esta semana</p>
+                        </div>
+                        <div class="stats-card">
+                            <div class="stats-number" id="stat-students">0</div>
+                            <p class="text-secondary mb-0">Total estudiantes</p>
+                        </div>
+                    </div>
+
+                    <!-- Generar QR -->
+                    <div class="card mb-4">
+                        <div class="card-body text-center">
+                            <h3 class="mb-3">Generar Código de Asistencia</h3>
+                            <p class="text-secondary mb-4">Genera un código QR para la sesión de hoy. Los estudiantes pueden escanearlo o ingresar el código manualmente.</p>
+
+                            <button id="btn-generate" class="btn btn-primary btn-lg" onclick="generateQR()">
+                                🔄 Generar Código QR
+                            </button>
+                            <small class="text-secondary d-block mt-2">💡 Cada clic genera un código nuevo</small>
+
+                            <div id="qr-display" style="display: none; margin-top: 2rem;">
+                                <div class="qr-container">
+                                    <div id="qrcode" class="qr-code"></div>
+                                    <div class="verification-code" id="code-display">--------</div>
+                                    <p class="text-secondary mt-3">Código válido solo hoy</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lista de asistencias -->
+                    <div class="card">
+                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                            <h3 style="margin: 0;">📋 Registro de Asistencias</h3>
+                            <div>
+                                <select id="filter-date" class="form-control" style="display: inline-block; width: auto;" onchange="loadAttendance()">
+                                    <option value="">Todas las fechas</option>
+                                    <option value="today">Hoy</option>
+                                    <option value="week">Última semana</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="attendance-list">
+                                <p class="text-secondary text-center">Cargando...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom" style="border:none;padding-top:0;">
+                <span>&copy; 2026 Javier Benítez Láinez | CLM - UGR</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        window.PE_CONFIG = {
+            API_URL: 'https://produccion-escrita-c2-api-production.up.railway.app'
+        };
+    </script>
+    <script src="../js/app.js?v=20250207"></script>
+    <script>
+        async function getApiError(response, fallbackMessage) {
+            try {
+                const data = await response.json();
+                return data?.error || data?.message || fallbackMessage;
+            } catch (_) {
+                return fallbackMessage;
+            }
+        }
+
+        async function ensureAttendanceMigration() {
+            try {
+                await fetch(`${window.PE_CONFIG.API_URL}/api/migrate/attendance`, { method: 'POST' });
+            } catch (error) {
+                console.warn('No se pudo ejecutar migración automática de asistencia:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = PE.Auth.getCurrentUser();
+            if (!user || user.role !== 'admin') {
+                window.location.href = '../auth/login.html';
+                return;
+            }
+
+            await ensureAttendanceMigration();
+            // Cargar estadísticas
+            await loadStats();
+            await loadAttendance();
+        });
+
+        async function loadStats() {
+            try {
+                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/attendance/stats`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    throw new Error(await getApiError(response, 'Error al cargar estadísticas'));
+                }
+
+                const stats = await response.json();
+                document.getElementById('stat-today').textContent = stats.todayAttendance;
+                document.getElementById('stat-week').textContent = stats.weekAttendance;
+                document.getElementById('stat-students').textContent = stats.totalStudents;
+            } catch (error) {
+                console.error('Error cargando estadísticas:', error);
+                PE.UI.notify(error.message || 'Error al cargar estadísticas', 'error');
+            }
+        }
+
+        async function generateQR() {
+            const btn = document.getElementById('btn-generate');
+            btn.disabled = true;
+            btn.textContent = '⏳ Generando...';
+
+            try {
+                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/attendance/generate`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ force: true })
+                });
+
+                if (!response.ok) {
+                    throw new Error(await getApiError(response, 'Error al generar código'));
+                }
+
+                const data = await response.json();
+
+                // Mostrar QR
+                const qrContainer = document.getElementById('qrcode');
+                qrContainer.innerHTML = '';
+                const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+                const checkInUrl = data.checkInUrl || data.qrUrl || `${window.location.origin}${basePath}/asistencia.html?code=${encodeURIComponent(data.verificationCode)}`;
+
+                new QRCode(qrContainer, {
+                    text: checkInUrl,
+                    width: 256,
+                    height: 256,
+                    colorDark: '#c53030',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+
+                document.getElementById('code-display').textContent = data.verificationCode;
+                document.getElementById('qr-display').style.display = 'block';
+
+                if (data.reused) {
+                    PE.UI.notify('Se ha reutilizado el código de hoy', 'info');
+                } else {
+                    PE.UI.notify('Código QR generado exitosamente', 'success');
+                }
+
+                // Recargar estadísticas y lista
+                await loadStats();
+                await loadAttendance();
+
+            } catch (error) {
+                console.error('Error generando QR:', error);
+                PE.UI.notify(error.message || 'Error al generar código QR', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🔄 Generar Código QR';
+            }
+        }
+
+        async function loadAttendance() {
+            const container = document.getElementById('attendance-list');
+            const filterDate = document.getElementById('filter-date').value;
+
+            try {
+                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+                let url = `${window.PE_CONFIG.API_URL}/api/attendance`;
+
+                if (filterDate === 'today') {
+                    url += '?date=' + new Date().toISOString().split('T')[0];
+                } else if (filterDate === 'week') {
+                    // Filtrar por semana en frontend
+                }
+
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    throw new Error(await getApiError(response, 'Error al cargar asistencias'));
+                }
+
+                let attendance = await response.json();
+
+                // Filtrar por semana si es necesario
+                if (filterDate === 'week') {
+                    const weekAgo = new Date();
+                    weekAgo.setDate(weekAgo.getDate() - 7);
+                    attendance = attendance.filter(a => new Date(a.date) >= weekAgo);
+                }
+
+                if (attendance.length === 0) {
+                    container.innerHTML = '<p class="text-secondary text-center">No hay registros de asistencia</p>';
+                    return;
+                }
+
+                container.innerHTML = `
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Estudiante</th>
+                                    <th>Fecha</th>
+                                    <th>Sesión</th>
+                                    <th>Hora confirmación</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${attendance.map(a => `
+                                    <tr>
+                                        <td>
+                                            <strong>${PE.Utils.escapeHtml(a.user_name || 'N/A')}</strong><br>
+                                            <small class="text-secondary">${a.user_email || ''}</small>
+                                        </td>
+                                        <td>${PE.Utils.formatDate(a.date)}</td>
+                                        <td>${a.session_title || 'N/A'}</td>
+                                        <td>${a.verified_at ? new Date(a.verified_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error('Error cargando asistencias:', error);
+                container.innerHTML = '<p class="text-secondary text-center">Error al cargar asistencias</p>';
+            }
+        }
+    </script>
+</body>
+</html>

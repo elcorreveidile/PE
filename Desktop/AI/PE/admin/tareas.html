@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion de Tareas | Panel de Administracion</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        .admin-header { background: linear-gradient(135deg, #c53030, #9b2c2c); }
+        .admin-badge { background: #c53030; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; margin-left: 0.5rem; }
+        .task-card { padding: var(--spacing-md); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); margin-bottom: var(--spacing-sm); }
+        .task-card:hover { background: var(--bg-light); }
+        .session-group { margin-bottom: 2rem; }
+        .session-group-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: var(--primary-color); color: white; border-radius: var(--border-radius-md) var(--border-radius-md) 0 0; }
+        .session-group-content { border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 var(--border-radius-md) var(--border-radius-md); padding: 1rem; }
+    </style>
+</head>
+<body>
+    <header class="header admin-header">
+        <div class="header-main">
+            <div class="container">
+                <a href="../index.html" class="logo">
+                    <div class="logo-icon">C2</div>
+                    <div class="logo-text">
+                        <span class="logo-title">Panel de Administracion <span class="admin-badge">ADMIN</span></span>
+                        <span class="logo-subtitle">CLM - UGR</span>
+                    </div>
+                </a>
+                <nav class="nav-main"><a href="../index.html">Ver curso</a><a href="../sesiones/index.html">Sesiones</a></nav>
+                <div class="nav-auth"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="section">
+        <div class="container">
+            <div class="page-with-sidebar">
+                <aside class="sidebar">
+                    <div class="sidebar-section">
+                        <h4 class="sidebar-title">Administracion</h4>
+                        <ul class="sidebar-nav">
+                            <li><a href="index.html">Panel principal</a></li>
+                            <li><a href="estudiantes.html">Estudiantes</a></li>
+                            <li><a href="correcciones.html">Correcciones</a></li>
+                            <li><a href="tareas.html" class="active">Gestion de tareas</a></li>
+                            <li><a href="estadisticas.html">Estadisticas</a></li>
+                        </ul>
+                    </div>
+                    <div class="sidebar-section">
+                        <button onclick="PE.Auth.logout()" class="btn btn-outline btn-block">Cerrar sesion</button>
+                    </div>
+                </aside>
+
+                <div class="main-content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-xl);">
+                        <div>
+                            <h1 style="margin-bottom: 0.25rem;">Gestion de tareas</h1>
+                            <p class="text-secondary mb-0">Control de actividades y entregas por sesion</p>
+                        </div>
+                    </div>
+
+                    <!-- Resumen de tareas -->
+                    <div class="sessions-grid mb-4" style="grid-template-columns: repeat(4, 1fr);">
+                        <div class="card text-center" style="padding: 1.5rem;">
+                            <h3 class="text-primary" style="font-size: 2rem; margin: 0;" id="stat-total">0</h3>
+                            <p class="text-secondary mb-0">Total entregas</p>
+                        </div>
+                        <div class="card text-center" style="padding: 1.5rem;">
+                            <h3 style="font-size: 2rem; margin: 0; color: var(--warning-color);" id="stat-pending">0</h3>
+                            <p class="text-secondary mb-0">Pendientes</p>
+                        </div>
+                        <div class="card text-center" style="padding: 1.5rem;">
+                            <h3 style="font-size: 2rem; margin: 0; color: var(--success-color);" id="stat-reviewed">0</h3>
+                            <p class="text-secondary mb-0">Corregidas</p>
+                        </div>
+                        <div class="card text-center" style="padding: 1.5rem;">
+                            <h3 class="text-primary" style="font-size: 2rem; margin: 0;" id="stat-sessions">0</h3>
+                            <p class="text-secondary mb-0">Sesiones activas</p>
+                        </div>
+                    </div>
+
+                    <!-- Filtro por sesion -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                                <select id="filter-session" class="form-control form-select" style="flex: 1; min-width: 200px;">
+                                    <option value="">Todas las sesiones</option>
+                                </select>
+                                <select id="filter-status" class="form-control form-select" style="width: auto;">
+                                    <option value="">Todos los estados</option>
+                                    <option value="pending">Pendientes</option>
+                                    <option value="reviewed">Corregidas</option>
+                                </select>
+                                <button class="btn btn-outline" onclick="exportSessionData()">Exportar datos</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lista de tareas por sesion -->
+                    <div id="tasks-list">
+                        <div class="loader"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom" style="border:none;padding-top:0;">
+                <span>&copy; 2026 Javier Benitez Lainez | CLM - UGR</span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = PE.Auth.getCurrentUser();
+            if (!user || user.role !== 'admin') {
+                const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+                window.location.href = basePath + '/auth/login.html';
+                return;
+            }
+
+            let submissions = await PE.Submissions.getAll();
+
+            submissions = Array.isArray(submissions) ? submissions : [];
+            const sessions = PE.CourseData.sessions;
+            const pending = submissions.filter(s => s.status === 'pending');
+            const reviewed = submissions.filter(s => s.status === 'reviewed');
+
+            // Estadisticas
+            document.getElementById('stat-total').textContent = submissions.length;
+            document.getElementById('stat-pending').textContent = pending.length;
+            document.getElementById('stat-reviewed').textContent = reviewed.length;
+
+            // Sesiones con entregas
+            const sessionsWithSubmissions = new Set(submissions.map(s => s.sessionId));
+            document.getElementById('stat-sessions').textContent = sessionsWithSubmissions.size;
+
+            // Poblar selector de sesiones
+            const sessionSelect = document.getElementById('filter-session');
+            sessions.forEach(s => {
+                const count = submissions.filter(sub => sub.sessionId == s.id).length;
+                const option = document.createElement('option');
+                option.value = s.id;
+                option.textContent = `Sesion ${s.id}: ${s.title} (${count} entregas)`;
+                sessionSelect.appendChild(option);
+            });
+
+            function renderTasks(filter = {}) {
+                let filtered = [...submissions];
+
+                if (filter.session) {
+                    filtered = filtered.filter(s => s.sessionId == filter.session);
+                }
+
+                if (filter.status) {
+                    filtered = filtered.filter(s => s.status === filter.status);
+                }
+
+                const container = document.getElementById('tasks-list');
+
+                if (filtered.length === 0) {
+                    container.innerHTML = '<div class="card"><div class="card-body text-center"><p class="text-secondary">No hay entregas con los filtros seleccionados.</p></div></div>';
+                    return;
+                }
+
+                // Agrupar por sesion
+                const grouped = {};
+                filtered.forEach(s => {
+                    const sessionId = s.sessionId || 'sin-sesion';
+                    if (!grouped[sessionId]) grouped[sessionId] = [];
+                    grouped[sessionId].push(s);
+                });
+
+                let html = '';
+                Object.keys(grouped).sort((a, b) => parseInt(a) - parseInt(b)).forEach(sessionId => {
+                    const session = sessions.find(s => s.id == sessionId);
+                    const sessionSubmissions = grouped[sessionId];
+                    const sessionPending = sessionSubmissions.filter(s => s.status === 'pending').length;
+
+                    html += `
+                        <div class="session-group">
+                            <div class="session-group-header">
+                                <div>
+                                    <strong>Sesion ${sessionId}</strong>: ${session ? session.title : 'Sesion no identificada'}
+                                </div>
+                                <div>
+                                    <span class="badge" style="background: rgba(255,255,255,0.2);">${sessionSubmissions.length} entregas</span>
+                                    ${sessionPending > 0 ? `<span class="badge badge-warning" style="margin-left: 0.5rem;">${sessionPending} pendientes</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="session-group-content">
+                                ${sessionSubmissions.map(s => `
+                                    <div class="task-card">
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                            <div>
+                                                <strong>${PE.Utils.escapeHtml(s.userName || 'Estudiante')}</strong>
+                                                <span class="badge badge-${s.status === 'reviewed' ? 'success' : 'warning'}" style="margin-left: 0.5rem;">
+                                                    ${s.status === 'reviewed' ? 'Corregido' : 'Pendiente'}
+                                                </span>
+                                                <p class="text-secondary mb-0" style="font-size: 0.875rem; margin-top: 0.25rem;">
+                                                    ${PE.Utils.escapeHtml(s.activityTitle)} - ${s.wordCount} palabras
+                                                </p>
+                                                <p class="text-secondary mb-0" style="font-size: 0.8rem;">
+                                                    Entregado: ${PE.Utils.formatDate(s.createdAt, 'long')}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                ${s.status === 'pending' ?
+                                                    `<a href="correcciones.html" class="btn btn-sm btn-primary">Corregir</a>` :
+                                                    `<button class="btn btn-sm btn-outline" onclick="viewSubmission('${s.id}')">Ver</button>`
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = html;
+            }
+
+            renderTasks();
+
+            // Filtros
+            document.getElementById('filter-session').addEventListener('change', (e) => {
+                renderTasks({
+                    session: e.target.value,
+                    status: document.getElementById('filter-status').value
+                });
+            });
+
+            document.getElementById('filter-status').addEventListener('change', (e) => {
+                renderTasks({
+                    session: document.getElementById('filter-session').value,
+                    status: e.target.value
+                });
+            });
+        });
+
+        async function viewSubmission(id) {
+            let submissions = await PE.Submissions.getAll();
+            submissions = Array.isArray(submissions) ? submissions : [];
+            const s = submissions.find(sub => sub.id === id);
+            if (s) {
+                PE.UI.showModal(s.activityTitle, `
+                    <div class="mb-3">
+                        <strong>Estudiante:</strong> ${PE.Utils.escapeHtml(s.userName || 'Estudiante')}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Entregado:</strong> ${PE.Utils.formatDate(s.createdAt, 'long')}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Contenido:</strong>
+                        <div style="background: var(--bg-light); padding: 1rem; border-radius: 0.5rem; max-height: 200px; overflow-y: auto; margin-top: 0.5rem;">
+                            ${s.content}
+                        </div>
+                        <p class="text-secondary" style="font-size: 0.8rem; margin-top: 0.5rem;">${s.wordCount} palabras</p>
+                    </div>
+                    ${s.feedback ? `
+                        <div class="alert alert-success">
+                            <strong>Retroalimentacion:</strong>
+                            <p style="margin: 0.5rem 0 0;">${PE.Utils.escapeHtml(s.feedback)}</p>
+                            ${s.grade ? `<p style="margin: 0.5rem 0 0;"><strong>Calificacion:</strong> ${s.grade}</p>` : ''}
+                        </div>
+                    ` : ''}
+                `, [{ text: 'Cerrar' }]);
+            }
+        }
+
+        async function exportSessionData() {
+            let submissions = await PE.Submissions.getAll();
+            submissions = Array.isArray(submissions) ? submissions : [];
+            const sessions = PE.CourseData.sessions;
+
+            const data = sessions.map(session => {
+                const sessionSubmissions = submissions.filter(s => s.sessionId == session.id);
+                return {
+                    sesion: session.id,
+                    titulo: session.title,
+                    fecha: session.date,
+                    entregas: sessionSubmissions.length,
+                    pendientes: sessionSubmissions.filter(s => s.status === 'pending').length,
+                    corregidas: sessionSubmissions.filter(s => s.status === 'reviewed').length
+                };
+            });
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'tareas_por_sesion_' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+
+            PE.UI.notify('Datos exportados correctamente', 'success');
+        }
+    </script>
+</body>
+</html>
