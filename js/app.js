@@ -675,6 +675,10 @@ const Auth = {
             // Verificar origen (en producción, restringir a tu dominio)
             if (event.data && event.data.type === 'oauth-callback' && event.data.provider === provider) {
                 window.removeEventListener('message', messageHandler);
+                if (event.data.error) {
+                    UI.notify(event.data.error, 'error');
+                    return;
+                }
                 this._handleOAuthCallback(provider, event.data.code);
             }
         };
