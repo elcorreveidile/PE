@@ -168,15 +168,15 @@
 
                 // Calcular datos de estudiantes
                 allStudents = allUsers.map(user => {
-                    const userSubmissions = allSubmissions.filter(s => 
+                    const userSubmissions = allSubmissions.filter(s =>
                         String(s.user_id || s.userId) === String(user.id)
                     );
-                    const gradedSubmissions = userSubmissions.filter(s => 
-                        s.numericGrade !== null && s.numericGrade !== undefined
+                    const gradedSubmissions = userSubmissions.filter(s =>
+                        s.numeric_grade !== null && s.numeric_grade !== undefined
                     );
 
                     const avgGrade = gradedSubmissions.length > 0
-                        ? gradedSubmissions.reduce((sum, s) => sum + s.numericGrade, 0) / gradedSubmissions.length
+                        ? gradedSubmissions.reduce((sum, s) => sum + s.numeric_grade, 0) / gradedSubmissions.length
                         : null;
 
                     const totalWords = userSubmissions.reduce((sum, s) => 
@@ -393,15 +393,15 @@
                                 </thead>
                                 <tbody>
                                     ${student.userSubmissions.map(s => {
-                                        const grade = s.numericGrade !== null ? s.numericGrade.toFixed(1) : '-';
-                                        const gradeColor = getGradeClass(s.numericGrade);
+                                        const grade = s.numeric_grade !== null ? s.numeric_grade.toFixed(1) : '-';
+                                        const gradeColor = getGradeClass(s.numeric_grade);
                                         return `
                                             <tr style="border-bottom: 1px solid var(--border-color);">
-                                                <td style="padding: 0.75rem;">${PE.Utils.escapeHtml(s.activityTitle)}</td>
-                                                <td style="padding: 0.75rem;">${PE.Utils.formatDate(s.createdAt)}</td>
-                                                <td style="padding: 0.75rem; text-align: center;">${s.wordCount || s.word_count}</td>
+                                                <td style="padding: 0.75rem;">${PE.Utils.escapeHtml(s.activityTitle || 'Actividad')}</td>
+                                                <td style="padding: 0.75rem;">${s.created_at ? PE.Utils.formatDate(s.created_at) : PE.Utils.formatDate(s.createdAt)}</td>
+                                                <td style="padding: 0.75rem; text-align: center;">${s.wordCount || s.word_count || 0}</td>
                                                 <td style="padding: 0.75rem; text-align: center;">
-                                                    ${s.numericGrade !== null ? `<span style="padding: 0.25rem 0.5rem; border-radius: 4px;" class="${gradeColor}">${grade}</span>` : '-'}
+                                                    ${s.numeric_grade !== null ? `<span style="padding: 0.25rem 0.5rem; border-radius: 4px;" class="${gradeColor}">${grade}</span>` : '-'}
                                                 </td>
                                                 <td style="padding: 0.75rem;">
                                                     <span class="badge badge-${s.status === 'reviewed' ? 'success' : 'warning'}">
@@ -486,7 +486,10 @@
 
         function printReport(studentId) {
             viewReport(studentId);
-            setTimeout(() => window.print(), 500);
+            // Esperar a que el modal se renderice antes de imprimir
+            setTimeout(() => {
+                window.print();
+            }, 1000);
         }
 
         function exportToPDF(studentId) {
@@ -570,12 +573,12 @@
                         </thead>
                         <tbody>
                             ${student.userSubmissions.map(s => {
-                                const grade = s.numericGrade !== null ? s.numericGrade.toFixed(1) : '-';
+                                const grade = s.numeric_grade !== null ? s.numeric_grade.toFixed(1) : '-';
                                 return `
                                     <tr>
-                                        <td>${s.activityTitle}</td>
-                                        <td>${PE.Utils.formatDate(s.createdAt)}</td>
-                                        <td>${s.wordCount || s.word_count}</td>
+                                        <td>${s.activityTitle || 'Actividad'}</td>
+                                        <td>${s.created_at ? PE.Utils.formatDate(s.created_at) : PE.Utils.formatDate(s.createdAt)}</td>
+                                        <td>${s.wordCount || s.word_count || 0}</td>
                                         <td>${grade}</td>
                                         <td>
                                             <span class="badge badge-${s.status === 'reviewed' ? 'success' : 'warning'}">
@@ -619,18 +622,25 @@
         }
 
         function generateAllReports() {
-            PE.UI.notify('Generando boletines para todos los estudiantes...', 'info');
-            
-            // Descargar un ZIP con todos los boletines
-            allStudents.forEach(student => {
-                if (student.avgGrade !== null) {
-                    setTimeout(() => {
-                        exportToPDF(student.id);
-                    }, student.avgGrade * 100); // Delay escalonado
-                }
+            const studentsWithGrades = allStudents.filter(s => s.avgGrade !== null);
+
+            if (studentsWithGrades.length === 0) {
+                PE.UI.notify('No hay estudiantes con calificaciones para generar boletines', 'warning');
+                return;
+            }
+
+            PE.UI.notify(`Generando ${studentsWithGrades.length} boletines...`, 'info');
+
+            // Descargar boletines individualmente
+            studentsWithGrades.forEach((student, index) => {
+                setTimeout(() => {
+                    exportToPDF(student.id);
+                }, index * 500); // 500ms de retraso entre cada descarga
             });
 
-            PE.UI.notify('Se están generando los boletines...', 'success');
+            setTimeout(() => {
+                PE.UI.notify(`Boletines generados: ${studentsWithGrades.length}`, 'success');
+            }, studentsWithGrades.length * 500 + 500);
         }
     </script>
 </body>
