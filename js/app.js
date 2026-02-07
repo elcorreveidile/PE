@@ -684,14 +684,13 @@ const Auth = {
             }
 
             // Enviar código al backend para intercambiarlo por token
-            const response = await API.post('/auth/oauth/callback', {
-                provider,
+            const response = await API.post(`/auth/oauth/${provider}`, {
                 code
             });
 
             if (response.needsRegistration) {
                 // Usuario necesita completar registro con código
-                this._showRegistrationModal(provider, response.email, response.name);
+                this._showRegistrationModal(provider, response.email, response.name, response.pendingToken);
                 return;
             }
 
@@ -720,12 +719,12 @@ const Auth = {
     },
 
     // Mostrar modal de registro para usuarios OAuth
-    _showRegistrationModal(provider, email, name) {
+    _showRegistrationModal(provider, email, name, pendingToken) {
         const modal = document.getElementById('registration-modal');
         if (modal) {
             modal.classList.remove('hidden');
             // Guardar datos OAuth temporalmente
-            this._pendingOAuth = { provider, email, name };
+            this._pendingOAuth = { provider, email, name, pendingToken };
         }
     },
 
@@ -742,10 +741,8 @@ const Auth = {
                 throw new Error('OAuth requiere conexión al backend');
             }
 
-            const response = await API.post('/auth/oauth/register', {
-                provider: this._pendingOAuth.provider,
-                email: this._pendingOAuth.email,
-                name: this._pendingOAuth.name,
+            const response = await API.post(`/auth/oauth/${this._pendingOAuth.provider}`, {
+                pendingToken: this._pendingOAuth.pendingToken,
                 registrationCode
             });
 

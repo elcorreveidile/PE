@@ -43,7 +43,7 @@ const REGISTRATION_CODE = process.env.REGISTRATION_CODE || 'PIO7-2026-CLM';
  */
 async function getGoogleToken(code) {
     const tokenEndpoint = 'https://oauth2.googleapis.com/token';
-    const redirectUri = `${FRONTEND_URL}/auth/oauth-callback.html`;
+    const redirectUri = `${FRONTEND_URL}/auth/oauth-callback`;
 
     const response = await fetch(tokenEndpoint, {
         method: 'POST',
