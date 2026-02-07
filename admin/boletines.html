@@ -152,13 +152,21 @@
         });
 
         async function loadData() {
+            const container = document.getElementById('students-list');
+            container.innerHTML = '<div class="loader"></div>';
+            
             try {
+                console.log('Cargando entregas...');
                 allSubmissions = await PE.Submissions.getAll();
                 allSubmissions = Array.isArray(allSubmissions) ? allSubmissions : [];
+                console.log('Entregas cargadas:', allSubmissions.length);
 
+                console.log('Cargando usuarios...');
                 allUsers = await PE.API.get('/users');
                 allUsers = Array.isArray(allUsers) ? allUsers.filter(u => (u.role || 'student') !== 'admin') : [];
+                console.log('Usuarios cargados:', allUsers.length);
 
+                // Calcular datos de estudiantes
                 allStudents = allUsers.map(user => {
                     const userSubmissions = allSubmissions.filter(s => 
                         String(s.user_id || s.userId) === String(user.id)
@@ -176,7 +184,7 @@
                     );
 
                     // Calcular progreso
-                    const totalSessions = PE.CourseData.sessions.length;
+                    const totalSessions = 27; // Número total de sesiones
                     const attendedSessions = new Set(userSubmissions.map(s => s.session_id || s.sessionId)).size;
                     const progressPercent = Math.round((attendedSessions / totalSessions) * 100);
 
@@ -190,9 +198,28 @@
                         userSubmissions
                     };
                 });
+                
+                console.log('Estudiantes procesados:', allStudents.length);
+                renderStudents();
+                
             } catch (error) {
                 console.error('Error cargando datos:', error);
-                PE.UI.notify('Error al cargar los datos', 'error');
+                
+                // Mostrar error en el UI
+                container.innerHTML = `
+                    <div class="card">
+                        <div class="card-body empty-state">
+                            <div class="empty-icon">⚠️</div>
+                            <h3>Error al cargar los datos</h3>
+                            <p class="text-secondary">${error.message}</p>
+                            <div style="margin-top: 1rem;">
+                                <button class="btn btn-outline" onclick="loadData()">🔄 Reintentar</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                PE.UI.notify(`Error: ${error.message}`, 'error');
             }
         }
 

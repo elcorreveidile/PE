@@ -159,14 +159,24 @@
         });
 
         async function loadRubrics() {
+            const container = document.getElementById('rubrics-list');
+            
             try {
                 const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+                
+                if (!token) {
+                    throw new Error('No hay token de autenticación');
+                }
+
+                console.log('Cargando rúbricas desde:', window.PE_CONFIG.API_URL);
+                
                 const response = await fetch(`${window.PE_CONFIG.API_URL}/api/rubrics`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
                 if (!response.ok) {
-                    throw new Error('Error al cargar rúbricas');
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
                 }
 
                 allRubrics = await response.json();
@@ -178,9 +188,23 @@
                 document.getElementById('stat-active').textContent = activeRubrics.length;
 
                 renderRubrics();
+                console.log('Rúbricas cargadas:', allRubrics.length);
             } catch (error) {
                 console.error('Error cargando rúbricas:', error);
-                PE.UI.notify('Error al cargar las rúbricas', 'error');
+                
+                // Mostrar error en el UI
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">⚠️</div>
+                        <h3>Error al cargar rúbricas</h3>
+                        <p class="text-secondary">${error.message}</p>
+                        <div style="margin-top: 1rem;">
+                            <button class="btn btn-outline" onclick="loadRubrics()">🔄 Reintentar</button>
+                        </div>
+                    </div>
+                `;
+                
+                PE.UI.notify(`Error: ${error.message}`, 'error');
             }
         }
 
