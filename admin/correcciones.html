@@ -45,6 +45,8 @@
                             <li><a href="tareas.html">Gestión de tareas</a></li>
                             <li><a href="estadisticas.html">Estadísticas</a></li>
                             <li><a href="comparacion.html">Comparación</a></li>
+                            <li><a href="rubricas.html">📊 Rúbricas</a></li>
+                            <li><a href="boletines.html">📋 Boletines</a></li>
                         </ul>
                     </div>
                     <div class="sidebar-section">
@@ -415,48 +417,314 @@
             const targetId = String(id);
             const s = allSubmissions.find(sub => String(sub.id) === targetId);
 
-            if (s) {
-                PE.UI.showModal('✍️ Corregir: ' + s.activityTitle, `
-                    <p><strong>👤 Estudiante:</strong> ${PE.Utils.escapeHtml(s.userName || 'Estudiante')}</p>
-                    <p><strong>📅 Fecha:</strong> ${PE.Utils.formatDate(s.createdAt, 'long')}</p>
-                    <div style="background: var(--bg-light); padding: 1rem; border-radius: 0.5rem; max-height: 300px; overflow-y: auto; margin-bottom: 1rem; border: 1px solid var(--border-color);">
-                        ${s.content}
+            if (!s) return;
+
+            // Cargar rúbricas disponibles
+            const storedRubrics = localStorage.getItem('pe_c2_rubrics');
+            const rubrics = storedRubrics ? JSON.parse(storedRubrics) : [];
+            const activeRubrics = rubrics.filter(r => r.active);
+            const selectedRubricId = s.rubricId || (activeRubrics.length > 0 ? activeRubrics[0].id : '');
+            const selectedRubric = rubrics.find(r => r.id === selectedRubricId) || activeRubrics[0];
+
+            const modalContent = `
+                <p><strong>👤 Estudiante:</strong> ${PE.Utils.escapeHtml(s.userName || 'Estudiante')}</p>
+                <p><strong>📅 Fecha:</strong> ${PE.Utils.formatDate(s.createdAt, 'long')}</p>
+                <div style="background: var(--bg-light); padding: 1rem; border-radius: 0.5rem; max-height: 300px; overflow-y: auto; margin-bottom: 1rem; border: 1px solid var(--border-color);">
+                    ${s.content}
+                </div>
+                <p class="text-secondary mb-2">📝 ${s.wordCount} palabras</p>
+
+                <div class="form-group mb-3">
+                    <label class="form-label">📊 Rúbrica de evaluación</label>
+                    <select id="rubric-select" class="form-control form-select" onchange="loadRubricCriteria(this.value)">
+                        <option value="">Sin rúbrica (evaluación simple)</option>
+                        ${activeRubrics.map(r => `
+                            <option value="${r.id}" ${selectedRubricId === r.id ? 'selected' : ''}>${r.name}</option>
+                        `).join('')}
+                    </select>
+                </div>
+
+                ${selectedRubric ? `
+                    <div id="rubric-evaluation" class="mb-3">
+                        <div class="alert alert-info mb-2">
+                            <strong>📝 Evaluación por criterios:</strong> Puntuación máxima: ${selectedRubric.maxPoints} puntos
+                        </div>
+                        <div id="criteria-scores">
+                            ${selectedRubric.criteria.map((c, i) => {
+                                const savedScore = s.criterionScores && s.criterionScores[c.name] !== undefined ? s.criterionScores[c.name] : '';
+                                const maxScore = (selectedRubric.maxPoints * c.weight) / 100;
+                                return `
+                                    <div class="form-group mb-2">
+                                        <label class="form-label">
+                                            <strong>${c.name}</strong> 
+                                            <span class="text-secondary">(${c.weight}%)</span>
+                                            <small class="text-secondary">- Max: ${maxScore.toFixed(1)}</small>
+                                        </label>
+                                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                            <input type="range" 
+                                                class="form-control-range" 
+                                                min="0" 
+                                                max="${maxScore}" 
+                                                step="0.1" 
+                                                value="${savedScore || 0}"
+                                                id="criterion-range-${i}"
+                                                oninput="updateCriterionScore(${i}, ${maxScore})">
+                                            <input type="number" 
+                                                class="form-control" 
+                                                style="width: 80px;"
+                                                min="0" 
+                                                max="${maxScore}" 
+                                                step="0.1"
+                                                value="${savedScore || 0}"
+                                                id="criterion-input-${i}"
+                                                oninput="syncCriterionScore(${i}, ${maxScore})">
+                                        </div>
+                                        <p class="text-secondary mb-0 mt-1" style="font-size: 0.8rem;">${c.description || ''}</p>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                        <div class="alert alert-primary mt-3">
+                            <strong>📊 Nota Total: <span id="total-grade">0</span> / ${selectedRubric.maxPoints}</strong>
+                            <span class="badge badge-info ml-2" id="grade-equivalent">-</span>
+                        </div>
+                    </div>
+                ` : '<div id="rubric-evaluation"></div>'}
+
+                <div class="form-group mb-3">
+                    <label class="form-label">💬 Retroalimentación general</label>
+                    <textarea id="feedback-text" class="form-control" rows="6" placeholder="Escribe tu corrección y comentarios...">${s.feedback || ''}</textarea>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="form-label">⭐ Calificación cualitativa (opcional)</label>
+                    <select id="feedback-grade" class="form-control form-select">
+                        <option value="">Sin calificación</option>
+                        <option value="Excelente" ${s.grade === 'Excelente' ? 'selected' : ''}>Excelente</option>
+                        <option value="Muy bien" ${s.grade === 'Muy bien' ? 'selected' : ''}>Muy bien</option>
+                        <option value="Bien" ${s.grade === 'Bien' ? 'selected' : ''}>Bien</option>
+                        <option value="Suficiente" ${s.grade === 'Suficiente' ? 'selected' : ''}>Suficiente</option>
+                        <option value="Necesita mejorar" ${s.grade === 'Necesita mejorar' ? 'selected' : ''}>Necesita mejorar</option>
+                    </select>
+                </div>
+            `;
+
+            PE.UI.showModal('✍️ Corregir: ' + s.activityTitle, modalContent, [
+                { text: 'Cancelar' },
+                {
+                    text: '💾 Guardar corrección',
+                    class: 'btn-primary',
+                    callback: async () => {
+                        const feedback = document.getElementById('feedback-text').value;
+                        const grade = document.getElementById('feedback-grade').value;
+                        const rubricSelect = document.getElementById('rubric-select');
+                        const rubricId = rubricSelect ? rubricSelect.value : '';
+                        
+                        // Calcular puntuación total si hay rúbrica
+                        let numericGrade = null;
+                        let criterionScores = null;
+                        
+                        if (rubricId && selectedRubric) {
+                            const totalGradeEl = document.getElementById('total-grade');
+                            numericGrade = parseFloat(totalGradeEl?.textContent || 0);
+                            
+                            criterionScores = {};
+                            selectedRubric.criteria.forEach((c, i) => {
+                                const input = document.getElementById(`criterion-input-${i}`);
+                                if (input) {
+                                    criterionScores[c.name] = parseFloat(input.value) || 0;
+                                }
+                            });
+                        }
+
+                        if (!feedback.trim()) {
+                            PE.UI.notify('Escribe tu retroalimentación', 'error');
+                            return;
+                        }
+
+                        // Guardar corrección con datos de rúbrica
+                        await saveGrading(id, feedback, grade, rubricId, numericGrade, criterionScores);
+                        PE.UI.notify('✅ Corrección guardada correctamente', 'success');
+                        location.reload();
+                    },
+                    close: false
+                }
+            ]);
+
+            // Calcular nota inicial si hay datos guardados
+            if (selectedRubric && s.criterionScores) {
+                calculateTotalGrade(selectedRubric);
+            }
+        }
+
+        function loadRubricCriteria(rubricId) {
+            const storedRubrics = localStorage.getItem('pe_c2_rubrics');
+            const rubrics = storedRubrics ? JSON.parse(storedRubrics) : [];
+            const rubric = rubrics.find(r => r.id === rubricId);
+
+            const evaluationDiv = document.getElementById('rubric-evaluation');
+
+            if (!rubric) {
+                evaluationDiv.innerHTML = '';
+                return;
+            }
+
+            evaluationDiv.innerHTML = `
+                <div class="alert alert-info mb-2">
+                    <strong>📝 Evaluación por criterios:</strong> Puntuación máxima: ${rubric.maxPoints} puntos
+                </div>
+                <div id="criteria-scores">
+                    ${rubric.criteria.map((c, i) => `
+                        <div class="form-group mb-2">
+                            <label class="form-label">
+                                <strong>${c.name}</strong> 
+                                <span class="text-secondary">(${c.weight}%)</span>
+                                <small class="text-secondary">- Max: ${((rubric.maxPoints * c.weight) / 100).toFixed(1)}</small>
+                            </label>
+                            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                <input type="range" 
+                                    class="form-control-range" 
+                                    min="0" 
+                                    max="${(rubric.maxPoints * c.weight) / 100}" 
+                                    step="0.1" 
+                                    value="0"
+                                    id="criterion-range-${i}"
+                                    oninput="updateCriterionScore(${i}, ${(rubric.maxPoints * c.weight) / 100})">
+                                <input type="number" 
+                                    class="form-control" 
+                                    style="width: 80px;"
+                                    min="0" 
+                                    max="${(rubric.maxPoints * c.weight) / 100}" 
+                                    step="0.1"
+                                    value="0"
+                                    id="criterion-input-${i}"
+                                    oninput="syncCriterionScore(${i}, ${(rubric.maxPoints * c.weight) / 100})">
                             </div>
-                    <p class="text-secondary mb-2">📝 ${s.wordCount} palabras</p>
-                    <div class="form-group">
-                        <label class="form-label">💬 Retroalimentación</label>
-                        <textarea id="feedback-text" class="form-control" rows="6" placeholder="Escribe tu corrección y comentarios...">${s.feedback || ''}</textarea>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">⭐ Calificación</label>
-                        <select id="feedback-grade" class="form-control form-select">
-                            <option value="">Sin calificación</option>
-                            <option value="Excelente" ${s.grade === 'Excelente' ? 'selected' : ''}>Excelente</option>
-                            <option value="Muy bien" ${s.grade === 'Muy bien' ? 'selected' : ''}>Muy bien</option>
-                            <option value="Bien" ${s.grade === 'Bien' ? 'selected' : ''}>Bien</option>
-                            <option value="Suficiente" ${s.grade === 'Suficiente' ? 'selected' : ''}>Suficiente</option>
-                            <option value="Necesita mejorar" ${s.grade === 'Necesita mejorar' ? 'selected' : ''}>Necesita mejorar</option>
-                        </select>
-                    </div>
-                `, [
-                    { text: 'Cancelar' },
-                    {
-                        text: '💾 Guardar corrección',
-                        class: 'btn-primary',
-                        callback: async () => {
-                            const feedback = document.getElementById('feedback-text').value;
-                            const grade = document.getElementById('feedback-grade').value;
-                            if (!feedback.trim()) {
-                                PE.UI.notify('Escribe tu retroalimentación', 'error');
-                                return;
-                            }
-                            await PE.Submissions.addFeedback(id, feedback, grade);
-                            PE.UI.notify('✅ Corrección guardada correctamente', 'success');
-                            location.reload();
+                            <p class="text-secondary mb-0 mt-1" style="font-size: 0.8rem;">${c.description || ''}</p>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="alert alert-primary mt-3">
+                    <strong>📊 Nota Total: <span id="total-grade">0</span> / ${rubric.maxPoints}</strong>
+                    <span class="badge badge-info ml-2" id="grade-equivalent">-</span>
+                </div>
+            `;
+        }
+
+        function updateCriterionScore(index, maxScore) {
+            const range = document.getElementById(`criterion-range-${index}`);
+            const input = document.getElementById(`criterion-input-${index}`);
+            if (range && input) {
+                input.value = range.value;
+                calculateTotalGrade();
+            }
+        }
+
+        function syncCriterionScore(index, maxScore) {
+            const range = document.getElementById(`criterion-range-${index}`);
+            const input = document.getElementById(`criterion-input-${index}`);
+            if (range && input) {
+                range.value = input.value;
+                calculateTotalGrade();
+            }
+        }
+
+        function calculateTotalGrade(rubric) {
+            const rubricSelect = document.getElementById('rubric-select');
+            if (!rubric && rubricSelect) {
+                const storedRubrics = localStorage.getItem('pe_c2_rubrics');
+                const rubrics = storedRubrics ? JSON.parse(storedRubrics) : [];
+                rubric = rubrics.find(r => r.id === rubricSelect.value);
+            }
+
+            if (!rubric) return;
+
+            let total = 0;
+            rubric.criteria.forEach((c, i) => {
+                const input = document.getElementById(`criterion-input-${i}`);
+                if (input) {
+                    total += parseFloat(input.value) || 0;
+                }
+            });
+
+            const totalGradeEl = document.getElementById('total-grade');
+            if (totalGradeEl) {
+                totalGradeEl.textContent = total.toFixed(1);
+            }
+
+            // Calcular equivalente cualitativo
+            const gradeEquivalentEl = document.getElementById('grade-equivalent');
+            if (gradeEquivalentEl) {
+                const percentage = (total / rubric.maxPoints) * 100;
+                let equivalent = '-';
+                if (percentage >= 90) equivalent = 'Excelente';
+                else if (percentage >= 80) equivalent = 'Muy bien';
+                else if (percentage >= 70) equivalent = 'Bien';
+                else if (percentage >= 60) equivalent = 'Suficiente';
+                else equivalent = 'Necesita mejorar';
+                
+                gradeEquivalentEl.textContent = equivalent;
+            }
+
+            return total;
+        }
+
+        async function saveGrading(id, feedback, grade, rubricId, numericGrade, criterionScores) {
+            try {
+                const submission = allSubmissions.find(s => String(s.id) === String(id));
+                if (!submission) return;
+
+                // Actualizar submission
+                submission.feedback = feedback;
+                submission.grade = grade;
+                submission.rubricId = rubricId;
+                submission.numericGrade = numericGrade;
+                submission.criterionScores = criterionScores;
+                submission.status = 'reviewed';
+                submission.reviewedAt = new Date().toISOString();
+
+                // Guardar en localStorage
+                const storedSubmissions = localStorage.getItem('pe_c2_submissions');
+                let submissions = storedSubmissions ? JSON.parse(storedSubmissions) : [];
+                const index = submissions.findIndex(s => String(s.id) === String(id));
+                if (index >= 0) {
+                    submissions[index] = submission;
+                }
+                localStorage.setItem('pe_c2_submissions', JSON.stringify(submissions));
+
+                // Intentar guardar en API usando el endpoint correcto
+                try {
+                    const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+                    
+                    const feedbackData = {
+                        feedback_text: feedback,
+                        grade: grade || null,
+                        numeric_grade: numericGrade || null,
+                        annotations: null,
+                        rubric_id: rubricId || null,
+                        criterion_scores: criterionScores || null
+                    };
+
+                    const response = await fetch(`${window.PE_CONFIG.API_URL}/api/submissions/${id}/feedback`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
                         },
-                        close: false
+                        body: JSON.stringify(feedbackData)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Error al guardar en API');
                     }
-                ]);
+                    
+                    console.log('Feedback guardado en API correctamente');
+                } catch (e) {
+                    console.warn('No se pudo guardar en API, usando localStorage:', e.message);
+                }
+            } catch (error) {
+                console.error('Error guardando calificación:', error);
+                throw error;
             }
         }
     </script>

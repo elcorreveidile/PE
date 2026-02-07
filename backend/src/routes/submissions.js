@@ -313,7 +313,7 @@ router.post('/:id/feedback', authenticateToken, requireAdmin, [
         }
 
         const submissionId = req.params.id;
-        const { feedback_text, grade, numeric_grade, annotations } = req.body;
+        const { feedback_text, grade, numeric_grade, annotations, rubric_id, criterion_scores } = req.body;
 
         // Verificar que la entrega existe
         const submissionResult = await query('SELECT * FROM submissions WHERE id = $1', [submissionId]);
@@ -339,8 +339,15 @@ router.post('/:id/feedback', authenticateToken, requireAdmin, [
             `, [submissionId, req.user.id, feedback_text, grade || null, numeric_grade || null, annotations || null]);
         }
 
-        // Actualizar estado de la entrega
-        await query("UPDATE submissions SET status = 'reviewed' WHERE id = $1", [submissionId]);
+        // Actualizar estado de la entrega y guardar datos de rúbrica
+        await query(`
+            UPDATE submissions 
+            SET status = 'reviewed', 
+                rubric_id = $1, 
+                criterion_scores = $2, 
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $3
+        `, [rubric_id || null, criterion_scores || null, submissionId]);
 
         // Notificar al estudiante
         await query(`
