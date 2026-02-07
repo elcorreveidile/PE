@@ -599,7 +599,7 @@ const Auth = {
         console.log(`[OAuth] Iniciando flujo para provider: ${provider}`);
 
         const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
-        const redirectUri = `${window.location.origin}${basePath}/auth/oauth-callback.html`;
+        const redirectUri = `${window.location.origin}${basePath}/auth/oauth-callback`;
         const width = 500;
         const height = 600;
         const left = (window.screen.width - width) / 2;

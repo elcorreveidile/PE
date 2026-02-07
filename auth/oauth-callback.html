@@ -73,11 +73,11 @@
         if (error) {
             titleEl.textContent = 'Error en la autenticación';
             messageEl.innerHTML = `<div class="error">${errorDescription || error}</div>`;
-            messageEl.innerHTML += '<p style="margin-top: 1rem;"><a href="login.html" style="color: white; text-decoration: underline;">Volver a intentar</a></p>';
+            messageEl.innerHTML += '<p style="margin-top: 1rem;"><a href="/auth/login" style="color: white; text-decoration: underline;">Volver a intentar</a></p>';
         } else if (!code) {
             titleEl.textContent = 'Código no encontrado';
             messageEl.textContent = 'No se recibió el código de autorización. Por favor, intenta de nuevo.';
-            messageEl.innerHTML += '<p style="margin-top: 1rem;"><a href="login.html" style="color: white; text-decoration: underline;">Volver a intentar</a></p>';
+            messageEl.innerHTML += '<p style="margin-top: 1rem;"><a href="/auth/login" style="color: white; text-decoration: underline;">Volver a intentar</a></p>';
         } else {
             // Enviar el código al opener (ventana padre que abrió el popup)
             if (window.opener) {
@@ -89,7 +89,7 @@
                 window.close();
             } else {
                 // No hay opener, redirigir con el código
-                window.location.href = `login.html?provider=${provider}&code=${encodeURIComponent(code)}`;
+                window.location.href = `/auth/login?provider=${provider}&code=${encodeURIComponent(code)}`;
             }
         }
     </script>
