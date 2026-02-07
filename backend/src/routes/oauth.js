@@ -595,7 +595,11 @@ router.post('/apple', [
 
     } catch (error) {
         console.error('Error en OAuth Apple:', error);
-        res.status(500).json({ error: 'Error al autenticar con Apple' });
+        const detail = error && error.message ? String(error.message) : 'Error desconocido';
+        res.status(500).json({
+            error: 'Error al autenticar con Apple',
+            details: detail
+        });
     }
 });
 
