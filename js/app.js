@@ -572,6 +572,7 @@ const Auth = {
 
     _oauthCallback: null,
     _oauthWindow: null,
+    _oauthStorageKey: 'pe_oauth_callback',
 
     // Login con Google
     loginWithGoogle() {
@@ -671,25 +672,66 @@ const Auth = {
 
     // Esperar callback del popup OAuth
     _waitForOAuthCallback(provider) {
+        const consumePayload = (payload) => {
+            if (!payload || payload.provider !== provider) return false;
+            window.removeEventListener('message', messageHandler);
+            window.removeEventListener('storage', storageHandler);
+
+            if (payload.error) {
+                UI.notify(payload.error, 'error');
+                return true;
+            }
+
+            this._handleOAuthCallback(provider, payload.code);
+            return true;
+        };
+
         const messageHandler = (event) => {
             // Verificar origen (en producción, restringir a tu dominio)
             if (event.data && event.data.type === 'oauth-callback' && event.data.provider === provider) {
-                window.removeEventListener('message', messageHandler);
-                if (event.data.error) {
-                    UI.notify(event.data.error, 'error');
-                    return;
+                consumePayload({
+                    provider: event.data.provider,
+                    code: event.data.code,
+                    error: event.data.error
+                });
+            }
+        };
+
+        const storageHandler = (event) => {
+            if (event.key !== this._oauthStorageKey || !event.newValue) return;
+            try {
+                const payload = JSON.parse(event.newValue);
+                if (consumePayload(payload)) {
+                    localStorage.removeItem(this._oauthStorageKey);
                 }
-                this._handleOAuthCallback(provider, event.data.code);
+            } catch {
+                // ignore malformed payload
             }
         };
 
         window.addEventListener('message', messageHandler);
+        window.addEventListener('storage', storageHandler);
+
+        // Comprobar fallback por storage por si el evento llegó antes de registrar listeners
+        try {
+            const existing = localStorage.getItem(this._oauthStorageKey);
+            if (existing) {
+                const payload = JSON.parse(existing);
+                if (consumePayload(payload)) {
+                    localStorage.removeItem(this._oauthStorageKey);
+                    return;
+                }
+            }
+        } catch {
+            // ignore malformed payload
+        }
 
         // Timeout de 5 minutos
         setTimeout(() => {
             if (this._oauthWindow && !this._oauthWindow.closed) {
                 this._oauthWindow.close();
                 window.removeEventListener('message', messageHandler);
+                window.removeEventListener('storage', storageHandler);
                 UI.notify('Tiempo de espera agotado. Inténtalo de nuevo.', 'warning');
             }
         }, 5 * 60 * 1000);
@@ -1808,6 +1850,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                 submitBtn.textContent = 'Completar registro';
             }
         });
+    }
+
+    // Fallback OAuth: procesar provider/code directamente en URL del login
+    const queryParams = new URLSearchParams(window.location.search);
+    const oauthProvider = queryParams.get('provider');
+    const oauthCode = queryParams.get('code');
+    const oauthError = queryParams.get('oauth_error') || queryParams.get('error');
+    const isLoginPath = window.location.pathname.includes('/auth/login');
+
+    if (isLoginPath && oauthProvider && (oauthCode || oauthError)) {
+        if (oauthError) {
+            UI.notify(decodeURIComponent(oauthError), 'error');
+        } else if (oauthCode) {
+            Auth._handleOAuthCallback(oauthProvider, oauthCode);
+        }
+        const cleanedPath = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanedPath);
     }
 
     // Formularios de entrega de actividades

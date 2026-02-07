@@ -72,6 +72,14 @@
 
         // Si hay error, mostrarlo
         if (error) {
+            try {
+                localStorage.setItem('pe_oauth_callback', JSON.stringify({
+                    type: 'oauth-callback',
+                    provider,
+                    error: errorDescription || error,
+                    ts: Date.now()
+                }));
+            } catch {}
             if (window.opener) {
                 window.opener.postMessage({
                     type: 'oauth-callback',
@@ -83,7 +91,18 @@
             titleEl.textContent = 'Error en la autenticación';
             messageEl.innerHTML = `<div class="error">${errorDescription || error}</div>`;
             messageEl.innerHTML += '<p style="margin-top: 1rem;"><a href="/auth/login.html" style="color: white; text-decoration: underline;">Volver a intentar</a></p>';
+            if (!window.opener) {
+                window.location.href = `/auth/login.html?provider=${encodeURIComponent(provider)}&oauth_error=${encodeURIComponent(errorDescription || error)}`;
+            }
         } else if (!code) {
+            try {
+                localStorage.setItem('pe_oauth_callback', JSON.stringify({
+                    type: 'oauth-callback',
+                    provider,
+                    error: 'No se recibió código de autorización de Apple',
+                    ts: Date.now()
+                }));
+            } catch {}
             if (window.opener) {
                 window.opener.postMessage({
                     type: 'oauth-callback',
@@ -95,7 +114,18 @@
             titleEl.textContent = 'Código no encontrado';
             messageEl.textContent = 'No se recibió el código de autorización. Por favor, intenta de nuevo.';
             messageEl.innerHTML += '<p style="margin-top: 1rem;"><a href="/auth/login.html" style="color: white; text-decoration: underline;">Volver a intentar</a></p>';
+            if (!window.opener) {
+                window.location.href = `/auth/login.html?provider=${encodeURIComponent(provider)}&oauth_error=${encodeURIComponent('No se recibió código de autorización de Apple')}`;
+            }
         } else {
+            try {
+                localStorage.setItem('pe_oauth_callback', JSON.stringify({
+                    type: 'oauth-callback',
+                    provider,
+                    code,
+                    ts: Date.now()
+                }));
+            } catch {}
             // Enviar el código al opener (ventana padre que abrió el popup)
             if (window.opener) {
                 window.opener.postMessage({
