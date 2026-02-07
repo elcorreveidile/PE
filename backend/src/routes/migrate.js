@@ -24,6 +24,8 @@ router.post('/attendance', async (req, res) => {
 
         // Ejecutar el SQL
         await query(sql);
+        // Asegurar compatibilidad: el código QR crea registro sin user_id y luego lo confirma.
+        await query('ALTER TABLE attendance ALTER COLUMN user_id DROP NOT NULL');
 
         console.log('[MIGRATION] Migración completada exitosamente');
 
