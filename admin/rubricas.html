@@ -94,21 +94,21 @@
                     <!-- Plantillas rápidas -->
                     <div class="card mb-4">
                         <div class="card-header">
-                            <h3 class="card-title">Plantillas de Rúbricas Predefinidas</h3>
+                            <h3 class="card-title">Plantillas de Rúbricas Disponibles</h3>
                         </div>
                         <div class="card-body">
                             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
-                                <button class="btn btn-outline" onclick="useTemplate('basica')" style="height: auto; padding: 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                                <button class="btn btn-outline" onclick="viewTemplate('Rúbrica Básica')" style="height: auto; padding: 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
                                     <span style="font-size: 2rem;">📝</span>
                                     <strong>Rúbrica Básica</strong>
                                     <small class="text-secondary">3 criterios simples</small>
                                 </button>
-                                <button class="btn btn-outline" onclick="useTemplate('intermedia')" style="height: auto; padding: 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                                <button class="btn btn-outline" onclick="viewTemplate('Rúbrica Intermedia')" style="height: auto; padding: 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
                                     <span style="font-size: 2rem;">📊</span>
                                     <strong>Rúbrica Intermedia</strong>
                                     <small class="text-secondary">5 criterios ponderados</small>
                                 </button>
-                                <button class="btn btn-outline" onclick="useTemplate('avanzada')" style="height: auto; padding: 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                                <button class="btn btn-outline" onclick="viewTemplate('Rúbrica Avanzada C2')" style="height: auto; padding: 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
                                     <span style="font-size: 2rem;">🎯</span>
                                     <strong>Rúbrica Avanzada</strong>
                                     <small class="text-secondary">7 criterios detallados</small>
@@ -423,15 +423,15 @@
                 allRubrics.push(rubricData);
             }
 
-            saveRubricToAPI(rubricData);
+            saveRubricToAPI(rubricData, true);
         }
 
-        async function saveRubricToAPI(rubricData) {
+        async function saveRubricToAPI(rubricData, closeModal = false) {
             try {
                 const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
                 const existingIndex = allRubrics.findIndex(r => r.id === rubricData.id);
                 const method = existingIndex >= 0 ? 'PUT' : 'POST';
-                const url = existingIndex >= 0 
+                const url = existingIndex >= 0
                     ? `${window.PE_CONFIG.API_URL}/api/rubrics/${rubricData.id}`
                     : `${window.PE_CONFIG.API_URL}/api/rubrics`;
 
@@ -450,76 +450,21 @@
 
                 PE.UI.notify('Rúbrica guardada correctamente', 'success');
                 loadRubrics();
-                PE.UI.closeModal();
+                if (closeModal) {
+                    PE.UI.closeModal();
+                }
             } catch (error) {
                 console.error('Error guardando rúbrica:', error);
                 PE.UI.notify('Error al guardar la rúbrica', 'error');
             }
         }
 
-        async function useTemplate(templateType) {
-            let template;
-            const now = new Date().toISOString();
-
-            switch (templateType) {
-                case 'basica':
-                    template = {
-                        id: generateId(),
-                        name: 'Rúbrica Básica',
-                        description: 'Rúbrica simple con 3 criterios fundamentales',
-                        criteria: [
-                            { name: 'Gramática y ortografía', weight: 40, description: 'Correcta aplicación de normas gramaticales y ortográficas' },
-                            { name: 'Vocabulario', weight: 30, description: 'Uso apropiado y variado de vocabulario' },
-                            { name: 'Estructura y coherencia', weight: 30, description: 'Organización lógica y coherente del texto' }
-                        ],
-                        maxPoints: 10,
-                        active: true,
-                        isTemplate: true,
-                        createdAt: now
-                    };
-                    break;
-                case 'intermedia':
-                    template = {
-                        id: generateId(),
-                        name: 'Rúbrica Intermedia',
-                        description: 'Rúbrica estándar con 5 criterios ponderados',
-                        criteria: [
-                            { name: 'Gramática y ortografía', weight: 30, description: 'Correcta aplicación de normas gramaticales y ortográficas' },
-                            { name: 'Vocabulario y estilo', weight: 25, description: 'Uso apropiado y variado de vocabulario con estilo propio' },
-                            { name: 'Estructura y organización', weight: 20, description: 'Organización lógica, párrafos bien definidos' },
-                            { name: 'Contenido y desarrollo', weight: 15, description: 'Profundidad y relevancia del contenido' },
-                            { name: 'Adecuación al tema', weight: 10, description: 'Cumplimiento con los requisitos del tema' }
-                        ],
-                        maxPoints: 10,
-                        active: true,
-                        isTemplate: true,
-                        createdAt: now
-                    };
-                    break;
-                case 'avanzada':
-                    template = {
-                        id: generateId(),
-                        name: 'Rúbrica Avanzada C2',
-                        description: 'Rúbrica detallada para nivel C2 con 7 criterios',
-                        criteria: [
-                            { name: 'Gramática y sintaxis', weight: 25, description: 'Dominio de estructuras complejas y precisión gramatical' },
-                            { name: 'Vocabulario', weight: 20, description: 'Uso sofisticado y preciso de vocabulario' },
-                            { name: 'Cohesión y coherencia', weight: 15, description: 'Conectores variados y flujo lógico' },
-                            { name: 'Registro y tono', weight: 10, description: 'Adecuación del registro al contexto comunicativo' },
-                            { name: 'Contenido y argumentación', weight: 15, description: 'Profundidad, originalidad y solidez argumentativa' },
-                            { name: 'Estructura textual', weight: 10, description: 'Organización efectiva del texto' },
-                            { name: 'Creatividad y estilo', weight: 5, description: 'Originalidad y voz personal' }
-                        ],
-                        maxPoints: 10,
-                        active: true,
-                        isTemplate: true,
-                        createdAt: now
-                    };
-                    break;
-            }
-
+        function viewTemplate(templateName) {
+            const template = allRubrics.find(r => r.name === templateName);
             if (template) {
-                await saveRubricToAPI(template);
+                viewRubric(template.id);
+            } else {
+                PE.UI.notify(`La plantilla "${templateName}" no existe. Crea una nueva rúbrica primero.`, 'warning');
             }
         }
 
