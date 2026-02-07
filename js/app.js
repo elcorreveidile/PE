@@ -1402,7 +1402,6 @@ const Forms = {
                 const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
                 const params = new URLSearchParams(window.location.search);
                 const redirect = params.get('redirect');
-
                 if (redirect && user.role !== 'admin') {
                     window.location.href = redirect;
                     return;

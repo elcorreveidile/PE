@@ -146,16 +146,91 @@
     </script>
     <script src="js/app.js"></script>
     <script>
-        // Verificar si hay código en la URL
+        // Verificar si hay código en la URL o pendiente tras login
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
-            const code = urlParams.get('code');
+            const codeFromUrl = urlParams.get('code');
+            const code = (codeFromUrl || '').toUpperCase();
 
-            if (code) {
-                document.getElementById('verification-code').value = code.toUpperCase();
+            if (!code) {
+                return;
+            }
+
+            document.getElementById('verification-code').value = code;
+
+            // Solo autoenviar cuando llega por URL (flujo QR)
+            if (codeFromUrl) {
                 checkIn(new Event('submit'));
             }
         });
+
+        async function tryAttendanceGet(paths, token) {
+            let lastError = null;
+
+            for (const path of paths) {
+                try {
+                    const response = await fetch(`${window.PE_CONFIG.API_URL}${path}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (response.ok) {
+                        return await response.json();
+                    }
+
+                    const errorData = await response.json().catch(() => ({}));
+                    const message = errorData.error || `HTTP ${response.status}`;
+
+                    if (response.status === 404) {
+                        lastError = new Error(message);
+                        continue;
+                    }
+
+                    throw new Error(message);
+                } catch (error) {
+                    lastError = error;
+                }
+            }
+
+            throw lastError || new Error('No se pudo validar el código de asistencia');
+        }
+
+        async function tryAttendanceCheckIn(paths, token, code) {
+            let lastError = null;
+
+            for (const path of paths) {
+                try {
+                    const response = await fetch(`${window.PE_CONFIG.API_URL}${path}`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            verificationCode: code,
+                            code
+                        })
+                    });
+
+                    if (response.ok) {
+                        return await response.json();
+                    }
+
+                    const errorData = await response.json().catch(() => ({}));
+                    const message = errorData.error || `HTTP ${response.status}`;
+
+                    if (response.status === 404) {
+                        lastError = new Error(message);
+                        continue;
+                    }
+
+                    throw new Error(message);
+                } catch (error) {
+                    lastError = error;
+                }
+            }
+
+            throw lastError || new Error('Error al registrar asistencia');
+        }
 
         async function checkIn(event) {
             event.preventDefault();
@@ -173,9 +248,9 @@
             // Verificar autenticación
             const user = PE.Auth.getCurrentUser();
             if (!user) {
-                // Guardar código y redirigir a login
-                sessionStorage.setItem('pendingCheckinCode', code);
-                window.location.href = 'auth/login.html?redirect=' + encodeURIComponent(window.location.href);
+                // Redirigir a login preservando el código en la URL para retomar el check-in
+                const attendanceUrl = `${window.location.origin}${window.location.pathname}?code=${encodeURIComponent(code)}`;
+                window.location.href = 'auth/login.html?redirect=' + encodeURIComponent(attendanceUrl);
                 return;
             }
 
@@ -183,57 +258,45 @@
             btn.textContent = '⏳ Verificando...';
 
             try {
-                // Primero verificar el código
                 const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
 
-                const sessionResponse = await fetch(`${window.PE_CONFIG.API_URL}/api/attendance/session/${code}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (!sessionResponse.ok) {
-                    throw new Error('Código no válido o expirado');
+                // Intentar cargar datos de sesión (no bloquear si falla por endpoint/versión)
+                let sessionData = null;
+                try {
+                    sessionData = await tryAttendanceGet([
+                        `/api/attendance/session/${code}`,
+                        `/api/attendance/validate/${code}`,
+                        `/api/attendance/code/${code}`
+                    ], token);
+                } catch (sessionError) {
+                    console.warn('No se pudo obtener detalle de sesión:', sessionError.message || sessionError);
                 }
 
-                const sessionData = await sessionResponse.json();
-
-                // Mostrar información de la sesión
-                const sessionInfo = document.getElementById('session-info');
-                const sessionDetails = document.getElementById('session-details');
-                sessionDetails.innerHTML = `
-                    <strong>${sessionData.sessionTitle || 'Sesión'}</strong><br>
-                    <small>${sessionData.sessionDay || ''}, ${PE.Utils.formatDate(sessionData.sessionDate)}</small>
-                `;
-                sessionInfo.style.display = 'block';
-
-                // Confirmar asistencia
-                const checkinResponse = await fetch(`${window.PE_CONFIG.API_URL}/api/attendance/check-in`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ verificationCode: code })
-                });
-
-                if (!checkinResponse.ok) {
-                    const errorData = await checkinResponse.json().catch(() => ({}));
-                    throw new Error(errorData.error || 'Error al registrar asistencia');
+                if (sessionData) {
+                    const sessionInfo = document.getElementById('session-info');
+                    const sessionDetails = document.getElementById('session-details');
+                    sessionDetails.innerHTML = `
+                        <strong>${sessionData.sessionTitle || 'Sesión'}</strong><br>
+                        <small>${sessionData.sessionDay || ''}${sessionData.sessionDate ? `, ${PE.Utils.formatDate(sessionData.sessionDate)}` : ''}</small>
+                    `;
+                    sessionInfo.style.display = 'block';
                 }
 
-                const result = await checkinResponse.json();
+                const result = await tryAttendanceCheckIn([
+                    '/api/attendance/check-in',
+                    '/api/attendance/checkin',
+                    '/api/attendance/confirm'
+                ], token, code);
 
                 // Mostrar éxito
                 document.getElementById('checkin-form').style.display = 'none';
                 document.getElementById('success-message').style.display = 'block';
 
                 document.getElementById('success-details').innerHTML = `
-                    <p><strong>Sesión:</strong> ${sessionData.sessionTitle || 'N/A'}</p>
+                    <p><strong>Sesión:</strong> ${sessionData?.sessionTitle || 'N/A'}</p>
                     <p><strong>Fecha:</strong> ${PE.Utils.formatDate(result.date)}</p>
                     <p><strong>Hora:</strong> ${new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</p>
                 `;
-
-                // Limpiar código pendiente
-                sessionStorage.removeItem('pendingCheckinCode');
 
             } catch (error) {
                 console.error('Error en check-in:', error);
