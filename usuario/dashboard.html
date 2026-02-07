@@ -174,8 +174,9 @@
 
                     <!-- Notificaciones -->
                     <div class="card">
-                        <div class="card-header">
+                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                             <h3 style="margin: 0;">Notificaciones</h3>
+                            <button class="btn btn-sm btn-outline" onclick="clearOldNotifications()">Limpiar antiguas</button>
                         </div>
                         <div class="card-body" id="notifications-list">
                             <div class="alert alert-info">
@@ -339,6 +340,35 @@
                 } catch (error) {
                     console.error('Error eliminando notificación:', error);
                     PE.UI.notify('Error al eliminar notificación', 'error');
+                }
+            };
+
+            // Limpiar notificaciones antiguas (anteriores al inicio del curso actual)
+            window.clearOldNotifications = async () => {
+                if (!confirm('¿Eliminar notificaciones anteriores al 2026-02-03?')) {
+                    return;
+                }
+
+                try {
+                    const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+                    const response = await fetch(`${window.PE_CONFIG.API_URL}/api/notifications/old?before=2026-02-03`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Error al limpiar notificaciones');
+                    }
+
+                    PE.UI.notify(`Notificaciones antiguas eliminadas: ${data.deleted || 0}`, 'success');
+                    loadNotifications();
+                } catch (error) {
+                    console.error('Error limpiando notificaciones antiguas:', error);
+                    PE.UI.notify('No se pudieron limpiar las notificaciones antiguas', 'error');
                 }
             };
 

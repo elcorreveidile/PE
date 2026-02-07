@@ -94,6 +94,38 @@ router.put('/read-all', authenticateToken, async (req, res) => {
 });
 
 /**
+ * DELETE /api/notifications/old
+ * Eliminar notificaciones antiguas del usuario actual
+ * Query params:
+ * - before (opcional): fecha límite YYYY-MM-DD. Default: 2026-02-03
+ */
+router.delete('/old', authenticateToken, async (req, res) => {
+    try {
+        const before = (req.query.before || '2026-02-03').toString();
+
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(before)) {
+            return res.status(400).json({ error: 'Parámetro before inválido. Usa formato YYYY-MM-DD' });
+        }
+
+        const deleteResult = await query(`
+            DELETE FROM notifications
+            WHERE user_id = $1
+              AND created_at < $2::date
+            RETURNING id
+        `, [req.user.id, before]);
+
+        return res.json({
+            message: 'Notificaciones antiguas eliminadas',
+            deleted: deleteResult.rowCount,
+            before
+        });
+    } catch (error) {
+        console.error('Error al eliminar notificaciones antiguas:', error);
+        return res.status(500).json({ error: 'Error al eliminar notificaciones antiguas' });
+    }
+});
+
+/**
  * DELETE /api/notifications/:id
  * Eliminar notificación
  */
@@ -103,7 +135,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 
         // Verificar que la notificación pertenece al usuario
         const notifResult = await query(
-            'SELECT user_id FROM notifications WHERE id = $1',
+            'SELECT id, user_id, type, title, message, created_at FROM notifications WHERE id = $1',
             [notificationId]
         );
 
@@ -111,11 +143,26 @@ router.delete('/:id', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Notificación no encontrada' });
         }
 
-        if (notifResult.rows[0].user_id !== req.user.id) {
+        const notif = notifResult.rows[0];
+
+        if (notif.user_id !== req.user.id) {
             return res.status(403).json({ error: 'No tienes permiso para eliminar esta notificación' });
         }
 
-        await query('DELETE FROM notifications WHERE id = $1', [notificationId]);
+        // Para broadcasts, eliminar el lote completo del usuario.
+        // Se usa una ventana de 60s para cubrir filas creadas con pequeñas diferencias de timestamp.
+        if (notif.type === 'broadcast') {
+            await query(`
+                DELETE FROM notifications
+                WHERE user_id = $1
+                  AND type = 'broadcast'
+                  AND title = $2
+                  AND message = $3
+                  AND created_at BETWEEN ($4::timestamp - INTERVAL '60 seconds') AND ($4::timestamp + INTERVAL '60 seconds')
+            `, [req.user.id, notif.title, notif.message, notif.created_at]);
+        } else {
+            await query('DELETE FROM notifications WHERE id = $1', [notificationId]);
+        }
 
         res.json({ message: 'Notificación eliminada' });
 
@@ -178,13 +225,14 @@ router.post('/broadcast', authenticateToken, requireAdmin, [
             return res.status(400).json({ error: 'No hay destinatarios para esta notificación' });
         }
 
-        // Insertar notificaciones para todos los recipientes
+        // Insertar notificaciones para todos los recipientes con timestamp común de lote
+        const batchCreatedAt = new Date().toISOString();
         let insertedCount = 0;
         for (const userId of recipients) {
             await query(`
-                INSERT INTO notifications (user_id, type, title, message)
-                VALUES ($1, 'broadcast', $2, $3)
-            `, [userId, title, message]);
+                INSERT INTO notifications (user_id, type, title, message, created_at)
+                VALUES ($1, 'broadcast', $2, $3, $4)
+            `, [userId, title, message, batchCreatedAt]);
             insertedCount++;
         }
 
@@ -236,7 +284,7 @@ router.get('/sent', authenticateToken, requireAdmin, async (req, res) => {
 
         const result = await query(`
             SELECT
-                n.id,
+                MIN(n.id) as id,
                 n.title,
                 n.message,
                 n.type,
@@ -244,7 +292,7 @@ router.get('/sent', authenticateToken, requireAdmin, async (req, res) => {
                 COUNT(DISTINCT n.user_id) as recipients_count
             FROM notifications n
             WHERE n.type = 'broadcast'
-            GROUP BY n.id, n.title, n.message, n.type, n.created_at
+            GROUP BY n.title, n.message, n.type, n.created_at
             ORDER BY n.created_at DESC
             LIMIT $1
         `, [limit]);
@@ -281,11 +329,14 @@ router.delete('/:id', authenticateToken, requireAdmin, async (req, res) => {
 
         const notif = notifResult.rows[0];
 
-        // Eliminar todas las notificaciones del mismo broadcast
-        // (mismo title, message, type y created_at)
+        // Eliminar todas las notificaciones del lote de broadcast.
+        // Ventana de 60s para cubrir filas creadas con pequeñas diferencias de timestamp.
         const deleteResult = await query(`
             DELETE FROM notifications
-            WHERE title = $1 AND message = $2 AND type = $3 AND created_at = $4
+            WHERE title = $1
+              AND message = $2
+              AND type = $3
+              AND created_at BETWEEN ($4::timestamp - INTERVAL '60 seconds') AND ($4::timestamp + INTERVAL '60 seconds')
             RETURNING id
         `, [notif.title, notif.message, notif.type, notif.created_at]);
 
@@ -321,11 +372,14 @@ router.delete('/broadcast/:id', authenticateToken, requireAdmin, async (req, res
 
         const notif = notifResult.rows[0];
 
-        // Eliminar todas las notificaciones del mismo broadcast
-        // (mismo title, message, type y created_at)
+        // Eliminar todas las notificaciones del lote de broadcast.
+        // Ventana de 60s para cubrir filas creadas con pequeñas diferencias de timestamp.
         const deleteResult = await query(`
             DELETE FROM notifications
-            WHERE title = $1 AND message = $2 AND type = $3 AND created_at = $4
+            WHERE title = $1
+              AND message = $2
+              AND type = $3
+              AND created_at BETWEEN ($4::timestamp - INTERVAL '60 seconds') AND ($4::timestamp + INTERVAL '60 seconds')
             RETURNING id
         `, [notif.title, notif.message, notif.type, notif.created_at]);
 
