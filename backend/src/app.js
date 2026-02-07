@@ -46,7 +46,10 @@ const corsOptions = {
         'http://localhost:3000',
         'http://localhost:5500',
         'http://127.0.0.1:5500',
-        'https://elcorreveidile.github.io'
+        'https://elcorreveidile.github.io',
+        'https://www.cognoscencia.com',
+        'http://localhost:5501',
+        'http://127.0.0.1:5501'
     ],
     credentials: true,
     optionsSuccessStatus: 200

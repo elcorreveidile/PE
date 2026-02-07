@@ -58,8 +58,8 @@ const CONFIG = (() => {
         API_URL: (!isLocal ? (productionApiUrl || resolvedOrigin) : (storedApiUrl || resolvedOrigin)),
         // En producción forzamos API para evitar datos inconsistentes
         ENFORCE_API: !isLocal,
-        // En producción usamos siempre la API, en local se detecta automáticamente
-        USE_API: !isLocal,
+        // Si está vacío, usa localStorage como fallback (solo en local)
+        USE_API: false, // Se actualiza automáticamente si la API responde
         // Código de inscripción (solo para modo localStorage)
         REGISTRATION_CODE: (typeof window !== 'undefined' && window.PE_CONFIG && window.PE_CONFIG.registrationCode)
             ? window.PE_CONFIG.registrationCode
@@ -86,37 +86,59 @@ const AppState = {
 
 const API = {
     _availabilityPromise: null,
+    _isAvailable: false,
 
-    // Verificar si la API está disponible
+    // Verificar si la API está disponible (con timeout)
     async checkAvailability() {
         if (!CONFIG.API_URL) return false;
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
         try {
+            console.log('[API] Verificando disponibilidad del backend...');
             const response = await fetch(`${CONFIG.API_URL}/api/health`, {
                 method: 'GET',
-                timeout: 3000
+                signal: controller.signal,
+                headers: { 'Cache-Control': 'no-cache' }
             });
-            CONFIG.USE_API = response.ok;
-            return response.ok;
-        } catch {
+
+            clearTimeout(timeoutId);
+
+            const isAvailable = response.ok;
+            CONFIG.USE_API = isAvailable;
+            this._isAvailable = isAvailable;
+
+            console.log(`[API] Backend ${isAvailable ? 'disponible' : 'no disponible'}`);
+            return isAvailable;
+        } catch (error) {
+            clearTimeout(timeoutId);
             CONFIG.USE_API = false;
+            this._isAvailable = false;
+            console.warn('[API] Error al verificar disponibilidad:', error.message);
             return false;
         }
     },
 
     async ensureAvailability() {
-        if (CONFIG.USE_API) return true;
+        // Si ya sabemos que está disponible, retornar inmediatamente
+        if (this._isAvailable && CONFIG.USE_API) return true;
         if (!CONFIG.API_URL) return false;
 
+        // Si ya hay una verificación en curso, usarla
         if (!this._availabilityPromise) {
             this._availabilityPromise = this.checkAvailability();
         }
 
-        const available = await this._availabilityPromise;
-        this._availabilityPromise = null;
-        if (CONFIG.ENFORCE_API && !available) {
-            throw new Error('Backend no disponible. No se puede usar el modo local en producción.');
+        try {
+            const available = await this._availabilityPromise;
+            return available;
+        } catch (error) {
+            // Reset cache on error to allow retry
+            this._availabilityPromise = null;
+            this._isAvailable = false;
+            throw error;
         }
-        return available;
     },
 
     // Hacer petición a la API
@@ -152,11 +174,26 @@ const API = {
                 const validationMessage = Array.isArray(data?.errors) && data.errors.length > 0
                     ? data.errors[0].msg
                     : null;
-                throw new Error(data.error || data.message || validationMessage || 'Error en la petición');
+                const errorMessage = data.error || data.message || validationMessage || 'Error en la petición';
+
+                // Mejorar el mensaje de error para incluir el código de estado
+                throw new Error(`${errorMessage} (${response.status})`);
+            }
+
+            // Si la petición fue exitosa, confirmar que la API está disponible
+            if (!CONFIG.USE_API) {
+                CONFIG.USE_API = true;
+                this._isAvailable = true;
+                console.log('API confirmada disponible tras petición exitosa');
             }
 
             return data;
         } catch (error) {
+            // Diferenciar entre errores de red y errores HTTP
+            if (error.name === 'TypeError' || error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                console.error('Network error:', error);
+                throw new Error('Error de conexión al servidor. Verifica tu conexión a internet.');
+            }
             console.error('API Error:', error);
             throw error;
         }
@@ -269,9 +306,6 @@ const Utils = {
 // ==========================================================================
 
 const Auth = {
-    // Almacenamiento temporal de datos OAuth para registro
-    _pendingOAuth: null,
-
     // Inicializar usuarios de demostración (solo localStorage)
     init() {
         // Cargar token guardado
@@ -420,22 +454,51 @@ const Auth = {
         const user = Utils.storage.get('currentUser');
         const token = Utils.storage.get('token');
 
-        if (user) {
-            AppState.user = user;
-            AppState.token = token;
-            AppState.isAdmin = user.role === 'admin';
+        if (!user) {
+            return null;
+        }
 
-            // Si hay API y token, verificar que el token sigue siendo válido
-            await API.ensureAvailability();
-            if (CONFIG.USE_API && token) {
-                try {
-                    const response = await API.get('/auth/me');
-                    AppState.user = response;
-                    Utils.storage.set('currentUser', response);
-                } catch {
-                    // Token inválido, limpiar sesión
-                    this.logout();
-                    return null;
+        AppState.user = user;
+        AppState.token = token;
+        AppState.isAdmin = user.role === 'admin';
+
+        // Si hay API y token, verificar que el token sigue siendo válido
+        if (token) {
+            try {
+                await API.ensureAvailability();
+                if (CONFIG.USE_API) {
+                    try {
+                        const response = await API.get('/auth/me');
+                        // Actualizar con datos frescos del servidor
+                        AppState.user = response;
+                        Utils.storage.set('currentUser', response);
+                        AppState.isAdmin = response.role === 'admin';
+                        return response;
+                    } catch (error) {
+                        // Solo hacer logout si es un error de autenticación (401/403)
+                        // Errores de red o del servidor no deberían desconectar al usuario
+                        if (error.message && (
+                            error.message.includes('401') ||
+                            error.message.includes('403') ||
+                            error.message.includes('Token') ||
+                            error.message.includes('No autorizado') ||
+                            error.message.includes('autoriz')
+                        )) {
+                            console.warn('Token inválido o expirado, cerrando sesión');
+                            this.logout();
+                            return null;
+                        }
+                        // Para otros errores (red, servidor), mantener la sesión local
+                        console.warn('Error verificando sesión, manteniendo sesión local:', error.message);
+                        return user;
+                    }
+                }
+            } catch (availabilityError) {
+                // Si ensureAvailability falla en producción, mostrar error pero no desconectar
+                if (CONFIG.ENFORCE_API) {
+                    console.error('Backend no disponible:', availabilityError);
+                    // No hacemos logout, permitimos continuar con datos locales
+                    // pero el sistema mostrará error de conexión
                 }
             }
         }
@@ -444,15 +507,6 @@ const Auth = {
 
     // Obtener usuario actual
     getCurrentUser() {
-        // Si no está en memoria, intentar leer de localStorage
-        if (!AppState.user) {
-            const storedUser = Utils.storage.get('currentUser');
-            if (storedUser) {
-                AppState.user = storedUser;
-                AppState.token = Utils.storage.get('token');
-                AppState.isAdmin = storedUser.role === 'admin';
-            }
-        }
         return AppState.user;
     },
 
@@ -503,7 +557,7 @@ const Auth = {
 
         // Fallback localStorage
         const users = Utils.storage.get('users') || [];
-        const user = users.find(u => String(u.id) === String(AppState.user.id));
+        const user = users.find(u => u.id === AppState.user.id);
         if (!user || user.password !== currentPassword) {
             throw new Error('Contraseña actual incorrecta');
         }
@@ -513,300 +567,220 @@ const Auth = {
     },
 
     // ==========================================================================
-    // OAuth 2.0 - Google y Apple Sign In
+    // OAuth Authentication (Google, Apple)
     // ==========================================================================
 
-    /**
-     * Iniciar login con Google OAuth
-     */
+    _oauthCallback: null,
+    _oauthWindow: null,
+
+    // Login con Google
     loginWithGoogle() {
-        const clientId = (typeof window !== 'undefined' && window.PE_CONFIG && window.PE_CONFIG.GOOGLE_CLIENT_ID)
-            ? window.PE_CONFIG.GOOGLE_CLIENT_ID
-            : 'YOUR_GOOGLE_CLIENT_ID';
-        const redirectUri = `${window.location.origin}/auth/oauth-callback.html`;
-        const scope = 'openid profile email';
+        console.log('[Google OAuth] Iniciando login con Google');
+        console.log('[Google OAuth] window.PE_CONFIG:', window.PE_CONFIG);
 
-        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` + new URLSearchParams({
-            client_id: clientId,
-            redirect_uri: redirectUri,
-            response_type: 'code',
-            scope: scope,
-            access_type: 'offline',
-            prompt: 'consent'
-        });
+        if (!window.PE_CONFIG?.GOOGLE_CLIENT_ID) {
+            console.error('[Google OAuth] GOOGLE_CLIENT_ID no encontrado');
+            UI.notify('Configuración de Google no disponible', 'error');
+            return;
+        }
 
-        this._openOAuthPopup(authUrl, 'google');
+        console.log('[Google OAuth] Cliente ID encontrado:', window.PE_CONFIG.GOOGLE_CLIENT_ID);
+        this._initiateOAuthFlow('google');
     },
 
-    /**
-     * Iniciar login con Apple Sign In
-     */
+    // Login con Apple
     loginWithApple() {
-        // Apple Sign In requiere usar su SDK o redirigir a su endpoint
-        const clientId = (typeof window !== 'undefined' && window.PE_CONFIG && window.PE_CONFIG.APPLE_CLIENT_ID)
-            ? window.PE_CONFIG.APPLE_CLIENT_ID
-            : 'YOUR_APPLE_CLIENT_ID';
-        const redirectUri = `${window.location.origin}/auth/oauth-callback.html`;
-        const scope = 'name email';
-
-        const authUrl = `https://appleid.apple.com/auth/authorize?` + new URLSearchParams({
-            client_id: clientId,
-            redirect_uri: redirectUri,
-            response_type: 'code id_token',
-            scope: scope,
-            response_mode: 'fragment'
-        });
-
-        this._openOAuthPopup(authUrl, 'apple');
+        UI.notify('Login con Apple próximamente disponible', 'info');
+        // TODO: Implementar Apple Sign In cuando esté disponible
     },
 
-    /**
-     * Abrir popup de OAuth y esperar respuesta
-     */
-    _openOAuthPopup(url, provider) {
+    // Iniciar flujo OAuth
+    _initiateOAuthFlow(provider) {
+        console.log(`[OAuth] Iniciando flujo para provider: ${provider}`);
+
+        const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+        const redirectUri = `${window.location.origin}${basePath}/auth/oauth-callback.html`;
         const width = 500;
         const height = 600;
         const left = (window.screen.width - width) / 2;
         const top = (window.screen.height - height) / 2;
 
-        const popup = window.open(
-            url,
-            `OAuth ${provider}`,
-            `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
-        );
+        console.log(`[OAuth] redirectUri: ${redirectUri}`);
 
-        if (!popup) {
-            UI.notify('No se pudo abrir la ventana de autorización. Habilita los popups para este sitio.', 'error');
+        // Construir URL de autorización según el provider
+        let authUrl;
+        if (provider === 'google') {
+            const scopes = 'openid email profile';
+            authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+                `client_id=${encodeURIComponent(window.PE_CONFIG.GOOGLE_CLIENT_ID)}&` +
+                `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+                `response_type=code&` +
+                `scope=${encodeURIComponent(scopes)}&` +
+                `access_type=offline`;
+            console.log(`[OAuth] URL de autorización Google generada`);
+        } else {
+            console.error(`[OAuth] Provider ${provider} no soportado`);
+            UI.notify(`Provider ${provider} no soportado`, 'error');
             return;
         }
 
-        // Escuchar mensajes del popup
+        console.log(`[OAuth] Abriendo popup...`);
+
+        // Abrir popup
+        this._oauthWindow = window.open(
+            authUrl,
+            `oauth-${provider}`,
+            `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
+        );
+
+        if (!this._oauthWindow) {
+            console.error('[OAuth] No se pudo abrir el popup (probablemente bloqueado)');
+            UI.notify('No se pudo abrir la ventana de autenticación. Verifica los bloqueadores de popup y permite ventanas emergentes para este sitio.', 'error');
+            return;
+        }
+
+        console.log('[OAuth] Popup abierto correctamente');
+
+        // Esperar mensaje del popup
+        this._waitForOAuthCallback(provider);
+    },
+
+    // Esperar callback del popup OAuth
+    _waitForOAuthCallback(provider) {
         const messageHandler = (event) => {
-            // Verificar origen (en producción, verificar event.origin)
-            if (event.data && event.data.type === 'oauth-callback') {
-                popup.close();
+            // Verificar origen (en producción, restringir a tu dominio)
+            if (event.data && event.data.type === 'oauth-callback' && event.data.provider === provider) {
                 window.removeEventListener('message', messageHandler);
-                this._handleOAuthCallback(event.data);
+                this._handleOAuthCallback(provider, event.data.code);
             }
         };
 
         window.addEventListener('message', messageHandler);
 
-        // Verificar si el popup fue cerrado manualmente
-        const checkClosed = setInterval(() => {
-            if (popup.closed) {
-                clearInterval(checkClosed);
+        // Timeout de 5 minutos
+        setTimeout(() => {
+            if (this._oauthWindow && !this._oauthWindow.closed) {
+                this._oauthWindow.close();
                 window.removeEventListener('message', messageHandler);
+                UI.notify('Tiempo de espera agotado. Inténtalo de nuevo.', 'warning');
             }
-        }, 1000);
+        }, 5 * 60 * 1000);
     },
 
-    /**
-     * Manejar callback de OAuth
-     */
-    async _handleOAuthCallback(data) {
-        const { provider, code } = data;
-
-        try {
-            UI.notify('Procesando autenticación...', 'info');
-
-            if (provider === 'google') {
-                await this._processGoogleOAuth(code);
-            } else if (provider === 'apple') {
-                await this._processAppleOAuth(code);
-            }
-        } catch (error) {
-            UI.notify(error.message, 'error');
+    // Manejar callback de OAuth
+    async _handleOAuthCallback(provider, code) {
+        if (!code) {
+            UI.notify('No se recibió código de autorización', 'error');
+            return;
         }
-    },
 
-    /**
-     * Procesar OAuth de Google
-     */
-    async _processGoogleOAuth(code) {
-        try {
-            const response = await API.post('/auth/oauth/google', { code });
-
-            if (response.needsRegistrationCode) {
-                // Mostrar modal para código de registro
-                this._showRegistrationModal(response);
-                return;
-            }
-
-            // Login exitoso o registro con código correcto
-            const user = response.user || response.data || response;
-            if (response.token) {
-                AppState.token = response.token;
-                Utils.storage.set('token', response.token);
-            }
-
-            if (user) {
-                Utils.storage.set('currentUser', user);
-                AppState.user = user;
-                AppState.isAdmin = user.role === 'admin';
-            }
-
-            UI.notify('Inicio de sesión exitoso', 'success');
-            setTimeout(() => {
-                const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
-                window.location.href = user.role === 'admin'
-                    ? basePath + '/admin/index.html'
-                    : basePath + '/usuario/dashboard.html';
-            }, 500);
-
-        } catch (error) {
-            if (error.message.includes('Código de registro requerido')) {
-                // Parsear la respuesta de error para obtener datos OAuth
-                try {
-                    const errorData = JSON.parse(error.message.match(/\{.*\}/)[0]);
-                    this._showRegistrationModal(errorData);
-                } catch {
-                    UI.notify('Error al procesar el registro', 'error');
-                }
-            } else {
-                UI.notify(error.message || 'Error al autenticar con Google', 'error');
-            }
-        }
-    },
-
-    /**
-     * Procesar OAuth de Apple
-     */
-    async _processAppleOAuth(code) {
-        // Apple Sign In es diferente, devuelve el token directamente en el URL fragment
-        // Necesitamos extraer el id_token del callback
-        const urlParams = new URLSearchParams(window.location.hash.substring(1));
-        const idToken = urlParams.get('id_token');
-        const firstName = urlParams.get('first_name');
-        const lastName = urlParams.get('last_name');
+        UI.notify('Procesando autenticación...', 'info');
 
         try {
-            const response = await API.post('/auth/oauth/apple', {
-                id_token: idToken || code,
-                firstName: firstName || '',
-                lastName: lastName || ''
+            await API.ensureAvailability();
+
+            if (!CONFIG.USE_API) {
+                throw new Error('OAuth requiere conexión al backend');
+            }
+
+            // Enviar código al backend para intercambiarlo por token
+            const response = await API.post('/auth/oauth/callback', {
+                provider,
+                code
             });
 
-            if (response.needsRegistrationCode) {
-                this._showRegistrationModal(response);
+            if (response.needsRegistration) {
+                // Usuario necesita completar registro con código
+                this._showRegistrationModal(provider, response.email, response.name);
                 return;
             }
 
-            const user = response.user || response.data || response;
-            if (response.token) {
+            // Login exitoso
+            if (response.user && response.token) {
+                AppState.user = response.user;
                 AppState.token = response.token;
+                AppState.isAdmin = response.user.role === 'admin';
+                Utils.storage.set('currentUser', response.user);
                 Utils.storage.set('token', response.token);
+
+                UI.notify(`Bienvenido/a, ${response.user.name}!`, 'success');
+
+                // Redirigir al dashboard correspondiente
+                setTimeout(() => {
+                    const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+                    window.location.href = response.user.role === 'admin'
+                        ? basePath + '/admin/index.html'
+                        : basePath + '/usuario/dashboard.html';
+                }, 500);
             }
-
-            if (user) {
-                Utils.storage.set('currentUser', user);
-                AppState.user = user;
-                AppState.isAdmin = user.role === 'admin';
-            }
-
-            UI.notify('Inicio de sesión exitoso', 'success');
-            setTimeout(() => {
-                const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
-                window.location.href = user.role === 'admin'
-                    ? basePath + '/admin/index.html'
-                    : basePath + '/usuario/dashboard.html';
-            }, 500);
-
         } catch (error) {
-            UI.notify(error.message || 'Error al autenticar con Apple', 'error');
+            console.error('Error en OAuth callback:', error);
+            UI.notify(error.message || 'Error al procesar la autenticación', 'error');
         }
     },
 
-    /**
-     * Mostrar modal de código de registro
-     */
-    _showRegistrationModal(oauthData) {
-        this._pendingOAuth = oauthData;
-
+    // Mostrar modal de registro para usuarios OAuth
+    _showRegistrationModal(provider, email, name) {
         const modal = document.getElementById('registration-modal');
         if (modal) {
             modal.classList.remove('hidden');
+            // Guardar datos OAuth temporalmente
+            this._pendingOAuth = { provider, email, name };
         }
-
-        // Enfocar input del código
-        setTimeout(() => {
-            const input = document.getElementById('registration-code');
-            if (input) input.focus();
-        }, 100);
     },
 
-    /**
-     * Cerrar modal de registro
-     */
+    // Completar registro OAuth con código de registro
+    async completeOAuthRegistration(registrationCode) {
+        if (!this._pendingOAuth) {
+            throw new Error('No hay registro OAuth pendiente');
+        }
+
+        try {
+            await API.ensureAvailability();
+
+            if (!CONFIG.USE_API) {
+                throw new Error('OAuth requiere conexión al backend');
+            }
+
+            const response = await API.post('/auth/oauth/register', {
+                provider: this._pendingOAuth.provider,
+                email: this._pendingOAuth.email,
+                name: this._pendingOAuth.name,
+                registrationCode
+            });
+
+            if (response.user && response.token) {
+                AppState.user = response.user;
+                AppState.token = response.token;
+                AppState.isAdmin = response.user.role === 'admin';
+                Utils.storage.set('currentUser', response.user);
+                Utils.storage.set('token', response.token);
+
+                this._pendingOAuth = null;
+                this.closeRegistrationModal();
+
+                UI.notify(`Registro completado. Bienvenido/a, ${response.user.name}!`, 'success');
+
+                setTimeout(() => {
+                    const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+                    window.location.href = response.user.role === 'admin'
+                        ? basePath + '/admin/index.html'
+                        : basePath + '/usuario/dashboard.html';
+                }, 500);
+            }
+        } catch (error) {
+            console.error('Error completando registro OAuth:', error);
+            throw error;
+        }
+    },
+
+    // Cerrar modal de registro
     closeRegistrationModal() {
-        this._pendingOAuth = null;
         const modal = document.getElementById('registration-modal');
         if (modal) {
             modal.classList.add('hidden');
         }
-
-        const errorDiv = document.getElementById('registration-error');
-        if (errorDiv) {
-            errorDiv.style.display = 'none';
-        }
-
-        const input = document.getElementById('registration-code');
-        if (input) {
-            input.value = '';
-        }
-    },
-
-    /**
-     * Completar registro con código
-     */
-    async completeOAuthRegistration(registrationCode) {
-        if (!this._pendingOAuth) {
-            throw new Error('No hay registro pendiente');
-        }
-
-        const { provider, pendingToken } = this._pendingOAuth;
-
-        try {
-            let response;
-            if (provider === 'google') {
-                // Enviar pendingToken en lugar del código de Google
-                response = await API.post('/auth/oauth/google', {
-                    pendingToken,
-                    registrationCode
-                });
-            } else if (provider === 'apple') {
-                response = await API.post('/auth/oauth/apple', {
-                    pendingToken,
-                    registrationCode
-                });
-            }
-
-            const user = response.user || response.data || response;
-            if (response.token) {
-                AppState.token = response.token;
-                Utils.storage.set('token', response.token);
-            }
-
-            if (user) {
-                Utils.storage.set('currentUser', user);
-                AppState.user = user;
-                AppState.isAdmin = user.role === 'admin';
-            }
-
-            this.closeRegistrationModal();
-            UI.notify('Registro completado exitosamente', 'success');
-
-            setTimeout(() => {
-                const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
-                window.location.href = user.role === 'admin'
-                    ? basePath + '/admin/index.html'
-                    : basePath + '/usuario/dashboard.html';
-            }, 500);
-
-        } catch (error) {
-            UI.notify(error.message || 'Error al completar el registro', 'error');
-            throw error;
-        }
+        this._pendingOAuth = null;
     }
 };
 
@@ -869,7 +843,7 @@ const Submissions = {
             throw new Error('Backend no disponible. No se permiten consultas locales en producción.');
         }
         const all = Utils.storage.get('submissions') || [];
-        return all.filter(s => String(s.userId) === String(userId));
+        return all.filter(s => s.userId === userId);
     },
 
     // Obtener entregas por sesión
@@ -956,7 +930,7 @@ const Submissions = {
         return new Promise((resolve, reject) => {
             setTimeout(() => {
                 const submissions = Utils.storage.get('submissions') || [];
-                const index = submissions.findIndex(s => String(s.id) === String(submissionId));
+                const index = submissions.findIndex(s => s.id === submissionId);
 
                 if (index === -1) {
                     reject(new Error('Entrega no encontrada'));
@@ -1010,7 +984,7 @@ const Submissions = {
         }
 
         const submissions = Utils.storage.get('submissions') || [];
-        const filtered = submissions.filter(s => String(s.id) !== String(submissionId));
+        const filtered = submissions.filter(s => s.id !== submissionId);
         Utils.storage.set('submissions', filtered);
         return { success: true };
     }
@@ -1700,13 +1674,6 @@ const Forms = {
             UI.notify('Sesión iniciada correctamente', 'success');
             setTimeout(() => {
                 const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
-                const params = new URLSearchParams(window.location.search);
-                const redirect = params.get('redirect');
-                if (redirect && user.role !== 'admin') {
-                    window.location.href = redirect;
-                    return;
-                }
-
                 window.location.href = user.role === 'admin' ? basePath + '/admin/index.html' : basePath + '/usuario/dashboard.html';
             }, 500);
         } catch (error) {
@@ -1722,24 +1689,40 @@ const Forms = {
 // ==========================================================================
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Verificar disponibilidad de la API
-    await API.checkAvailability();
-
-    if (CONFIG.ENFORCE_API && !CONFIG.USE_API) {
-        UI.showBlockingError('El backend está desconectado. En producción no se permite usar almacenamiento local para evitar datos inconsistentes.');
-        return;
-    }
-
-    // Inicializar autenticación
+    // Inicializar autenticación primero
     Auth.init();
+
+    // Verificar disponibilidad de la API de forma asíncrona (sin bloquear)
+    const hasExistingSession = !!(Utils.storage.get('token') && Utils.storage.get('currentUser'));
+
+    // Iniciar verificación de API en background
+    API.checkAvailability().then(isAvailable => {
+        console.log(`[Init] Verificación de API completada: ${isAvailable ? 'disponible' : 'no disponible'}`);
+
+        // Si no hay API y no hay sesión, mostrar advertencia pero NO bloquear
+        if (CONFIG.ENFORCE_API && !isAvailable && !hasExistingSession) {
+            console.warn('[Init] Backend no disponible, pero permitiendo navegación');
+            UI.notify('El backend está temporalmente desconectado. Algunas funciones pueden no estar disponibles.', 'warning', 5000);
+        }
+
+        // Si hay sesión previa pero API no disponible, advertir
+        if (hasExistingSession && !isAvailable) {
+            console.warn('[Init] Sesión existente detectada pero backend no disponible');
+            UI.notify('Conectando con el servidor...', 'info', 3000);
+        }
+    }).catch(error => {
+        console.warn('[Init] Error verificando API, continuando:', error.message);
+    });
+
+    // Verificar sesión del usuario
     await Auth.checkSession();
     UI.updateAuthUI();
 
     // Mostrar indicador de modo
     if (CONFIG.USE_API) {
-        console.log('Producción Escrita C2 - Modo API (Backend conectado)');
+        console.log('[Init] Producción Escrita C2 - Modo API (Backend conectado)');
     } else {
-        console.log('Producción Escrita C2 - Modo localStorage (sin backend)');
+        console.log('[Init] Producción Escrita C2 - Buscando backend...');
     }
 
     // Menú móvil
@@ -1771,31 +1754,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         registerForm.addEventListener('submit', (e) => Forms.handleRegistration(e));
     }
 
-    // Formulario de registro OAuth (código de inscripción)
+    // Formulario de registro OAuth (para usuarios de Google/Apple)
     const oauthRegistrationForm = document.getElementById('oauth-registration-form');
     if (oauthRegistrationForm) {
         oauthRegistrationForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const submitBtn = oauthRegistrationForm.querySelector('button[type="submit"]');
-            const errorDiv = document.getElementById('registration-error');
-            const codeInput = document.getElementById('registration-code');
+            const code = oauthRegistrationForm.querySelector('#registration-code').value.trim();
+            const errorContainer = document.getElementById('registration-error');
 
-            const registrationCode = codeInput?.value.trim();
-
-            if (!registrationCode) {
-                errorDiv.textContent = 'Introduce el código de registro';
-                errorDiv.style.display = 'block';
+            if (!code) {
+                errorContainer.textContent = 'Introduce el código de registro';
+                errorContainer.style.display = 'block';
                 return;
             }
 
+            const submitBtn = oauthRegistrationForm.querySelector('button[type="submit"]');
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Verificando...';
+            submitBtn.textContent = 'Procesando...';
 
             try {
-                await Auth.completeOAuthRegistration(registrationCode);
+                await Auth.completeOAuthRegistration(code);
             } catch (error) {
-                errorDiv.textContent = error.message || 'Código de registro inválido';
-                errorDiv.style.display = 'block';
+                errorContainer.textContent = error.message || 'Error al completar el registro';
+                errorContainer.style.display = 'block';
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Completar registro';
             }
@@ -1839,17 +1820,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    // Mostrar fecha actual en el header
-    const dateElement = document.getElementById('current-date');
-    if (dateElement) {
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        const today = new Date().toLocaleDateString('es-ES', options);
-        // Capitalizar primera letra
-        const formattedDate = today.charAt(0).toUpperCase() + today.slice(1);
-        dateElement.textContent = formattedDate;
-    }
-
-    console.log('Producción Escrita C2 - Aplicación iniciada');
+    console.log('[Init] Producción Escrita C2 - Aplicación iniciada');
 });
 
 // ==========================================================================
