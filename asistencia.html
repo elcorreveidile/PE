@@ -84,7 +84,7 @@
                                 class="form-control code-input"
                                 maxlength="8"
                                 placeholder="--------"
-                                pattern="[A-F0-9]{8}"
+                                pattern="[A-Z0-9]{8}"
                                 required
                                 autocomplete="off"
                                 style="text-transform: uppercase;"
@@ -165,7 +165,7 @@
             const code = codeInput.value.toUpperCase().trim();
 
             // Validar formato
-            if (!/^[A-F0-9]{8}$/.test(code)) {
+            if (!/^[A-Z0-9]{8}$/.test(code)) {
                 PE.UI.notify('El código debe tener 8 caracteres alfanuméricos', 'error');
                 return;
             }
@@ -249,7 +249,7 @@
 
         // Auto-format input
         document.getElementById('verification-code').addEventListener('input', function(e) {
-            this.value = this.value.toUpperCase().replace(/[^A-F0-9]/g, '');
+            this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
         });
     </script>
 </body>

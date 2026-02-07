@@ -215,8 +215,11 @@
                 // Mostrar QR
                 const qrContainer = document.getElementById('qrcode');
                 qrContainer.innerHTML = '';
+                const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+                const checkInUrl = data.checkInUrl || data.qrUrl || `${window.location.origin}${basePath}/asistencia.html?code=${encodeURIComponent(data.verificationCode)}`;
+
                 new QRCode(qrContainer, {
-                    text: data.verificationCode,
+                    text: checkInUrl,
                     width: 256,
                     height: 256,
                     colorDark: '#c53030',
