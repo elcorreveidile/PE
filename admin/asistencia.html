@@ -114,6 +114,7 @@
                             <button id="btn-generate" class="btn btn-primary btn-lg" onclick="generateQR()">
                                 🔄 Generar Código QR
                             </button>
+                            <small class="text-secondary d-block mt-2">💡 Cada clic genera un código nuevo</small>
 
                             <div id="qr-display" style="display: none; margin-top: 2rem;">
                                 <div class="qr-container">
@@ -227,7 +228,7 @@
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({})
+                    body: JSON.stringify({ force: true })
                 });
 
                 if (!response.ok) {

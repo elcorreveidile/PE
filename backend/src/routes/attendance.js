@@ -32,7 +32,7 @@ function generateVerificationCode() {
  */
 router.post('/generate', authenticateToken, requireAdmin, async (req, res) => {
     try {
-        const { sessionId } = req.body;
+        const { sessionId, force } = req.body;
 
         // Obtener fecha actual
         const today = new Date().toISOString().split('T')[0];
@@ -45,7 +45,7 @@ router.post('/generate', authenticateToken, requireAdmin, async (req, res) => {
             LIMIT 1
         `, [today]);
 
-        if (existingResult.rows.length > 0) {
+        if (existingResult.rows.length > 0 && !force) {
             return res.json({
                 message: 'Ya existe un código de asistencia para hoy',
                 verificationCode: existingResult.rows[0].verification_code,

@@ -263,6 +263,15 @@ router.get('/export/students', authenticateToken, requireAdmin, async (req, res)
     try {
         const format = req.query.format || 'csv';
 
+        // Primero obtener el total de sesiones para calcular el porcentaje
+        const totalSessionsResult = await query(`
+            SELECT COUNT(*) as total
+            FROM course_sessions
+            WHERE date::text ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+                AND (date::text)::date <= CURRENT_DATE
+        `);
+        const totalSessions = parseInt(totalSessionsResult.rows[0].total) || 1;
+
         const result = await query(`
             SELECT
                 u.id,
@@ -274,11 +283,13 @@ router.get('/export/students', authenticateToken, requireAdmin, async (req, res)
                 u.last_login as "ultimo_acceso",
                 COALESCE((SELECT COUNT(*) FROM submissions WHERE user_id = u.id), 0) as "total_entregas",
                 COALESCE((SELECT COUNT(*) FROM submissions WHERE user_id = u.id AND status = 'reviewed'), 0) as "entregas_corregidas",
-                COALESCE((SELECT SUM(word_count) FROM submissions WHERE user_id = u.id), 0) as "total_palabras"
+                COALESCE((SELECT SUM(word_count) FROM submissions WHERE user_id = u.id), 0) as "total_palabras",
+                COALESCE((SELECT COUNT(*) FROM attendance WHERE user_id = u.id), 0) as "asistencias",
+                ROUND((COALESCE((SELECT COUNT(*) FROM attendance WHERE user_id = u.id), 0)::numeric / $1 * 100), 2) as "porcentaje_asistencia"
             FROM users u
             WHERE u.role = 'student'
             ORDER BY u.name
-        `);
+        `, [totalSessions]);
 
         if (format === 'csv') {
             const fields = [
@@ -291,7 +302,9 @@ router.get('/export/students', authenticateToken, requireAdmin, async (req, res)
                 { label: 'Último Acceso', value: 'ultimo_acceso' },
                 { label: 'Total Entregas', value: 'total_entregas' },
                 { label: 'Entregas Corregidas', value: 'entregas_corregidas' },
-                { label: 'Total Palabras', value: 'total_palabras' }
+                { label: 'Total Palabras', value: 'total_palabras' },
+                { label: 'Asistencias', value: 'asistencias' },
+                { label: 'Porcentaje Asistencia', value: 'porcentaje_asistencia' }
             ];
 
             const parser = new Parser({ fields });
@@ -315,11 +328,13 @@ router.get('/export/students', authenticateToken, requireAdmin, async (req, res)
                 { header: 'Último Acceso', key: 'ultimo_acceso', width: 20 },
                 { header: 'Total Entregas', key: 'total_entregas', width: 15 },
                 { header: 'Entregas Corregidas', key: 'entregas_corregidas', width: 18 },
-                { header: 'Total Palabras', key: 'total_palabras', width: 15 }
+                { header: 'Total Palabras', key: 'total_palabras', width: 15 },
+                { header: 'Asistencias', key: 'asistencias', width: 12 },
+                { header: '% Asistencia', key: 'porcentaje_asistencia', width: 15 }
             ];
 
-            worksheet.addRow({ id: '', email: 'Producción Escrita C2', name: 'CLM - UGR', level: '', active: '', registro: '', ultimo_acceso: '', total_entregas: '', entregas_corregidas: '', total_palabras: '' });
-            worksheet.addRow({ id: '', email: `Exportado: ${new Date().toLocaleString('es-ES')}`, name: '', level: '', active: '', registro: '', ultimo_acceso: '', total_entregas: '', entregas_corregidas: '', total_palabras: '' });
+            worksheet.addRow({ id: '', email: 'Producción Escrita C2', name: 'CLM - UGR', level: '', active: '', registro: '', ultimo_acceso: '', total_entregas: '', entregas_corregidas: '', total_palabras: '', asistencias: '', porcentaje_asistencia: '' });
+            worksheet.addRow({ id: '', email: `Exportado: ${new Date().toLocaleString('es-ES')}`, name: '', level: '', active: '', registro: '', ultimo_acceso: '', total_entregas: '', entregas_corregidas: '', total_palabras: '', asistencias: '', porcentaje_asistencia: '' });
             worksheet.addRow({});
 
             result.rows.forEach(row => {
