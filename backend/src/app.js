@@ -22,6 +22,10 @@ const exportRoutes = require('./routes/export');
 const attendanceRoutes = require('./routes/attendance');
 const migrateRoutes = require('./routes/migrate');
 const rubricsRoutes = require('./routes/rubrics');
+const statisticsRoutes = require('./routes/statistics');
+
+// Importar middleware
+const { trackVisit } = require('./middleware/visits');
 
 // Crear aplicación Express
 const app = express();
@@ -83,6 +87,9 @@ if (NODE_ENV === 'development') {
     app.use(morgan('combined'));
 }
 
+// Trackear visitas (antes de parsear JSON)
+app.use(trackVisit);
+
 // Parsear JSON y formularios
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -98,6 +105,7 @@ app.use('/api/admin/export', exportRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/migrate', migrateRoutes);
 app.use('/api/rubrics', rubricsRoutes);
+app.use('/api/statistics', statisticsRoutes);
 
 // Ruta de health check
 app.get('/api/health', (req, res) => {

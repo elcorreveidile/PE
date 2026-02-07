@@ -57,6 +57,8 @@
                             <li><a href="tareas.html">Gestion de tareas</a></li>
                             <li><a href="estadisticas.html" class="active">Estadisticas</a></li>
                             <li><a href="comparacion.html">Comparacion</a></li>
+                            <li><a href="rubricas.html">📊 Rúbricas</a></li>
+                            <li><a href="boletines.html">📋 Boletines</a></li>
                         </ul>
                     </div>
                     <div class="sidebar-section">
@@ -75,7 +77,7 @@
                     </div>
 
                     <!-- Estadisticas principales -->
-                    <div class="sessions-grid mb-4" style="grid-template-columns: repeat(4, 1fr);">
+                    <div class="sessions-grid mb-4" style="grid-template-columns: repeat(5, 1fr);">
                         <div class="card stat-card">
                             <span class="stat-value text-primary" id="stat-students">0</span>
                             <p class="stat-label">Estudiantes matriculados</p>
@@ -85,12 +87,16 @@
                             <p class="stat-label">Total de entregas</p>
                         </div>
                         <div class="card stat-card">
-                            <span class="stat-value" style="color: var(--accent-color);" id="stat-words">0</span>
-                            <p class="stat-label">Palabras escritas</p>
+                            <span class="stat-value" style="color: var(--accent-color);" id="stat-graded">0</span>
+                            <p class="stat-label">Entregas calificadas</p>
                         </div>
                         <div class="card stat-card">
-                            <span class="stat-value text-primary" id="stat-avg">0</span>
-                            <p class="stat-label">Media palabras/entrega</p>
+                            <span class="stat-value" style="color: var(--warning-color);" id="stat-avg-grade">-</span>
+                            <p class="stat-label">Nota media curso</p>
+                        </div>
+                        <div class="card stat-card">
+                            <span class="stat-value text-primary" id="stat-words">0</span>
+                            <p class="stat-label">Palabras escritas</p>
                         </div>
                     </div>
 
@@ -252,12 +258,19 @@
             const pending = submissions.filter(s => s.status === 'pending');
             const totalWords = submissions.reduce((sum, s) => sum + (s.word_count || s.wordCount || 0), 0);
             const avgWords = submissions.length > 0 ? Math.round(totalWords / submissions.length) : 0;
+            
+            // Calcular estadísticas de notas
+            const gradedSubmissions = submissions.filter(s => s.numericGrade !== null && s.numericGrade !== undefined);
+            const averageGrade = gradedSubmissions.length > 0 
+                ? (gradedSubmissions.reduce((sum, s) => sum + s.numericGrade, 0) / gradedSubmissions.length).toFixed(1)
+                : '-';
 
             // Estadisticas principales
             document.getElementById('stat-students').textContent = students.length;
             document.getElementById('stat-submissions').textContent = submissions.length;
+            document.getElementById('stat-graded').textContent = gradedSubmissions.length;
+            document.getElementById('stat-avg-grade').textContent = averageGrade;
             document.getElementById('stat-words').textContent = totalWords.toLocaleString('es-ES');
-            document.getElementById('stat-avg').textContent = avgWords;
 
             // Progreso del curso
             document.getElementById('course-progress').textContent = progress.percentage + '%';
@@ -298,27 +311,74 @@
                 `;
             }).join('');
 
-            // Ranking de estudiantes
-            const studentStats = students.map(s => ({
-                ...s,
-                submissions: submissions.filter(sub => String(sub.user_id || sub.userId) === String(s.id)).length,
-                words: submissions.filter(sub => String(sub.user_id || sub.userId) === String(s.id)).reduce((sum, sub) => sum + (sub.word_count || sub.wordCount || 0), 0)
-            })).sort((a, b) => b.submissions - a.submissions);
+            // Ranking de estudiantes por nota
+            const studentStats = students.map(s => {
+                const studentSubmissions = submissions.filter(sub => String(sub.user_id || sub.userId) === String(s.id));
+                const gradedStudentSubmissions = studentSubmissions.filter(sub => sub.numericGrade !== null && sub.numericGrade !== undefined);
+                const avgGrade = gradedStudentSubmissions.length > 0 
+                    ? gradedStudentSubmissions.reduce((sum, sub) => sum + sub.numericGrade, 0) / gradedStudentSubmissions.length
+                    : null;
+                
+                return {
+                    ...s,
+                    submissions: studentSubmissions.length,
+                    gradedSubmissions: gradedStudentSubmissions.length,
+                    words: studentSubmissions.reduce((sum, sub) => sum + (sub.word_count || sub.wordCount || 0), 0),
+                    avgGrade: avgGrade
+                };
+            }).filter(s => s.avgGrade !== null).sort((a, b) => b.avgGrade - a.avgGrade);
 
             if (studentStats.length === 0) {
-                document.getElementById('student-ranking').innerHTML = '<p class="text-secondary text-center">No hay estudiantes registrados.</p>';
+                document.getElementById('student-ranking').innerHTML = '<p class="text-secondary text-center">No hay estudiantes con notas.</p>';
             } else {
                 document.getElementById('student-ranking').innerHTML = studentStats.slice(0, 5).map((s, i) => `
                     <div class="ranking-item">
                         <div class="ranking-position ${i < 3 ? 'ranking-' + (i + 1) : 'ranking-other'}">${i + 1}</div>
                         <div style="flex: 1;">
                             <strong>${PE.Utils.escapeHtml(s.name)}</strong>
-                            <p class="text-secondary mb-0" style="font-size: 0.8rem;">${s.words.toLocaleString('es-ES')} palabras</p>
+                            <p class="text-secondary mb-0" style="font-size: 0.8rem;">${s.submissions} entregas (${s.gradedSubmissions} calificadas)</p>
                         </div>
-                        <div class="badge badge-primary">${s.submissions} entregas</div>
+                        <div class="badge badge-primary">${s.avgGrade.toFixed(1)}</div>
                     </div>
                 `).join('');
             }
+
+            // Distribución de notas
+            const gradeRanges = {
+                'Sobresaliente (9-10)': gradedSubmissions.filter(s => s.numericGrade >= 9).length,
+                'Notable (7-8.9)': gradedSubmissions.filter(s => s.numericGrade >= 7 && s.numericGrade < 9).length,
+                'Bien (6-6.9)': gradedSubmissions.filter(s => s.numericGrade >= 6 && s.numericGrade < 7).length,
+                'Suficiente (5-5.9)': gradedSubmissions.filter(s => s.numericGrade >= 5 && s.numericGrade < 6).length,
+                'Insuficiente (<5)': gradedSubmissions.filter(s => s.numericGrade < 5).length
+            };
+
+            const maxGradeCount = Math.max(...Object.values(gradeRanges), 1);
+            const totalGraded = gradedSubmissions.length || 1;
+
+            const gradeDistContainer = document.createElement('div');
+            gradeDistContainer.innerHTML = Object.entries(gradeRanges).map(([range, count]) => {
+                const width = (count / maxGradeCount) * 100;
+                const percentage = (count / totalGraded * 100).toFixed(0);
+                const colors = {
+                    'Sobresaliente (9-10)': 'var(--success-color)',
+                    'Notable (7-8.9)': 'var(--primary-color)',
+                    'Bien (6-6.9)': 'var(--accent-color)',
+                    'Suficiente (5-5.9)': 'var(--warning-color)',
+                    'Insuficiente (<5)': 'var(--danger-color)'
+                };
+                return `
+                    <div class="chart-row">
+                        <span class="chart-label">${range}</span>
+                        <div class="chart-container">
+                            <div class="chart-bar" style="width: ${width}%; background: ${colors[range]};"></div>
+                        </div>
+                        <span class="chart-value">${count} (${percentage}%)</span>
+                    </div>
+                `;
+            }).join('');
+            
+            const levelDistContainer = document.getElementById('level-distribution');
+            levelDistContainer.parentNode.insertBefore(gradeDistContainer, levelDistContainer);
 
             // Distribucion por nivel
             const levels = { 'B2': 0, 'C1': 0, 'C2': 0 };
