@@ -1,7 +1,7 @@
 /**
  * Producción Escrita C2 - JavaScript Principal
  * Sistema de gestión del curso
- * Con soporte para API Backend y fallback a localStorage
+ * Requiere conexión al backend API
  */
 
 // ==========================================================================
@@ -44,7 +44,7 @@ const CONFIG = (() => {
         : '');
     const storedApiUrl = normalizeApiUrl(localStorage.getItem('pe_c2_api_url'));
 
-    // URL de la API en Render (o tu backend desplegado)
+    // URL de la API (Railway u otro backend desplegado)
     // Para cambiar la URL del backend, puedes:
     // 1. Añadir <script>window.PE_CONFIG = { API_URL: 'https://tu-api.onrender.com' }</script> antes de cargar este script
     // 2. O cambiar manualmente la URL aquí
@@ -54,15 +54,9 @@ const CONFIG = (() => {
 
     return {
         STORAGE_PREFIX: 'pe_c2_',
-        // URL del backend API - usa productionApiUrl si está configurado, sino el origin actual
-        API_URL: (!isLocal ? (productionApiUrl || resolvedOrigin) : (storedApiUrl || resolvedOrigin)),
-        // En producción forzamos API para evitar datos inconsistentes
-        ENFORCE_API: !isLocal,
-
-        // Código de inscripción (solo para modo localStorage)
-        REGISTRATION_CODE: (typeof window !== 'undefined' && window.PE_CONFIG && window.PE_CONFIG.registrationCode)
-            ? window.PE_CONFIG.registrationCode
-            : (localStorage.getItem('pe_c2_registration_code') || ''),
+        API_URL: productionApiUrl || resolvedOrigin,
+        // La API está disponible (se actualiza tras health check)
+        API_READY: false,
         COURSE_START: new Date('2026-02-03'),
         COURSE_END: new Date('2026-05-21'),
         SESSION_DAYS: [2, 4], // Martes = 2, Jueves = 4
@@ -91,7 +85,7 @@ const API = {
         if (!CONFIG.API_URL) return false;
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
 
             const response = await fetch(`${CONFIG.API_URL}/api/health`, {
                 method: 'GET',
@@ -100,36 +94,31 @@ const API = {
 
             clearTimeout(timeoutId);
 
-            // En producción, SIEMPRE usar API aunque falle una petición
-            // No cambiar USE_API a false en producción
-            if (!response.ok && !CONFIG.ENFORCE_API) {
-                CONFIG.USE_API = false;
+            if (response.ok) {
+                CONFIG.API_READY = true;
             }
 
             return response.ok;
         } catch (error) {
-            // En producción, NO cambiar a localStorage aunque falle
-            // El error se manejará en ensureAvailability
-            if (!CONFIG.ENFORCE_API) {
-                CONFIG.USE_API = false;
-            }
             return false;
         }
     },
 
     async ensureAvailability() {
-        if (CONFIG.USE_API) return true;
-        if (!CONFIG.API_URL) return false;
+        if (CONFIG.API_READY) return true;
+        if (!CONFIG.API_URL) {
+            throw new Error('No se ha configurado la URL del servidor.');
+        }
 
         if (!this._availabilityPromise) {
-            this._availabilityPromise = this.checkAvailability();
+            this._availabilityPromise = this.checkAvailability().finally(() => {
+                setTimeout(() => { this._availabilityPromise = null; }, 30000);
+            });
         }
 
         const available = await this._availabilityPromise;
-        this._availabilityPromise = null;
 
-        if (CONFIG.ENFORCE_API && !available) {
-            // En producción, mostrar error claro en lugar de cambiar a localStorage
+        if (!available) {
             throw new Error('El servidor no está disponible en este momento. Por favor, inténtalo de nuevo en unos segundos. Si el problema persiste, contacta al profesor.');
         }
 
@@ -208,7 +197,7 @@ const API = {
 // ==========================================================================
 
 const Utils = {
-    // Almacenamiento local
+    // Caché de sesión en localStorage (solo para token y usuario actual)
     storage: {
         get(key) {
             try {
@@ -224,11 +213,6 @@ const Utils = {
         remove(key) {
             localStorage.removeItem(CONFIG.STORAGE_PREFIX + key);
         }
-    },
-
-    // Generar ID único
-    generateId() {
-        return Date.now().toString(36) + Math.random().toString(36).substr(2);
     },
 
     // Formatear fecha
@@ -282,55 +266,20 @@ const Utils = {
 };
 
 // ==========================================================================
-// Sistema de Autenticación (con soporte API y localStorage)
+// Sistema de Autenticación (API backend)
 // ==========================================================================
 
 const Auth = {
-    // Inicializar usuarios de demostración (solo localStorage)
+    // Restaurar token guardado de la sesión anterior
     init() {
-        // Cargar token guardado
         const savedToken = Utils.storage.get('token');
         if (savedToken) {
             AppState.token = savedToken;
-        }
-
-        // Inicializar usuarios demo en localStorage si no hay API
-        if (!CONFIG.ENFORCE_API && !CONFIG.USE_API && !Utils.storage.get('users')) {
-            Utils.storage.set('users', [
-                {
-                    id: 'admin1',
-                    email: 'benitezl@go.ugr.es',
-                    password: 'admin123',
-                    name: 'Javier Benítez Láinez',
-                    role: 'admin',
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: 'user1',
-                    email: 'estudiante@ejemplo.com',
-                    password: 'estudiante123',
-                    name: 'Estudiante Demo',
-                    role: 'student',
-                    level: 'C2',
-                    createdAt: new Date().toISOString()
-                }
-            ]);
         }
     },
 
     // Registrar usuario
     async register(userData) {
-        await API.ensureAvailability();
-
-        if (!CONFIG.USE_API) {
-            if (CONFIG.ENFORCE_API) {
-                throw new Error('El servidor no está disponible. No se puede completar el registro. Por favor, inténtalo de nuevo en unos segundos.');
-            }
-            // Solo en modo desarrollo local, permitir localStorage
-            throw new Error('El modo localStorage solo está disponible en desarrollo local.');
-        }
-
-        // SIEMPRE usar API en producción
         const response = await API.post('/auth/register', userData);
         const user = response.user || response.data || response;
 
@@ -350,16 +299,6 @@ const Auth = {
 
     // Iniciar sesión
     async login(email, password) {
-        await API.ensureAvailability();
-
-        if (!CONFIG.USE_API) {
-            if (CONFIG.ENFORCE_API) {
-                throw new Error('El servidor no está disponible. No se puede iniciar sesión. Por favor, inténtalo de nuevo en unos segundos.');
-            }
-            throw new Error('El modo localStorage solo está disponible en desarrollo local.');
-        }
-
-        // SIEMPRE usar API en producción
         const response = await API.post('/auth/login', { email, password });
 
         const user = response.user || response.data || response;
@@ -388,36 +327,45 @@ const Auth = {
         window.location.href = basePath + '/index.html';
     },
 
-    // Verificar sesión actual
+    // Verificar sesión actual contra el backend
     async checkSession() {
         const user = Utils.storage.get('currentUser');
         const token = Utils.storage.get('token');
 
-        if (user) {
-            AppState.user = user;
-            AppState.token = token;
-            AppState.isAdmin = user.role === 'admin';
+        if (!user || !token) return null;
 
-            // Si hay API y token, verificar que el token sigue siendo válido
-            await API.ensureAvailability();
-            if (CONFIG.USE_API && token) {
-                try {
-                    const response = await API.get('/auth/me');
-                    AppState.user = response;
-                    Utils.storage.set('currentUser', response);
-                } catch {
-                    // Token inválido, limpiar sesión
+        AppState.user = user;
+        AppState.token = token;
+        AppState.isAdmin = user.role === 'admin';
+
+        // Verificar que el token sigue siendo válido con el backend
+        if (CONFIG.API_READY) {
+            try {
+                const response = await API.get('/auth/me');
+                AppState.user = response;
+                AppState.isAdmin = response.role === 'admin';
+                Utils.storage.set('currentUser', response);
+                return response;
+            } catch (error) {
+                const msg = error.message || '';
+                // Errores de autenticación: token expirado, inválido, usuario eliminado
+                const isAuthError = msg.includes('Token') || msg.includes('acceso requerido') ||
+                    msg.includes('expirado') || msg.includes('invalido') ||
+                    msg.includes('desactivada') || msg.includes('no encontrado');
+                if (isAuthError) {
                     this.logout();
                     return null;
                 }
+                // Error de red transitorio: mantener sesión con datos cacheados
+                console.warn('No se pudo verificar la sesión con el servidor:', msg);
             }
         }
-        return user;
+
+        return AppState.user;
     },
 
-    // Obtener usuario actual
+    // Obtener usuario actual (desde memoria o caché)
     getCurrentUser() {
-        // Si no está en memoria, intentar leer de localStorage
         if (!AppState.user) {
             const storedUser = Utils.storage.get('currentUser');
             if (storedUser) {
@@ -436,58 +384,21 @@ const Auth = {
 
     // Actualizar perfil
     async updateProfile(data) {
-        await API.ensureAvailability();
-        if (CONFIG.USE_API) {
-            await API.put('/auth/profile', data);
-            const updated = await API.get('/auth/me');
-            AppState.user = updated;
-            Utils.storage.set('currentUser', updated);
-            return updated;
-        }
-
-        if (CONFIG.ENFORCE_API) {
-            throw new Error('El backend no está disponible. No se permiten cambios de perfil en modo local en producción.');
-        }
-
-        // Fallback localStorage
-        const users = Utils.storage.get('users') || [];
-        const index = users.findIndex(u => u.id === AppState.user.id);
-        if (index !== -1) {
-            users[index] = { ...users[index], ...data };
-            Utils.storage.set('users', users);
-            const { password, ...safeUser } = users[index];
-            AppState.user = safeUser;
-            Utils.storage.set('currentUser', safeUser);
-            return safeUser;
-        }
-        throw new Error('Usuario no encontrado');
+        await API.put('/auth/profile', data);
+        const updated = await API.get('/auth/me');
+        AppState.user = updated;
+        Utils.storage.set('currentUser', updated);
+        return updated;
     },
 
     // Cambiar contraseña
     async changePassword(currentPassword, newPassword) {
-        await API.ensureAvailability();
-        if (CONFIG.USE_API) {
-            return API.put('/auth/password', { currentPassword, newPassword });
-        }
-
-        if (CONFIG.ENFORCE_API) {
-            throw new Error('El backend no está disponible. No se permite cambiar contraseña en modo local en producción.');
-        }
-
-        // Fallback localStorage
-        const users = Utils.storage.get('users') || [];
-        const user = users.find(u => String(u.id) === String(AppState.user.id));
-        if (!user || user.password !== currentPassword) {
-            throw new Error('Contraseña actual incorrecta');
-        }
-        user.password = newPassword;
-        Utils.storage.set('users', users);
-        return { success: true };
+        return API.put('/auth/password', { currentPassword, newPassword });
     }
 };
 
 // ==========================================================================
-// Sistema de Entregas (con soporte API y localStorage)
+// Sistema de Entregas (API backend)
 // ==========================================================================
 
 const Submissions = {
@@ -511,74 +422,30 @@ const Submissions = {
             reviewedAt: submission.reviewed_at ?? submission.reviewedAt
         };
     },
+
     // Obtener todas las entregas
     async getAll() {
-        await API.ensureAvailability();
-        if (CONFIG.USE_API) {
-            try {
-                const response = await API.get('/submissions');
-                const submissions = response.submissions || response.data || response || [];
-                return Array.isArray(submissions) ? submissions.map(this.normalize) : [];
-            } catch {
-                return [];
-            }
-        }
-        if (CONFIG.ENFORCE_API) {
-            throw new Error('Backend no disponible. No se permite usar entregas en modo local en producción.');
-        }
-        return Utils.storage.get('submissions') || [];
+        const response = await API.get('/submissions');
+        const submissions = response.submissions || response.data || response || [];
+        return Array.isArray(submissions) ? submissions.map(this.normalize) : [];
     },
 
     // Obtener entregas por usuario
     async getByUser(userId) {
-        await API.ensureAvailability();
-        if (CONFIG.USE_API) {
-            try {
-                const response = await API.get(`/submissions?user_id=${userId}`);
-                const submissions = response.submissions || response.data || response || [];
-                return Array.isArray(submissions) ? submissions.map(this.normalize) : [];
-            } catch {
-                return [];
-            }
-        }
-        if (CONFIG.ENFORCE_API) {
-            throw new Error('Backend no disponible. No se permiten consultas locales en producción.');
-        }
-        const all = Utils.storage.get('submissions') || [];
-        return all.filter(s => String(s.userId) === String(userId));
+        const response = await API.get(`/submissions?user_id=${userId}`);
+        const submissions = response.submissions || response.data || response || [];
+        return Array.isArray(submissions) ? submissions.map(this.normalize) : [];
     },
 
     // Obtener entregas por sesión
     async getBySession(sessionId) {
-        await API.ensureAvailability();
-        if (CONFIG.USE_API) {
-            try {
-                const response = await API.get(`/submissions?session_id=${sessionId}`);
-                const submissions = response.submissions || response.data || response || [];
-                return Array.isArray(submissions) ? submissions.map(this.normalize) : [];
-            } catch {
-                return [];
-            }
-        }
-        if (CONFIG.ENFORCE_API) {
-            throw new Error('Backend no disponible. No se permiten consultas locales en producción.');
-        }
-        const all = Utils.storage.get('submissions') || [];
-        return all.filter(s => s.sessionId === sessionId);
+        const response = await API.get(`/submissions?session_id=${sessionId}`);
+        const submissions = response.submissions || response.data || response || [];
+        return Array.isArray(submissions) ? submissions.map(this.normalize) : [];
     },
 
     // Crear nueva entrega
     async create(submissionData) {
-        await API.ensureAvailability();
-
-        if (!CONFIG.USE_API) {
-            if (CONFIG.ENFORCE_API) {
-                throw new Error('El servidor no está disponible. No se puede enviar la tarea. Por favor, inténtalo de nuevo en unos segundos.');
-            }
-            throw new Error('El modo localStorage solo está disponible en desarrollo local.');
-        }
-
-        // SIEMPRE usar API en producción
         const response = await API.post('/submissions', {
             session_id: submissionData.sessionId,
             activity_id: submissionData.activityId,
@@ -591,79 +458,24 @@ const Submissions = {
 
     // Actualizar entrega
     async update(submissionId, updates) {
-        await API.ensureAvailability();
-        if (CONFIG.USE_API) {
-            const response = await API.put(`/submissions/${submissionId}`, {
-                content: updates.content
-            });
-            return response.data || response;
-        }
-
-        if (CONFIG.ENFORCE_API) {
-            throw new Error('Backend no disponible. No se permite editar entregas en modo local en producción.');
-        }
-
-        // Fallback localStorage
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                const submissions = Utils.storage.get('submissions') || [];
-                const index = submissions.findIndex(s => String(s.id) === String(submissionId));
-
-                if (index === -1) {
-                    reject(new Error('Entrega no encontrada'));
-                    return;
-                }
-
-                submissions[index] = {
-                    ...submissions[index],
-                    ...updates,
-                    updatedAt: new Date().toISOString()
-                };
-
-                Utils.storage.set('submissions', submissions);
-                resolve(submissions[index]);
-            }, 300);
+        const response = await API.put(`/submissions/${submissionId}`, {
+            content: updates.content
         });
+        return response.data || response;
     },
 
     // Añadir retroalimentación (profesor)
     async addFeedback(submissionId, feedback, grade) {
-        await API.ensureAvailability();
-        if (CONFIG.USE_API) {
-            const response = await API.post(`/submissions/${submissionId}/feedback`, {
-                feedback_text: feedback,
-                grade
-            });
-            return response.data || response;
-        }
-
-        if (CONFIG.ENFORCE_API) {
-            throw new Error('Backend no disponible. No se permite corregir en modo local en producción.');
-        }
-
-        return this.update(submissionId, {
-            feedback,
-            grade,
-            status: 'reviewed',
-            reviewedAt: new Date().toISOString()
+        const response = await API.post(`/submissions/${submissionId}/feedback`, {
+            feedback_text: feedback,
+            grade
         });
+        return response.data || response;
     },
 
     // Eliminar entrega
     async delete(submissionId) {
-        await API.ensureAvailability();
-        if (CONFIG.USE_API) {
-            return API.delete(`/submissions/${submissionId}`);
-        }
-
-        if (CONFIG.ENFORCE_API) {
-            throw new Error('Backend no disponible. No se permite borrar entregas en modo local en producción.');
-        }
-
-        const submissions = Utils.storage.get('submissions') || [];
-        const filtered = submissions.filter(s => String(s.id) !== String(submissionId));
-        Utils.storage.set('submissions', filtered);
-        return { success: true };
+        return API.delete(`/submissions/${submissionId}`);
     }
 };
 
@@ -1265,8 +1077,6 @@ const Forms = {
 
         if (!registrationCode) {
             errors.push('Introduce el código de inscripción');
-        } else if (!CONFIG.USE_API && CONFIG.REGISTRATION_CODE && registrationCode !== CONFIG.REGISTRATION_CODE) {
-            errors.push('El código de inscripción es incorrecto');
         }
 
         if (!password || password.length < 6) {
@@ -1367,24 +1177,23 @@ const Forms = {
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Verificar disponibilidad de la API
-    await API.checkAvailability();
+    const apiAvailable = await API.checkAvailability();
 
-    if (CONFIG.ENFORCE_API && !CONFIG.USE_API) {
-        UI.showBlockingError('El backend está desconectado. En producción no se permite usar almacenamiento local para evitar datos inconsistentes.');
+    if (!apiAvailable) {
+        UI.showBlockingError('El backend está desconectado. No se puede acceder al sistema sin conexión al servidor.');
         return;
     }
 
     // Inicializar autenticación
     Auth.init();
-    await Auth.checkSession();
+    try {
+        await Auth.checkSession();
+    } catch (error) {
+        console.warn('Error al verificar sesión:', error.message);
+    }
     UI.updateAuthUI();
 
-    // Mostrar indicador de modo
-    if (CONFIG.USE_API) {
-        console.log('Producción Escrita C2 - Modo API (Backend conectado)');
-    } else {
-        console.log('Producción Escrita C2 - Modo localStorage (sin backend)');
-    }
+    console.log('Producción Escrita C2 - Backend conectado');
 
     // Menú móvil
     const menuToggle = document.getElementById('menu-toggle');
@@ -1456,11 +1265,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // ==========================================================================
-// Configuración de API (para uso desde consola)
+// Configuración de API (para uso desde consola del navegador)
 // ==========================================================================
 
 const APIConfig = {
-    // Configurar URL del backend
     setUrl(url) {
         const normalized = normalizeApiUrl(url);
         if (!normalized) {
@@ -1473,17 +1281,15 @@ const APIConfig = {
         console.log('Recarga la página para aplicar los cambios.');
     },
 
-    // Ver configuración actual
     getUrl() {
-        return CONFIG.API_URL || '(no configurada - usando localStorage)';
+        return CONFIG.API_URL || '(no configurada)';
     },
 
-    // Limpiar configuración (volver a localStorage)
     clear() {
         localStorage.removeItem('pe_c2_api_url');
         CONFIG.API_URL = '';
-        CONFIG.USE_API = false;
-        console.log('Configuración de API eliminada. Usando localStorage.');
+        CONFIG.API_READY = false;
+        console.log('Configuración de API eliminada.');
     }
 };
 

@@ -127,29 +127,12 @@
             }
 
             const API = PE.API;
-            const CONFIG = window.CONFIG || { USE_API: false };
-            const Utils = PE.Utils;
-
-            try {
-                await API.ensureAvailability();
-                CONFIG.USE_API = true;
-            } catch (e) {
-                console.error('API no disponible:', e);
-            }
 
             let users = [];
-            let submissions = [];
 
             async function loadData() {
                 try {
-                    if (CONFIG.USE_API) {
-                        users = await API.get('/users');
-                        submissions = [];
-                    } else {
-                        users = Utils.storage.get('users') || [];
-                        submissions = await PE.Submissions.getAll();
-                        submissions = Array.isArray(submissions) ? submissions : [];
-                    }
+                    users = await API.get('/users');
                 } catch (e) {
                     console.error('Error cargando datos:', e);
                     users = [];
@@ -158,21 +141,10 @@
             }
 
             function getStatsForUser(current) {
-                if (CONFIG.USE_API) {
-                    const total = current.submissions_count || 0;
-                    const reviewed = current.reviewed_count || 0;
-                    const pending = Math.max(total - reviewed, 0);
-                    return { total, reviewed, pending };
-                }
-
-                const userSubmissions = submissions.filter(sub => String(sub.userId) === String(current.id));
-                const reviewed = userSubmissions.filter(sub => sub.status === 'reviewed');
-                const pending = userSubmissions.filter(sub => sub.status === 'pending');
-                return {
-                    total: userSubmissions.length,
-                    reviewed: reviewed.length,
-                    pending: pending.length
-                };
+                const total = current.submissions_count || 0;
+                const reviewed = current.reviewed_count || 0;
+                const pending = Math.max(total - reviewed, 0);
+                return { total, reviewed, pending };
             }
 
             function renderUsers(filter = {}) {
@@ -350,25 +322,7 @@
                             }
 
                             try {
-                                if (CONFIG.USE_API) {
-                                    await API.post('/users', { name, email, password, role, level, active });
-                                } else {
-                                    const stored = Utils.storage.get('users') || [];
-                                    if (stored.find(u => u.email === email)) {
-                                        throw new Error('Este email ya está registrado');
-                                    }
-                                    stored.push({
-                                        id: PE.Utils.generateId(),
-                                        email,
-                                        password,
-                                        name,
-                                        role,
-                                        level,
-                                        active,
-                                        createdAt: new Date().toISOString()
-                                    });
-                                    Utils.storage.set('users', stored);
-                                }
+                                await API.post('/users', { name, email, password, role, level, active });
                                 modal.remove();
                                 await refresh();
                                 PE.UI.notify('Usuario creado correctamente', 'success');
@@ -389,75 +343,35 @@
             await refresh();
 
             window.viewUser = async (id) => {
-                if (CONFIG.USE_API) {
-                    const userDetail = await API.get(`/users/${id}`);
-                    const submissionsList = (userDetail.submissions || []).length === 0
-                        ? '<p class="text-secondary">No hay entregas registradas.</p>'
-                        : userDetail.submissions.map(s => `
-                            <div style="padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; margin-bottom: 0.5rem;">
-                                <div style="display: flex; justify-content: space-between;">
-                                    <strong>${PE.Utils.escapeHtml(s.activity_title || s.activityTitle)}</strong>
-                                    <span class="badge badge-${s.status === 'reviewed' ? 'success' : 'warning'}">
-                                        ${s.status === 'reviewed' ? 'Corregido' : 'Pendiente'}
-                                    </span>
-                                </div>
-                                <p class="text-secondary mb-0" style="font-size: 0.8rem;">
-                                    ${PE.Utils.formatDate(s.created_at || s.createdAt)} - ${s.word_count || s.wordCount || 0} palabras
-                                </p>
+                const userDetail = await API.get(`/users/${id}`);
+                const submissionsList = (userDetail.submissions || []).length === 0
+                    ? '<p class="text-secondary">No hay entregas registradas.</p>'
+                    : userDetail.submissions.map(s => `
+                        <div style="padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; margin-bottom: 0.5rem;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <strong>${PE.Utils.escapeHtml(s.activity_title || s.activityTitle)}</strong>
+                                <span class="badge badge-${s.status === 'reviewed' ? 'success' : 'warning'}">
+                                    ${s.status === 'reviewed' ? 'Corregido' : 'Pendiente'}
+                                </span>
                             </div>
-                        `).join('');
-
-                    PE.UI.showModal('Detalle del usuario', `
-                        <div class="mb-3"><strong>Nombre:</strong> ${PE.Utils.escapeHtml(userDetail.name)}</div>
-                        <div class="mb-3"><strong>Email:</strong> ${PE.Utils.escapeHtml(userDetail.email)}</div>
-                        <div class="mb-3"><strong>Rol:</strong> ${(userDetail.role === 'admin') ? 'Profesor' : 'Estudiante'}</div>
-                        ${userDetail.role === 'student' ? `<div class="mb-3"><strong>Nivel:</strong> ${userDetail.level || 'C2'}</div>` : ''}
-                        <div class="mb-3"><strong>Fecha de registro:</strong> ${PE.Utils.formatDate(userDetail.created_at || userDetail.createdAt, 'long')}</div>
-                        <hr>
-                        <h4>Entregas (${(userDetail.submissions || []).length})</h4>
-                        <div style="max-height: 300px; overflow-y: auto;">
-                            ${submissionsList}
+                            <p class="text-secondary mb-0" style="font-size: 0.8rem;">
+                                ${PE.Utils.formatDate(s.created_at || s.createdAt)} - ${s.word_count || s.wordCount || 0} palabras
+                            </p>
                         </div>
-                    `, [{ text: 'Cerrar' }]);
-                    return;
-                }
+                    `).join('');
 
-                const storedUsers = Utils.storage.get('users') || [];
-                const selected = storedUsers.find(u => String(u.id) === String(id));
-                let localSubmissions = await PE.Submissions.getAll();
-                localSubmissions = Array.isArray(localSubmissions) ? localSubmissions : [];
-                localSubmissions = localSubmissions.filter(s => String(s.userId) === String(id));
-
-                if (selected) {
-                    const submissionsList = localSubmissions.length === 0
-                        ? '<p class="text-secondary">No hay entregas registradas.</p>'
-                        : localSubmissions.map(s => `
-                            <div style="padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; margin-bottom: 0.5rem;">
-                                <div style="display: flex; justify-content: space-between;">
-                                    <strong>${PE.Utils.escapeHtml(s.activityTitle)}</strong>
-                                    <span class="badge badge-${s.status === 'reviewed' ? 'success' : 'warning'}">
-                                        ${s.status === 'reviewed' ? 'Corregido' : 'Pendiente'}
-                                    </span>
-                                </div>
-                                <p class="text-secondary mb-0" style="font-size: 0.8rem;">
-                                    ${PE.Utils.formatDate(s.createdAt)} - ${s.wordCount} palabras
-                                </p>
-                            </div>
-                        `).join('');
-
-                    PE.UI.showModal('Detalle del usuario', `
-                        <div class="mb-3"><strong>Nombre:</strong> ${PE.Utils.escapeHtml(selected.name)}</div>
-                        <div class="mb-3"><strong>Email:</strong> ${PE.Utils.escapeHtml(selected.email)}</div>
-                        <div class="mb-3"><strong>Rol:</strong> ${(selected.role === 'admin') ? 'Profesor' : 'Estudiante'}</div>
-                        ${selected.role === 'student' ? `<div class="mb-3"><strong>Nivel:</strong> ${selected.level || 'C2'}</div>` : ''}
-                        <div class="mb-3"><strong>Fecha de registro:</strong> ${PE.Utils.formatDate(selected.createdAt, 'long')}</div>
-                        <hr>
-                        <h4>Entregas (${localSubmissions.length})</h4>
-                        <div style="max-height: 300px; overflow-y: auto;">
-                            ${submissionsList}
-                        </div>
-                    `, [{ text: 'Cerrar' }]);
-                }
+                PE.UI.showModal('Detalle del usuario', `
+                    <div class="mb-3"><strong>Nombre:</strong> ${PE.Utils.escapeHtml(userDetail.name)}</div>
+                    <div class="mb-3"><strong>Email:</strong> ${PE.Utils.escapeHtml(userDetail.email)}</div>
+                    <div class="mb-3"><strong>Rol:</strong> ${(userDetail.role === 'admin') ? 'Profesor' : 'Estudiante'}</div>
+                    ${userDetail.role === 'student' ? `<div class="mb-3"><strong>Nivel:</strong> ${userDetail.level || 'C2'}</div>` : ''}
+                    <div class="mb-3"><strong>Fecha de registro:</strong> ${PE.Utils.formatDate(userDetail.created_at || userDetail.createdAt, 'long')}</div>
+                    <hr>
+                    <h4>Entregas (${(userDetail.submissions || []).length})</h4>
+                    <div style="max-height: 300px; overflow-y: auto;">
+                        ${submissionsList}
+                    </div>
+                `, [{ text: 'Cerrar' }]);
             };
 
             window.deleteUser = async (id) => {
@@ -468,14 +382,7 @@
 
                 PE.UI.confirm('¿Seguro que deseas eliminar este usuario?', async () => {
                     try {
-                        if (CONFIG.USE_API) {
-                            await API.delete(`/users/${id}`);
-                        } else {
-                            const stored = Utils.storage.get('users') || [];
-                            Utils.storage.set('users', stored.filter(u => u.id !== id));
-                            const localSubmissions = Utils.storage.get('submissions') || [];
-                            Utils.storage.set('submissions', localSubmissions.filter(s => s.userId !== id));
-                        }
+                        await API.delete(`/users/${id}`);
                         await refresh();
                         PE.UI.notify('Usuario eliminado correctamente', 'success');
                     } catch (error) {
