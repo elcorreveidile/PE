@@ -11,18 +11,25 @@
         .admin-header { background: linear-gradient(135deg, #c53030, #9b2c2c); }
         .report-card { border-left: 4px solid var(--primary-color); transition: all 0.3s ease; }
         .report-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .grade-badge { 
-            display: inline-block; 
-            padding: 0.5rem 1rem; 
-            border-radius: 8px; 
-            font-weight: 700; 
+        .grade-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 700;
             font-size: 1.5rem;
         }
-        .grade-excellent { background: var(--success-color); color: white; }
-        .grade-very-good { background: var(--primary-color); color: white; }
-        .grade-good { background: var(--accent-color); color: white; }
-        .grade-sufficient { background: var(--warning-color); color: white; }
-        .grade-insufficient { background: var(--danger-color); color: white; }
+        .grade-excellent { background: #28a745; color: white; }
+        .grade-excellent p { color: rgba(255,255,255,0.9); }
+        .grade-very-good { background: #1a365d; color: white; }
+        .grade-very-good p { color: rgba(255,255,255,0.9); }
+        .grade-good { background: #d69e2e; color: white; }
+        .grade-good p { color: rgba(255,255,255,0.9); }
+        .grade-sufficient { background: #ffc107; color: #333; }
+        .grade-sufficient p { color: #333; }
+        .grade-insufficient { background: #dc3545; color: white; }
+        .grade-insufficient p { color: rgba(255,255,255,0.9); }
+        .grade-none { background: #f7fafc; color: #4a5568; }
+        .grade-none p { color: #4a5568; }
         .progress-chart { height: 8px; background: var(--bg-light); border-radius: 4px; overflow: hidden; }
         .progress-chart-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
         .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-secondary); }
@@ -292,7 +299,7 @@
                                     </div>
                                 </div>
                                 <div style="text-align: center; min-width: 150px;">
-                                    <div class="grade-badge ${gradeClass}" style="${gradeClass ? '' : 'background: var(--bg-light); color: var(--text-secondary);'}">${gradeText}</div>
+                                    <div class="grade-badge ${gradeClass}">${gradeText}</div>
                                     <p class="text-secondary mb-0" style="font-size: 0.875rem;">Nota media</p>
                                 </div>
                             </div>
@@ -316,7 +323,7 @@
         }
 
         function getGradeClass(grade) {
-            if (grade === null || grade === undefined) return '';
+            if (grade === null || grade === undefined || isNaN(grade)) return 'grade-none';
             if (grade >= 9) return 'grade-excellent';
             if (grade >= 7) return 'grade-very-good';
             if (grade >= 6) return 'grade-good';
@@ -377,9 +384,9 @@
                                 <div style="font-size: 2.5rem; font-weight: 700;">${student.totalWords.toLocaleString('es-ES')}</div>
                                 <p class="text-secondary mb-0">Palabras</p>
                             </div>
-                            <div style="text-align: center; padding: 1.5rem; border-radius: 8px; ${gradeClass ? '' : 'background: var(--bg-light);'}" class="${gradeClass}">
-                                <div style="font-size: 3rem; font-weight: 700; ${gradeClass ? 'color: white;' : 'color: var(--text-secondary);'}">${gradeText}</div>
-                                <p class="mb-0" style="color: ${gradeClass ? 'rgba(255,255,255,0.9)' : 'var(--text-secondary)'};">Nota Media</p>
+                            <div class="${gradeClass}" style="text-align: center; padding: 1.5rem; border-radius: 8px;">
+                                <div style="font-size: 3rem; font-weight: 700;">${gradeText}</div>
+                                <p class="mb-0">Nota Media</p>
                             </div>
                         </div>
                     </div>
