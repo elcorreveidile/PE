@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boletines de Notas | Panel Admin - Producción Escrita C2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        .admin-header { background: linear-gradient(135deg, #c53030, #9b2c2c); }
+        .report-card { border-left: 4px solid var(--primary-color); transition: all 0.3s ease; }
+        .report-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .grade-badge { 
+            display: inline-block; 
+            padding: 0.5rem 1rem; 
+            border-radius: 8px; 
+            font-weight: 700; 
+            font-size: 1.5rem;
+        }
+        .grade-excellent { background: var(--success-color); color: white; }
+        .grade-very-good { background: var(--primary-color); color: white; }
+        .grade-good { background: var(--accent-color); color: white; }
+        .grade-sufficient { background: var(--warning-color); color: white; }
+        .grade-insufficient { background: var(--danger-color); color: white; }
+        .progress-chart { height: 8px; background: var(--bg-light); border-radius: 4px; overflow: hidden; }
+        .progress-chart-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+        .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-secondary); }
+        .empty-icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.5; }
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white; }
+            .card { box-shadow: none; border: 1px solid #ddd; }
+        }
+        .print-only { display: none; }
+    </style>
+</head>
+<body>
+    <header class="header admin-header">
+        <div class="header-main">
+            <div class="container">
+                <a href="../index.html" class="logo">
+                    <div class="logo-icon">C2</div>
+                    <div class="logo-text">
+                        <span class="logo-title">Panel de Administración</span>
+                        <span class="logo-subtitle">CLM - UGR</span>
+                    </div>
+                </a>
+                <nav class="nav-main"><a href="../index.html">Ver curso</a><a href="../sesiones/index.html">Sesiones</a></nav>
+                <div class="nav-auth"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="section">
+        <div class="container">
+            <div class="page-with-sidebar">
+                <aside class="sidebar no-print">
+                    <div class="sidebar-section">
+                        <h4 class="sidebar-title">Administración</h4>
+                        <ul class="sidebar-nav">
+                            <li><a href="index.html">Panel principal</a></li>
+                            <li><a href="estudiantes.html">Estudiantes</a></li>
+                            <li><a href="correcciones.html">Correcciones</a></li>
+                            <li><a href="notificaciones.html">Notificaciones</a></li>
+                            <li><a href="asistencia.html">Asistencia QR</a></li>
+                            <li><a href="tareas.html">Gestión de tareas</a></li>
+                            <li><a href="estadisticas.html">Estadísticas</a></li>
+                            <li><a href="comparacion.html">Comparación</a></li>
+                            <li><a href="rubricas.html">📊 Rúbricas</a></li>
+                            <li><a href="boletines.html" class="active">📋 Boletines</a></li>
+                        </ul>
+                    </div>
+                    <div class="sidebar-section">
+                        <button onclick="PE.Auth.logout()" class="btn btn-outline btn-block">Cerrar sesión</button>
+                    </div>
+                </aside>
+
+                <div class="main-content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-xl);">
+                        <div>
+                            <h1 style="margin-bottom: 0.25rem;">Boletines de Notas</h1>
+                            <p class="text-secondary mb-0">Reportes individuales y certificaciones</p>
+                        </div>
+                        <button class="btn btn-primary no-print" onclick="generateAllReports()">📊 Generar todos los boletines</button>
+                    </div>
+
+                    <!-- Filtros -->
+                    <div class="card mb-4 no-print">
+                        <div class="card-body">
+                            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
+                                <input type="text" id="search-student" class="form-control" placeholder="🔍 Buscar estudiante..." style="flex: 1; min-width: 250px;">
+                                
+                                <select id="filter-level" class="form-control form-select" style="width: auto;">
+                                    <option value="">Todos los niveles</option>
+                                    <option value="B2">Nivel B2</option>
+                                    <option value="C1">Nivel C1</option>
+                                    <option value="C2">Nivel C2</option>
+                                </select>
+
+                                <select id="filter-status" class="form-control form-select" style="width: auto;">
+                                    <option value="">Todos los estados</option>
+                                    <option value="completed">Completado</option>
+                                    <option value="in-progress">En progreso</option>
+                                </select>
+
+                                <button class="btn btn-outline" onclick="resetFilters()">🔄 Limpiar</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lista de estudiantes -->
+                    <div id="students-list"></div>
+
+                    <!-- Modal del boletín -->
+                    <div id="report-modal" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer no-print">
+        <div class="container">
+            <div class="footer-bottom" style="border:none;padding-top:0;">
+                <span>&copy; 2026 Javier Benítez Láinez | CLM - UGR</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        window.PE_CONFIG = {
+            API_URL: 'https://produccion-escrita-c2-api-production.up.railway.app'
+        };
+    </script>
+    <script src="../js/app.js"></script>
+    <script>
+        let allStudents = [];
+        let allSubmissions = [];
+        let allUsers = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = PE.Auth.getCurrentUser();
+            if (!user || user.role !== 'admin') {
+                window.location.href = '../auth/login.html';
+                return;
+            }
+
+            await loadData();
+            setupEventListeners();
+            renderStudents();
+        });
+
+        async function loadData() {
+            try {
+                allSubmissions = await PE.Submissions.getAll();
+                allSubmissions = Array.isArray(allSubmissions) ? allSubmissions : [];
+
+                allUsers = await PE.API.get('/users');
+                allUsers = Array.isArray(allUsers) ? allUsers.filter(u => (u.role || 'student') !== 'admin') : [];
+
+                allStudents = allUsers.map(user => {
+                    const userSubmissions = allSubmissions.filter(s => 
+                        String(s.user_id || s.userId) === String(user.id)
+                    );
+                    const gradedSubmissions = userSubmissions.filter(s => 
+                        s.numericGrade !== null && s.numericGrade !== undefined
+                    );
+
+                    const avgGrade = gradedSubmissions.length > 0
+                        ? gradedSubmissions.reduce((sum, s) => sum + s.numericGrade, 0) / gradedSubmissions.length
+                        : null;
+
+                    const totalWords = userSubmissions.reduce((sum, s) => 
+                        sum + (s.word_count || s.wordCount || 0), 0
+                    );
+
+                    // Calcular progreso
+                    const totalSessions = PE.CourseData.sessions.length;
+                    const attendedSessions = new Set(userSubmissions.map(s => s.session_id || s.sessionId)).size;
+                    const progressPercent = Math.round((attendedSessions / totalSessions) * 100);
+
+                    return {
+                        ...user,
+                        submissions: userSubmissions.length,
+                        gradedSubmissions: gradedSubmissions.length,
+                        avgGrade,
+                        totalWords,
+                        progressPercent,
+                        userSubmissions
+                    };
+                });
+            } catch (error) {
+                console.error('Error cargando datos:', error);
+                PE.UI.notify('Error al cargar los datos', 'error');
+            }
+        }
+
+        function setupEventListeners() {
+            document.getElementById('search-student').addEventListener('input', 
+                PE.Utils.debounce(renderStudents, 300)
+            );
+            document.getElementById('filter-level').addEventListener('change', renderStudents);
+            document.getElementById('filter-status').addEventListener('change', renderStudents);
+        }
+
+        function resetFilters() {
+            document.getElementById('search-student').value = '';
+            document.getElementById('filter-level').value = '';
+            document.getElementById('filter-status').value = '';
+            renderStudents();
+        }
+
+        function renderStudents() {
+            const searchTerm = document.getElementById('search-student').value.toLowerCase();
+            const levelFilter = document.getElementById('filter-level').value;
+            const statusFilter = document.getElementById('filter-status').value;
+
+            let filtered = allStudents.filter(student => {
+                if (searchTerm && !student.name.toLowerCase().includes(searchTerm)) return false;
+                if (levelFilter && student.level !== levelFilter) return false;
+                if (statusFilter === 'completed' && student.progressPercent < 80) return false;
+                if (statusFilter === 'in-progress' && student.progressPercent >= 80) return false;
+                return true;
+            });
+
+            const container = document.getElementById('students-list');
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="card">
+                        <div class="card-body empty-state">
+                            <div class="empty-icon">📋</div>
+                            <h3>No se encontraron estudiantes</h3>
+                            <p>Intenta ajustar los filtros de búsqueda</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map((student, index) => {
+                const gradeClass = getGradeClass(student.avgGrade);
+                const gradeText = student.avgGrade ? student.avgGrade.toFixed(1) : '-';
+                const progressColor = student.progressPercent >= 80 ? 'var(--success-color)' :
+                                    student.progressPercent >= 50 ? 'var(--accent-color)' : 'var(--warning-color)';
+
+                return `
+                    <div class="card mb-3 report-card">
+                        <div class="card-body">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                                <div style="flex: 1; min-width: 300px;">
+                                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                                        <h4 style="margin: 0;">${PE.Utils.escapeHtml(student.name)}</h4>
+                                        <span class="badge badge-info">${student.level || 'C2'}</span>
+                                    </div>
+                                    <p class="text-secondary mb-2">${PE.Utils.escapeHtml(student.email)}</p>
+                                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                        <span class="badge badge-primary">${student.submissions} entregas</span>
+                                        <span class="badge badge-${student.gradedSubmissions > 0 ? 'success' : 'warning'}">
+                                            ${student.gradedSubmissions} calificadas
+                                        </span>
+                                        <span class="badge badge-info">${student.totalWords.toLocaleString('es-ES')} palabras</span>
+                                    </div>
+                                </div>
+                                <div style="text-align: center; min-width: 150px;">
+                                    <div class="grade-badge ${gradeClass}">${gradeText}</div>
+                                    <p class="text-secondary mb-0" style="font-size: 0.875rem;">Nota media</p>
+                                </div>
+                            </div>
+                            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                    <span class="text-secondary">Progreso del curso</span>
+                                    <strong>${student.progressPercent}%</strong>
+                                </div>
+                                <div class="progress-chart">
+                                    <div class="progress-chart-fill" style="width: ${student.progressPercent}%; background: ${progressColor};"></div>
+                                </div>
+                            </div>
+                            <div style="margin-top: 1rem; display: flex; gap: 0.5rem; justify-content: flex-end;">
+                                <button class="btn btn-sm btn-outline" onclick="viewReport('${student.id}')">📋 Ver boletín</button>
+                                <button class="btn btn-sm btn-primary" onclick="printReport('${student.id}')">🖨️ Imprimir</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getGradeClass(grade) {
+            if (grade === null || grade === undefined) return '';
+            if (grade >= 9) return 'grade-excellent';
+            if (grade >= 7) return 'grade-very-good';
+            if (grade >= 6) return 'grade-good';
+            if (grade >= 5) return 'grade-sufficient';
+            return 'grade-insufficient';
+        }
+
+        function viewReport(studentId) {
+            const student = allStudents.find(s => String(s.id) === String(studentId));
+            if (!student) return;
+
+            const gradeClass = getGradeClass(student.avgGrade);
+            const gradeText = student.avgGrade ? student.avgGrade.toFixed(1) : '-';
+            const today = new Date().toLocaleDateString('es-ES', { 
+                year: 'numeric', month: 'long', day: 'numeric' 
+            });
+
+            const reportHtml = `
+                <div id="report-content" style="max-width: 800px; margin: 0 auto;">
+                    <!-- Cabecera del reporte -->
+                    <div style="text-align: center; margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 2px solid var(--primary-color);">
+                        <h2 style="margin: 0 0 0.5rem;">BOLETÍN DE CALIFICACIONES</h2>
+                        <p class="text-secondary mb-0">Producción Escrita C2 - CLM UGR</p>
+                        <p class="text-secondary mb-0"><strong>Fecha:</strong> ${today}</p>
+                    </div>
+
+                    <!-- Información del estudiante -->
+                    <div style="background: var(--bg-light); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+                        <h3 style="margin: 0 0 1rem;">👤 Datos del Estudiante</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div><strong>Nombre:</strong> ${PE.Utils.escapeHtml(student.name)}</div>
+                            <div><strong>Email:</strong> ${PE.Utils.escapeHtml(student.email)}</div>
+                            <div><strong>Nivel:</strong> ${student.level || 'C2'}</div>
+                            <div><strong>Progreso:</strong> ${student.progressPercent}%</div>
+                        </div>
+                    </div>
+
+                    <!-- Resumen de notas -->
+                    <div style="margin-bottom: 2rem;">
+                        <h3 style="margin: 0 0 1rem;">📊 Resumen Académico</h3>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
+                            <div style="text-align: center; padding: 1.5rem; background: var(--bg-light); border-radius: 8px;">
+                                <div style="font-size: 2.5rem; font-weight: 700; color: var(--primary-color);">${student.submissions}</div>
+                                <p class="text-secondary mb-0">Entregas</p>
+                            </div>
+                            <div style="text-align: center; padding: 1.5rem; background: var(--bg-light); border-radius: 8px;">
+                                <div style="font-size: 2.5rem; font-weight: 700; color: var(--success-color);">${student.gradedSubmissions}</div>
+                                <p class="text-secondary mb-0">Calificadas</p>
+                            </div>
+                            <div style="text-align: center; padding: 1.5rem; background: var(--bg-light); border-radius: 8px;">
+                                <div style="font-size: 2.5rem; font-weight: 700;">${student.totalWords.toLocaleString('es-ES')}</div>
+                                <p class="text-secondary mb-0">Palabras</p>
+                            </div>
+                            <div style="text-align: center; padding: 1.5rem; border-radius: 8px;" class="${gradeClass}">
+                                <div style="font-size: 3rem; font-weight: 700; color: white;">${gradeText}</div>
+                                <p class="mb-0" style="color: rgba(255,255,255,0.9);">Nota Media</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detalle de entregas -->
+                    <div style="margin-bottom: 2rem;">
+                        <h3 style="margin: 0 0 1rem;">📝 Detalle de Entregas</h3>
+                        ${student.userSubmissions.length === 0 ? 
+                            '<p class="text-secondary">No hay entregas registradas.</p>' :
+                            `<table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: var(--primary-color); color: white;">
+                                        <th style="padding: 0.75rem; text-align: left;">Actividad</th>
+                                        <th style="padding: 0.75rem; text-align: left;">Fecha</th>
+                                        <th style="padding: 0.75rem; text-align: center;">Palabras</th>
+                                        <th style="padding: 0.75rem; text-align: center;">Nota</th>
+                                        <th style="padding: 0.75rem; text-align: left;">Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${student.userSubmissions.map(s => {
+                                        const grade = s.numericGrade !== null ? s.numericGrade.toFixed(1) : '-';
+                                        const gradeColor = getGradeClass(s.numericGrade);
+                                        return `
+                                            <tr style="border-bottom: 1px solid var(--border-color);">
+                                                <td style="padding: 0.75rem;">${PE.Utils.escapeHtml(s.activityTitle)}</td>
+                                                <td style="padding: 0.75rem;">${PE.Utils.formatDate(s.createdAt)}</td>
+                                                <td style="padding: 0.75rem; text-align: center;">${s.wordCount || s.word_count}</td>
+                                                <td style="padding: 0.75rem; text-align: center;">
+                                                    ${s.numericGrade !== null ? `<span style="padding: 0.25rem 0.5rem; border-radius: 4px;" class="${gradeColor}">${grade}</span>` : '-'}
+                                                </td>
+                                                <td style="padding: 0.75rem;">
+                                                    <span class="badge badge-${s.status === 'reviewed' ? 'success' : 'warning'}">
+                                                        ${s.status === 'reviewed' ? 'Corregido' : 'Pendiente'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>`
+                        }
+                    </div>
+
+                    <!-- Comentario del profesor -->
+                    ${student.avgGrade !== null ? `
+                        <div style="background: var(--bg-light); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+                            <h3 style="margin: 0 0 1rem;">💬 Evaluación General</h3>
+                            ${generateEvaluationComment(student)}
+                        </div>
+                    ` : ''}
+
+                    <!-- Pie del reporte -->
+                    <div style="text-align: center; margin-top: 2rem; padding-top: 2rem; border-top: 2px solid var(--border-color);">
+                        <p class="text-secondary mb-0">Este boletín es un documento oficial del curso de Producción Escrita C2</p>
+                        <p class="text-secondary mb-0">CLM - Universidad de Granada</p>
+                        <p class="text-secondary mb-0">© 2026</p>
+                    </div>
+                </div>
+            `;
+
+            PE.UI.showModal('📋 Boletín de Notas', reportHtml, [
+                { text: 'Cerrar' },
+                {
+                    text: '🖨️ Imprimir',
+                    class: 'btn-primary',
+                    callback: () => window.print(),
+                    close: false
+                },
+                {
+                    text: '💾 Exportar PDF',
+                    class: 'btn-outline',
+                    callback: () => exportToPDF(studentId),
+                    close: false
+                }
+            ]);
+        }
+
+        function generateEvaluationComment(student) {
+            const avg = student.avgGrade;
+            let comment = '';
+            
+            if (avg >= 9) {
+                comment = `El estudiante muestra un desempeño excelente en el curso de Producción Escrita C2. 
+                Con una nota media de ${avg.toFixed(1)}, demuestra dominio avanzado de la lengua escrita,
+                vocabulario sofisticado y estructuras complejas. Su progreso del ${student.progressPercent}% 
+                refleja un compromiso constante con el aprendizaje.`;
+            } else if (avg >= 7) {
+                comment = `El estudiante presenta un desempeño muy bueno en el curso. 
+                Con una nota media de ${avg.toFixed(1)}, muestra buen dominio de la escritura académica
+                y capacidad para producir textos de calidad. Su progreso del ${student.progressPercent}% 
+                indica un ritmo de aprendizaje sólido.`;
+            } else if (avg >= 6) {
+                comment = `El estudiante demuestra un buen desempeño general. 
+                Con una nota media de ${avg.toFixed(1)}, posee las competencias básicas de escritura
+                en nivel C2, aunque仍有 espacios para mejorar en la precisión y sofisticación lingüística.
+                Su progreso del ${student.progressPercent}% es satisfactorio.`;
+            } else if (avg >= 5) {
+                comment = `El estudiante alcanza el nivel suficiente en el curso. 
+                Con una nota media de ${avg.toFixed(1)}, cumple con los requisitos mínimos de
+                Producción Escrita C2. Se recomienda reforzar la práctica escrita para mejorar
+                la fluidez y precisión. Progreso actual: ${student.progressPercent}%.`;
+            } else {
+                comment = `El estudiante presenta dificultades para alcanzar los objetivos del nivel C2.
+                Con una nota media de ${avg.toFixed(1)}, requiere apoyo adicional y práctica intensiva
+                de escritura académica. Progreso actual: ${student.progressPercent}%. Se sugiere tutoría
+                personalizada.`;
+            }
+            
+            return comment;
+        }
+
+        function printReport(studentId) {
+            viewReport(studentId);
+            setTimeout(() => window.print(), 500);
+        }
+
+        function exportToPDF(studentId) {
+            const student = allStudents.find(s => String(s.id) === String(studentId));
+            if (!student) return;
+
+            const gradeClass = getGradeClass(student.avgGrade);
+            const gradeText = student.avgGrade ? student.avgGrade.toFixed(1) : '-';
+            const today = new Date().toLocaleDateString('es-ES', { 
+                year: 'numeric', month: 'long', day: 'numeric' 
+            });
+
+            // Crear contenido HTML para PDF
+            const pdfContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Boletín - ${student.name}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 2rem; color: #333; }
+                        h1, h2, h3 { color: #c53030; }
+                        table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+                        th { background: #c53030; color: white; padding: 0.75rem; text-align: left; }
+                        td { padding: 0.75rem; border-bottom: 1px solid #ddd; }
+                        tr:nth-child(even) { background: #f9f9f9; }
+                        .badge { padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; }
+                        .badge-success { background: #28a745; color: white; }
+                        .badge-warning { background: #ffc107; color: #000; }
+                        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin: 2rem 0; }
+                        .summary-item { text-align: center; padding: 1.5rem; background: #f5f5f5; border-radius: 8px; }
+                        .summary-value { font-size: 2rem; font-weight: 700; }
+                        @media print { body { padding: 1cm; } }
+                    </style>
+                </head>
+                <body>
+                    <div style="text-align: center; margin-bottom: 2rem; border-bottom: 2px solid #c53030; padding-bottom: 1rem;">
+                        <h1 style="margin: 0;">BOLETÍN DE CALIFICACIONES</h1>
+                        <p style="margin: 0.5rem 0;">Producción Escrita C2 - CLM UGR</p>
+                        <p style="margin: 0;"><strong>Fecha:</strong> ${today}</p>
+                    </div>
+
+                    <div style="background: #f5f5f5; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+                        <h3>Datos del Estudiante</h3>
+                        <p><strong>Nombre:</strong> ${student.name}</p>
+                        <p><strong>Email:</strong> ${student.email}</p>
+                        <p><strong>Nivel:</strong> ${student.level || 'C2'}</p>
+                        <p><strong>Progreso:</strong> ${student.progressPercent}%</p>
+                    </div>
+
+                    <h3>Resumen Académico</h3>
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <div class="summary-value" style="color: #c53030;">${student.submissions}</div>
+                            <p>Entregas</p>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-value" style="color: #28a745;">${student.gradedSubmissions}</div>
+                            <p>Calificadas</p>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-value">${student.totalWords.toLocaleString('es-ES')}</div>
+                            <p>Palabras</p>
+                        </div>
+                        <div class="summary-item" style="background: ${getGradeColor(student.avgGrade)};">
+                            <div class="summary-value" style="color: white;">${gradeText}</div>
+                            <p style="color: rgba(255,255,255,0.9);">Nota Media</p>
+                        </div>
+                    </div>
+
+                    <h3>Detalle de Entregas</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Actividad</th>
+                                <th>Fecha</th>
+                                <th>Palabras</th>
+                                <th>Nota</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${student.userSubmissions.map(s => {
+                                const grade = s.numericGrade !== null ? s.numericGrade.toFixed(1) : '-';
+                                return `
+                                    <tr>
+                                        <td>${s.activityTitle}</td>
+                                        <td>${PE.Utils.formatDate(s.createdAt)}</td>
+                                        <td>${s.wordCount || s.word_count}</td>
+                                        <td>${grade}</td>
+                                        <td>
+                                            <span class="badge badge-${s.status === 'reviewed' ? 'success' : 'warning'}">
+                                                ${s.status === 'reviewed' ? 'Corregido' : 'Pendiente'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+
+                    <div style="text-align: center; margin-top: 3rem; border-top: 2px solid #ddd; padding-top: 1rem;">
+                        <p>Este boletín es un documento oficial del curso de Producción Escrita C2</p>
+                        <p>CLM - Universidad de Granada | © 2026</p>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            // Crear blob y descargar
+            const blob = new Blob([pdfContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `boletin_${student.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.html`;
+            document.body.appendChild(a);
+            a.click();
+            URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            PE.UI.notify('Boletín exportado correctamente', 'success');
+        }
+
+        function getGradeColor(grade) {
+            if (grade >= 9) return '#28a745';
+            if (grade >= 7) return '#007bff';
+            if (grade >= 6) return '#17a2b8';
+            if (grade >= 5) return '#ffc107';
+            return '#dc3545';
+        }
+
+        function generateAllReports() {
+            PE.UI.notify('Generando boletines para todos los estudiantes...', 'info');
+            
+            // Descargar un ZIP con todos los boletines
+            allStudents.forEach(student => {
+                if (student.avgGrade !== null) {
+                    setTimeout(() => {
+                        exportToPDF(student.id);
+                    }, student.avgGrade * 100); // Delay escalonado
+                }
+            });
+
+            PE.UI.notify('Se están generando los boletines...', 'success');
+        }
+    </script>
+</body>
+</html>

@@ -55,24 +55,76 @@ router.post('/attendance', async (req, res) => {
 });
 
 /**
+ * POST /api/migrate/rubrics
+ * Ejecuta la migración de la tabla rubrics
+ */
+router.post('/rubrics', async (req, res) => {
+    try {
+        console.log('[MIGRATION] Iniciando migración de tabla rubrics...');
+
+        // Leer el archivo SQL
+        const sqlPath = path.join(__dirname, '../database/add-rubrics-table.sql');
+        const sql = fs.readFileSync(sqlPath, 'utf8');
+
+        // Ejecutar el SQL
+        await query(sql);
+
+        console.log('[MIGRATION] Migración de rubrics completada exitosamente');
+
+        res.json({
+            success: true,
+            message: 'Migración de rubrics completada exitosamente',
+            table: 'rubrics'
+        });
+
+    } catch (error) {
+        console.error('[MIGRATION] Error en rubrics:', error);
+
+        // Si es porque la tabla ya existe, no es un error real
+        if (error.message.includes('already exists')) {
+            return res.json({
+                success: true,
+                message: 'La tabla rubrics ya existe',
+                table: 'rubrics'
+            });
+        }
+
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
  * GET /api/migrate/status
  * Verificar el estado de las migraciones
  */
 router.get('/status', async (req, res) => {
     try {
         // Verificar si la tabla attendance existe
-        const result = await query(`
+        const attendanceResult = await query(`
             SELECT EXISTS (
                 SELECT FROM information_schema.tables
                 WHERE table_name = 'attendance'
             );
         `);
 
-        const exists = result.rows[0].exists;
+        // Verificar si la tabla rubrics existe
+        const rubricsResult = await query(`
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables
+                WHERE table_name = 'rubrics'
+            );
+        `);
+
+        const attendanceExists = attendanceResult.rows[0].exists;
+        const rubricsExists = rubricsResult.rows[0].exists;
 
         res.json({
-            attendance: exists,
-            message: exists ? 'Tabla attendance creada' : 'Tabla attendance no encontrada'
+            attendance: attendanceExists,
+            rubrics: rubricsExists,
+            message: `${attendanceExists ? 'Attendance' : 'Falta Attendance'}, ${rubricsExists ? 'Rubrics' : 'Falta Rubrics'}`
         });
 
     } catch (error) {

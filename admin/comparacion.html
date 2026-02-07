@@ -280,6 +280,8 @@
                             <li><a href="tareas.html">Gestión de tareas</a></li>
                             <li><a href="estadisticas.html">Estadísticas</a></li>
                             <li><a href="comparacion.html" class="active">Comparación</a></li>
+                            <li><a href="rubricas.html">📊 Rúbricas</a></li>
+                            <li><a href="boletines.html">📋 Boletines</a></li>
                         </ul>
                     </div>
                     <div class="sidebar-section">
@@ -422,7 +424,10 @@
                 return;
             }
 
-            if (selectedStudents.find(s => s.id === studentId)) {
+            // Convertir a string para comparación consistente
+            const studentIdStr = String(studentId);
+
+            if (selectedStudents.find(s => String(s.id) === studentIdStr)) {
                 PE.UI.notify('Este estudiante ya está seleccionado', 'warning');
                 return;
             }
@@ -432,11 +437,15 @@
                 return;
             }
 
-            const student = allUsers.find(u => u.id === studentId);
+            const student = allUsers.find(u => String(u.id) === studentIdStr);
             if (student) {
                 selectedStudents.push(student);
                 renderSelectedStudents();
                 select.value = '';
+                console.log('Estudiante añadido:', student.name, 'ID:', student.id);
+            } else {
+                console.error('No se encontró el estudiante con ID:', studentId);
+                PE.UI.notify('Error al añadir estudiante', 'error');
             }
         }
 

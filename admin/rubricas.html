@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Rúbricas | Panel Admin - Producción Escrita C2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        .admin-header { background: linear-gradient(135deg, #c53030, #9b2c2c); }
+        .rubric-card { border-left: 4px solid var(--primary-color); transition: all 0.3s ease; }
+        .rubric-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .criterion-item { background: var(--bg-light); border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; }
+        .criterion-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
+        .weight-badge { background: var(--primary-light); color: var(--primary-color); padding: 0.25rem 0.75rem; border-radius: 12px; font-weight: 600; font-size: 0.875rem; }
+        .template-badge { background: var(--accent-color); color: white; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.75rem; }
+        .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-secondary); }
+        .empty-icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.5; }
+    </style>
+</head>
+<body>
+    <header class="header admin-header">
+        <div class="header-main">
+            <div class="container">
+                <a href="../index.html" class="logo">
+                    <div class="logo-icon">C2</div>
+                    <div class="logo-text">
+                        <span class="logo-title">Panel de Administración</span>
+                        <span class="logo-subtitle">CLM - UGR</span>
+                    </div>
+                </a>
+                <nav class="nav-main"><a href="../index.html">Ver curso</a><a href="../sesiones/index.html">Sesiones</a></nav>
+                <div class="nav-auth"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="section">
+        <div class="container">
+            <div class="page-with-sidebar">
+                <aside class="sidebar">
+                    <div class="sidebar-section">
+                        <h4 class="sidebar-title">Administración</h4>
+                        <ul class="sidebar-nav">
+                            <li><a href="index.html">Panel principal</a></li>
+                            <li><a href="estudiantes.html">Estudiantes</a></li>
+                            <li><a href="correcciones.html">Correcciones</a></li>
+                            <li><a href="notificaciones.html">Notificaciones</a></li>
+                            <li><a href="asistencia.html">Asistencia QR</a></li>
+                            <li><a href="tareas.html">Gestión de tareas</a></li>
+                            <li><a href="estadisticas.html">Estadísticas</a></li>
+                            <li><a href="comparacion.html">Comparación</a></li>
+                            <li><a href="rubricas.html" class="active">📊 Rúbricas</a></li>
+                            <li><a href="boletines.html">📋 Boletines</a></li>
+                        </ul>
+                    </div>
+                    <div class="sidebar-section">
+                        <button onclick="PE.Auth.logout()" class="btn btn-outline btn-block">Cerrar sesión</button>
+                    </div>
+                </aside>
+
+                <div class="main-content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-xl);">
+                        <div>
+                            <h1 style="margin-bottom: 0.25rem;">Gestión de Rúbricas</h1>
+                            <p class="text-secondary mb-0">Crea y gestiona rúbricas de evaluación</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="createRubric()">+ Nueva Rúbrica</button>
+                    </div>
+
+                    <!-- Estadísticas -->
+                    <div class="sessions-grid mb-4" style="grid-template-columns: repeat(3, 1fr);">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h3 class="text-primary" id="stat-total">0</h3>
+                                <p class="text-secondary mb-0">Rúbricas creadas</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h3 style="color: var(--success-color);" id="stat-active">0</h3>
+                                <p class="text-secondary mb-0">Rúbricas activas</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h3 style="color: var(--accent-color);" id="stat-templates">3</h3>
+                                <p class="text-secondary mb-0">Plantillas disponibles</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Plantillas rápidas -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title">Plantillas de Rúbricas Predefinidas</h3>
+                        </div>
+                        <div class="card-body">
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                                <button class="btn btn-outline" onclick="useTemplate('basica')" style="height: auto; padding: 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                                    <span style="font-size: 2rem;">📝</span>
+                                    <strong>Rúbrica Básica</strong>
+                                    <small class="text-secondary">3 criterios simples</small>
+                                </button>
+                                <button class="btn btn-outline" onclick="useTemplate('intermedia')" style="height: auto; padding: 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                                    <span style="font-size: 2rem;">📊</span>
+                                    <strong>Rúbrica Intermedia</strong>
+                                    <small class="text-secondary">5 criterios ponderados</small>
+                                </button>
+                                <button class="btn btn-outline" onclick="useTemplate('avanzada')" style="height: auto; padding: 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                                    <span style="font-size: 2rem;">🎯</span>
+                                    <strong>Rúbrica Avanzada</strong>
+                                    <small class="text-secondary">7 criterios detallados</small>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lista de rúbricas -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Mis Rúbricas</h3>
+                        </div>
+                        <div class="card-body" id="rubrics-list">
+                            <div class="loader"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom" style="border:none;padding-top:0;">
+                <span>&copy; 2026 Javier Benítez Láinez | CLM - UGR</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        window.PE_CONFIG = {
+            API_URL: 'https://produccion-escrita-c2-api-production.up.railway.app'
+        };
+    </script>
+    <script src="../js/app.js"></script>
+    <script>
+        let allRubrics = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = PE.Auth.getCurrentUser();
+            if (!user || user.role !== 'admin') {
+                window.location.href = '../auth/login.html';
+                return;
+            }
+
+            await loadRubrics();
+        });
+
+        async function loadRubrics() {
+            try {
+                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/rubrics`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error al cargar rúbricas');
+                }
+
+                allRubrics = await response.json();
+                allRubrics = Array.isArray(allRubrics) ? allRubrics : [];
+
+                const activeRubrics = allRubrics.filter(r => r.active !== false);
+
+                document.getElementById('stat-total').textContent = allRubrics.length;
+                document.getElementById('stat-active').textContent = activeRubrics.length;
+
+                renderRubrics();
+            } catch (error) {
+                console.error('Error cargando rúbricas:', error);
+                PE.UI.notify('Error al cargar las rúbricas', 'error');
+            }
+        }
+
+        function renderRubrics() {
+            const container = document.getElementById('rubrics-list');
+
+            if (allRubrics.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📊</div>
+                        <h3>No hay rúbricas creadas</h3>
+                        <p class="text-secondary">Crea tu primera rúbrica o usa una plantilla predefinida</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = allRubrics.map(rubric => `
+                <div class="card mb-3 rubric-card">
+                    <div class="card-body">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                            <div style="flex: 1; min-width: 300px;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                    <h4 style="margin: 0;">${PE.Utils.escapeHtml(rubric.name)}</h4>
+                                    ${rubric.isTemplate ? '<span class="template-badge">Plantilla</span>' : ''}
+                                </div>
+                                <p class="text-secondary mb-2">${PE.Utils.escapeHtml(rubric.description || 'Sin descripción')}</p>
+                                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                    <span class="badge badge-info">${rubric.criteria.length} criterios</span>
+                                    <span class="badge badge-primary">Max: ${rubric.maxPoints} puntos</span>
+                                    ${rubric.active ? '<span class="badge badge-success">Activo</span>' : '<span class="badge badge-secondary">Inactivo</span>'}
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn btn-sm btn-outline" onclick="viewRubric('${rubric.id}')">👁️ Ver</button>
+                                <button class="btn btn-sm btn-outline" onclick="editRubric('${rubric.id}')">✏️ Editar</button>
+                                <button class="btn btn-sm btn-${rubric.active ? 'warning' : 'success'}" onclick="toggleRubric('${rubric.id}')">
+                                    ${rubric.active ? '⏸️ Desactivar' : '▶️ Activar'}
+                                </button>
+                                ${!rubric.isTemplate ? `<button class="btn btn-sm btn-danger" onclick="deleteRubric('${rubric.id}')">🗑️</button>` : ''}
+                            </div>
+                        </div>
+                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                            <strong>Criterios:</strong>
+                            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
+                                ${rubric.criteria.map(c => `
+                                    <span class="weight-badge">${c.name} (${c.weight}%)</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function createRubric() {
+            showRubricModal(null);
+        }
+
+        function showRubricModal(rubric) {
+            const isEdit = rubric !== null;
+            const rubricData = isEdit ? rubric : {
+                id: generateId(),
+                name: '',
+                description: '',
+                criteria: [],
+                maxPoints: 10,
+                active: true,
+                isTemplate: false,
+                createdAt: new Date().toISOString()
+            };
+
+            let criteriaHtml = rubricData.criteria.map((c, i) => `
+                <div class="criterion-item" id="criterion-${i}">
+                    <div class="criterion-row">
+                        <input type="text" class="form-control" placeholder="Nombre del criterio" value="${c.name}" id="criterion-name-${i}" style="flex: 2;">
+                        <input type="number" class="form-control" placeholder="Peso %" value="${c.weight}" min="0" max="100" id="criterion-weight-${i}" style="flex: 1;">
+                        ${rubricData.criteria.length > 1 ? `<button class="btn btn-sm btn-danger" onclick="removeCriterion(${i})">✕</button>` : ''}
+                    </div>
+                    <textarea class="form-control" placeholder="Descripción del criterio..." rows="2" id="criterion-desc-${i}">${c.description || ''}</textarea>
+                </div>
+            `).join('');
+
+            PE.UI.showModal(isEdit ? '✏️ Editar Rúbrica' : '📊 Nueva Rúbrica', `
+                <div class="form-group">
+                    <label class="form-label">Nombre de la rúbrica *</label>
+                    <input type="text" class="form-control" id="rubric-name" value="${rubricData.name}" placeholder="Ej: Rúbrica para ensayos C2">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Descripción</label>
+                    <textarea class="form-control" id="rubric-description" rows="2" placeholder="Describe el propósito de esta rúbrica...">${rubricData.description || ''}</textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Puntuación máxima</label>
+                    <input type="number" class="form-control" id="rubric-max-points" value="${rubricData.maxPoints}" min="1" max="20">
+                </div>
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <label class="form-label mb-0">Criterios de evaluación</label>
+                        <button class="btn btn-sm btn-outline" onclick="addCriterion()">+ Agregar criterio</button>
+                    </div>
+                    <div id="criteria-container">
+                        ${criteriaHtml}
+                    </div>
+                    <small class="text-secondary" id="total-weight">Peso total: ${calculateTotalWeight(rubricData.criteria)}%</small>
+                </div>
+            `, [
+                { text: 'Cancelar' },
+                {
+                    text: isEdit ? '💾 Guardar cambios' : '✅ Crear rúbrica',
+                    class: 'btn-primary',
+                    callback: () => saveRubric(rubricData.id),
+                    close: false
+                }
+            ]);
+        }
+
+        function addCriterion() {
+            const container = document.getElementById('criteria-container');
+            const index = container.children.length;
+            const criterionHtml = `
+                <div class="criterion-item" id="criterion-${index}">
+                    <div class="criterion-row">
+                        <input type="text" class="form-control" placeholder="Nombre del criterio" value="" id="criterion-name-${index}" style="flex: 2;">
+                        <input type="number" class="form-control" placeholder="Peso %" value="" min="0" max="100" id="criterion-weight-${index}" style="flex: 1;">
+                        <button class="btn btn-sm btn-danger" onclick="removeCriterion(${index})">✕</button>
+                    </div>
+                    <textarea class="form-control" placeholder="Descripción del criterio..." rows="2" id="criterion-desc-${index}"></textarea>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', criterionHtml);
+        }
+
+        function removeCriterion(index) {
+            const criterion = document.getElementById(`criterion-${index}`);
+            if (criterion && document.querySelectorAll('.criterion-item').length > 1) {
+                criterion.remove();
+                reindexCriteria();
+            } else {
+                PE.UI.notify('Debe haber al menos un criterio', 'warning');
+            }
+        }
+
+        function reindexCriteria() {
+            const container = document.getElementById('criteria-container');
+            const criteria = container.querySelectorAll('.criterion-item');
+            criteria.forEach((c, i) => {
+                c.id = `criterion-${i}`;
+                const nameInput = c.querySelector(`[id^="criterion-name-"]`);
+                const weightInput = c.querySelector(`[id^="criterion-weight-"]`);
+                const descInput = c.querySelector(`[id^="criterion-desc-"]`);
+                const removeBtn = c.querySelector('.btn-danger');
+
+                if (nameInput) nameInput.id = `criterion-name-${i}`;
+                if (weightInput) weightInput.id = `criterion-weight-${i}`;
+                if (descInput) descInput.id = `criterion-desc-${i}`;
+                if (removeBtn) removeBtn.onclick = () => removeCriterion(i);
+            });
+        }
+
+        function calculateTotalWeight(criteria) {
+            return criteria.reduce((sum, c) => sum + (parseInt(c.weight) || 0), 0);
+        }
+
+        function saveRubric(id) {
+            const name = document.getElementById('rubric-name').value.trim();
+            const description = document.getElementById('rubric-description').value.trim();
+            const maxPoints = parseInt(document.getElementById('rubric-max-points').value) || 10;
+
+            if (!name) {
+                PE.UI.notify('El nombre es obligatorio', 'error');
+                return;
+            }
+
+            const criteriaContainer = document.getElementById('criteria-container');
+            const criteriaItems = criteriaContainer.querySelectorAll('.criterion-item');
+            const criteria = [];
+
+            criteriaItems.forEach((item, i) => {
+                const name = document.getElementById(`criterion-name-${i}`).value.trim();
+                const weight = parseInt(document.getElementById(`criterion-weight-${i}`).value) || 0;
+                const description = document.getElementById(`criterion-desc-${i}`).value.trim();
+
+                if (name) {
+                    criteria.push({ name, weight, description });
+                }
+            });
+
+            if (criteria.length === 0) {
+                PE.UI.notify('Debes agregar al menos un criterio', 'error');
+                return;
+            }
+
+            const totalWeight = calculateTotalWeight(criteria);
+            if (totalWeight !== 100) {
+                PE.UI.notify(`El peso total debe ser 100% (actual: ${totalWeight}%)`, 'error');
+                return;
+            }
+
+            const existingIndex = allRubrics.findIndex(r => r.id === id);
+            const rubricData = {
+                id: id,
+                name,
+                description,
+                criteria,
+                maxPoints,
+                active: existingIndex >= 0 ? allRubrics[existingIndex].active : true,
+                isTemplate: existingIndex >= 0 ? allRubrics[existingIndex].isTemplate : false,
+                createdAt: existingIndex >= 0 ? allRubrics[existingIndex].createdAt : new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            if (existingIndex >= 0) {
+                allRubrics[existingIndex] = rubricData;
+            } else {
+                allRubrics.push(rubricData);
+            }
+
+            saveRubricToAPI(rubricData);
+        }
+
+        async function saveRubricToAPI(rubricData) {
+            try {
+                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+                const existingIndex = allRubrics.findIndex(r => r.id === rubricData.id);
+                const method = existingIndex >= 0 ? 'PUT' : 'POST';
+                const url = existingIndex >= 0 
+                    ? `${window.PE_CONFIG.API_URL}/api/rubrics/${rubricData.id}`
+                    : `${window.PE_CONFIG.API_URL}/api/rubrics`;
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(rubricData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error al guardar la rúbrica');
+                }
+
+                PE.UI.notify('Rúbrica guardada correctamente', 'success');
+                loadRubrics();
+                PE.UI.closeModal();
+            } catch (error) {
+                console.error('Error guardando rúbrica:', error);
+                PE.UI.notify('Error al guardar la rúbrica', 'error');
+            }
+        }
+
+        async function useTemplate(templateType) {
+            let template;
+            const now = new Date().toISOString();
+
+            switch (templateType) {
+                case 'basica':
+                    template = {
+                        id: generateId(),
+                        name: 'Rúbrica Básica',
+                        description: 'Rúbrica simple con 3 criterios fundamentales',
+                        criteria: [
+                            { name: 'Gramática y ortografía', weight: 40, description: 'Correcta aplicación de normas gramaticales y ortográficas' },
+                            { name: 'Vocabulario', weight: 30, description: 'Uso apropiado y variado de vocabulario' },
+                            { name: 'Estructura y coherencia', weight: 30, description: 'Organización lógica y coherente del texto' }
+                        ],
+                        maxPoints: 10,
+                        active: true,
+                        isTemplate: true,
+                        createdAt: now
+                    };
+                    break;
+                case 'intermedia':
+                    template = {
+                        id: generateId(),
+                        name: 'Rúbrica Intermedia',
+                        description: 'Rúbrica estándar con 5 criterios ponderados',
+                        criteria: [
+                            { name: 'Gramática y ortografía', weight: 30, description: 'Correcta aplicación de normas gramaticales y ortográficas' },
+                            { name: 'Vocabulario y estilo', weight: 25, description: 'Uso apropiado y variado de vocabulario con estilo propio' },
+                            { name: 'Estructura y organización', weight: 20, description: 'Organización lógica, párrafos bien definidos' },
+                            { name: 'Contenido y desarrollo', weight: 15, description: 'Profundidad y relevancia del contenido' },
+                            { name: 'Adecuación al tema', weight: 10, description: 'Cumplimiento con los requisitos del tema' }
+                        ],
+                        maxPoints: 10,
+                        active: true,
+                        isTemplate: true,
+                        createdAt: now
+                    };
+                    break;
+                case 'avanzada':
+                    template = {
+                        id: generateId(),
+                        name: 'Rúbrica Avanzada C2',
+                        description: 'Rúbrica detallada para nivel C2 con 7 criterios',
+                        criteria: [
+                            { name: 'Gramática y sintaxis', weight: 25, description: 'Dominio de estructuras complejas y precisión gramatical' },
+                            { name: 'Vocabulario', weight: 20, description: 'Uso sofisticado y preciso de vocabulario' },
+                            { name: 'Cohesión y coherencia', weight: 15, description: 'Conectores variados y flujo lógico' },
+                            { name: 'Registro y tono', weight: 10, description: 'Adecuación del registro al contexto comunicativo' },
+                            { name: 'Contenido y argumentación', weight: 15, description: 'Profundidad, originalidad y solidez argumentativa' },
+                            { name: 'Estructura textual', weight: 10, description: 'Organización efectiva del texto' },
+                            { name: 'Creatividad y estilo', weight: 5, description: 'Originalidad y voz personal' }
+                        ],
+                        maxPoints: 10,
+                        active: true,
+                        isTemplate: true,
+                        createdAt: now
+                    };
+                    break;
+            }
+
+            if (template) {
+                await saveRubricToAPI(template);
+            }
+        }
+
+        function viewRubric(id) {
+            const rubric = allRubrics.find(r => r.id === id);
+            if (!rubric) return;
+
+            PE.UI.showModal(`📊 ${rubric.name}`, `
+                <div class="mb-3">
+                    <strong>📝 Descripción:</strong>
+                    <p class="text-secondary">${rubric.description || 'Sin descripción'}</p>
+                </div>
+                <div class="mb-3">
+                    <strong>📊 Puntuación máxima:</strong> ${rubric.maxPoints} puntos
+                </div>
+                <div class="mb-3">
+                    <strong>⚙️ Criterios de evaluación:</strong>
+                    ${rubric.criteria.map((c, i) => `
+                        <div class="criterion-item mt-2">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <strong>${i + 1}. ${c.name}</strong>
+                                <span class="weight-badge">${c.weight}%</span>
+                            </div>
+                            <p class="text-secondary mb-0 mt-2">${c.description || 'Sin descripción'}</p>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="alert alert-info">
+                    <strong>ℹ️ Información:</strong>
+                    <small class="mb-0">Creado: ${PE.Utils.formatDate(rubric.createdAt, 'long')}${rubric.updatedAt ? ` | Actualizado: ${PE.Utils.formatDate(rubric.updatedAt, 'long')}` : ''}</small>
+                </div>
+            `);
+        }
+
+        function editRubric(id) {
+            const rubric = allRubrics.find(r => r.id === id);
+            if (!rubric) return;
+            showRubricModal(rubric);
+        }
+
+        async function toggleRubric(id) {
+            const rubric = allRubrics.find(r => r.id === id);
+            if (!rubric) return;
+
+            try {
+                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/rubrics/${id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ active: !rubric.active })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error al actualizar la rúbrica');
+                }
+
+                PE.UI.notify(`Rúbrica ${!rubric.active ? 'activada' : 'desactivada'}`, 'success');
+                loadRubrics();
+            } catch (error) {
+                console.error('Error actualizando rúbrica:', error);
+                PE.UI.notify('Error al actualizar la rúbrica', 'error');
+            }
+        }
+
+        async function deleteRubric(id) {
+            if (!confirm('¿Estás seguro de que deseas eliminar esta rúbrica?')) return;
+
+            try {
+                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/rubrics/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error al eliminar la rúbrica');
+                }
+
+                PE.UI.notify('Rúbrica eliminada', 'success');
+                loadRubrics();
+            } catch (error) {
+                console.error('Error eliminando rúbrica:', error);
+                PE.UI.notify('Error al eliminar la rúbrica', 'error');
+            }
+        }
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+    </script>
+</body>
+</html>
