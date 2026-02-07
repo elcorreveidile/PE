@@ -245,6 +245,55 @@ router.post('/check-in', authenticateToken, [
 });
 
 /**
+ * GET /api/attendance/me
+ * Estado de asistencia del estudiante autenticado
+ */
+router.get('/me', authenticateToken, async (req, res) => {
+    try {
+        const { date } = req.query;
+        const targetDate = date || new Date().toISOString().split('T')[0];
+
+        const result = await query(`
+            SELECT
+                a.id,
+                a.user_id,
+                a.session_id,
+                a.date,
+                a.verified_at,
+                cs.title as session_title,
+                cs.day as session_day
+            FROM attendance a
+            LEFT JOIN course_sessions cs ON a.session_id = cs.id
+            WHERE a.user_id = $1 AND a.date = $2
+            ORDER BY a.verified_at DESC
+            LIMIT 1
+        `, [req.user.id, targetDate]);
+
+        if (result.rows.length === 0) {
+            return res.json({
+                registered: false,
+                date: targetDate
+            });
+        }
+
+        return res.json({
+            registered: true,
+            date: targetDate,
+            attendance: result.rows[0]
+        });
+    } catch (error) {
+        console.error('Error obteniendo asistencia del estudiante:', error);
+        if (isUndefinedTableError(error)) {
+            return res.json({
+                registered: false,
+                date: req.query?.date || new Date().toISOString().split('T')[0]
+            });
+        }
+        return res.status(500).json({ error: 'Error al consultar asistencia del estudiante' });
+    }
+});
+
+/**
  * GET /api/attendance
  * Obtener lista de asistencias (solo admin)
  */

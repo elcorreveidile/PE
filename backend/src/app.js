@@ -11,6 +11,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+const fs = require('fs');
 
 // Importar rutas
 const authRoutes = require('./routes/auth');
@@ -141,14 +142,29 @@ app.get('/api/course', (req, res) => {
 
 // Servir archivos estáticos del frontend en producción
 if (NODE_ENV === 'production') {
-    app.use(express.static(path.join(__dirname, '../../')));
+    const frontendRoot = path.join(__dirname, '../../');
+    app.use(express.static(frontendRoot, {
+        extensions: ['html']
+    }));
 
-    // SPA fallback - servir index.html para rutas no encontradas
+    // Soporte explícito para clean URLs en páginas estáticas (ej: /usuario/dashboard -> /usuario/dashboard.html)
     app.get('*', (req, res, next) => {
         if (req.path.startsWith('/api/')) {
             return next();
         }
-        res.sendFile(path.join(__dirname, '../../index.html'));
+
+        if (req.path === '/' || req.path === '/index') {
+            return res.sendFile(path.join(frontendRoot, 'index.html'));
+        }
+
+        const cleanPath = req.path.replace(/\/+$/, '');
+        const htmlCandidate = path.join(frontendRoot, `${cleanPath}.html`);
+
+        if (fs.existsSync(htmlCandidate)) {
+            return res.sendFile(htmlCandidate);
+        }
+
+        return next();
     });
 }
 

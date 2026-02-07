@@ -372,7 +372,7 @@
             loadNotifications();
 
             // Cargar estado de asistencia
-            checkAttendanceStatus();
+            checkAttendanceStatus(user);
 
             // Entregas recientes
             const recentSubmissions = submissions.slice(-3).reverse();
@@ -420,12 +420,16 @@
         });
 
         // Verificar estado de asistencia
-        async function checkAttendanceStatus() {
+        async function checkAttendanceStatus(currentUser) {
             try {
                 const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
                 const today = new Date().toISOString().split('T')[0];
 
-                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/attendance?date=${today}`, {
+                if (!token || !currentUser) {
+                    return;
+                }
+
+                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/attendance/me?date=${today}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -433,9 +437,7 @@
 
                 if (response.ok) {
                     const attendance = await response.json();
-                    const myAttendance = attendance.find(a => a.user_email === user.email);
-
-                    if (myAttendance) {
+                    if (attendance?.registered) {
                         // El usuario ya tiene asistencia hoy
                         document.getElementById('attendance-form').style.display = 'none';
                         document.getElementById('attendance-already').style.display = 'block';
