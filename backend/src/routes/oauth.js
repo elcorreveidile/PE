@@ -5,6 +5,7 @@
 
 const express = require('express');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const { query } = require('../database/db');
 const { generateToken } = require('../middleware/auth');
@@ -34,6 +35,8 @@ const APPLE_CLIENT_ID = process.env.APPLE_CLIENT_ID || '';
 const APPLE_TEAM_ID = process.env.APPLE_TEAM_ID || '';
 const APPLE_KEY_ID = process.env.APPLE_KEY_ID || '';
 const APPLE_PRIVATE_KEY = process.env.APPLE_PRIVATE_KEY || '';
+const APPLE_TOKEN_ENDPOINT = 'https://appleid.apple.com/auth/token';
+const APPLE_REDIRECT_URI = `${FRONTEND_URL}/auth/oauth-callback.html`;
 
 // Código de registro requerido
 const REGISTRATION_CODE = process.env.REGISTRATION_CODE || 'PIO7-2026-CLM';
@@ -82,6 +85,66 @@ async function getGoogleProfile(accessToken) {
 /**
  * Verificar token de Apple
  */
+function buildAppleClientSecret() {
+    if (!APPLE_CLIENT_ID || !APPLE_TEAM_ID || !APPLE_KEY_ID || !APPLE_PRIVATE_KEY) {
+        throw new Error('Configuración de Apple OAuth incompleta en variables de entorno');
+    }
+
+    const privateKey = APPLE_PRIVATE_KEY.replace(/\\n/g, '\n');
+    const now = Math.floor(Date.now() / 1000);
+
+    return jwt.sign(
+        {
+            iss: APPLE_TEAM_ID,
+            iat: now,
+            exp: now + (60 * 60 * 24 * 30), // 30 días
+            aud: 'https://appleid.apple.com',
+            sub: APPLE_CLIENT_ID
+        },
+        privateKey,
+        {
+            algorithm: 'ES256',
+            keyid: APPLE_KEY_ID
+        }
+    );
+}
+
+async function getAppleToken(code) {
+    const clientSecret = buildAppleClientSecret();
+
+    const response = await fetch(APPLE_TOKEN_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+            grant_type: 'authorization_code',
+            code,
+            client_id: APPLE_CLIENT_ID,
+            client_secret: clientSecret,
+            redirect_uri: APPLE_REDIRECT_URI
+        })
+    });
+
+    const raw = await response.text();
+    let data;
+
+    try {
+        data = raw ? JSON.parse(raw) : {};
+    } catch {
+        data = { error: raw };
+    }
+
+    if (!response.ok) {
+        const detail = data.error_description || data.error || 'Error al obtener token de Apple';
+        throw new Error(`Apple token exchange falló: ${detail}`);
+    }
+
+    if (!data.id_token) {
+        throw new Error('Apple no devolvió id_token');
+    }
+
+    return data;
+}
+
 async function verifyAppleToken(idToken) {
     // Apple requiere verificación JWT del token
     // Por ahora, decodificamos sin verificar firma (para producción, verificar firma)
@@ -314,7 +377,9 @@ router.post('/google', [
  * Login o registro con Apple Sign In
  */
 router.post('/apple', [
-    body('id_token').notEmpty().withMessage('ID token de Apple requerido'),
+    body('code').optional(),
+    body('id_token').optional(),
+    body('pendingToken').optional(),
     body('registrationCode').optional().trim(),
     body('firstName').optional(),
     body('lastName').optional()
@@ -325,20 +390,64 @@ router.post('/apple', [
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { id_token, registrationCode, firstName, lastName } = req.body;
+        const {
+            code,
+            id_token: idTokenFromClient,
+            pendingToken,
+            registrationCode,
+            firstName,
+            lastName
+        } = req.body;
 
-        // 1. Verificar token de Apple
-        const applePayload = await verifyAppleToken(id_token);
+        let appleId;
+        let userEmail;
+        let name;
 
-        const appleId = applePayload.sub;
-        const email = applePayload.email;
-        const name = firstName && lastName
-            ? `${firstName} ${lastName}`
-            : (firstName || lastName || (email ? email.split('@')[0] : 'Usuario'));
+        // Flujo de finalización de registro con pendingToken (igual que Google)
+        if (pendingToken && registrationCode) {
+            const pendingData = oauthPendingData.get(pendingToken);
+            if (!pendingData) {
+                return res.status(400).json({
+                    error: 'Sesión expirada. Por favor, inicia sesión de nuevo.'
+                });
+            }
 
-        // Apple no siempre devuelve email (privacidad)
-        // Si no hay email, usamos un placeholder basado en Apple ID
-        const userEmail = email || `${appleId}@privaterelay.appleid.com`;
+            if (registrationCode !== REGISTRATION_CODE) {
+                return res.status(400).json({
+                    error: 'Código de registro incorrecto'
+                });
+            }
+
+            appleId = pendingData.appleId;
+            userEmail = pendingData.userEmail;
+            name = pendingData.name;
+            oauthPendingData.delete(pendingToken);
+        } else {
+            let idToken = idTokenFromClient;
+
+            // Si viene authorization code (web flow), intercambiar en backend por id_token
+            if (!idToken && code) {
+                const tokenData = await getAppleToken(code);
+                idToken = tokenData.id_token;
+            }
+
+            if (!idToken) {
+                return res.status(400).json({
+                    error: 'Se requiere code o id_token de Apple'
+                });
+            }
+
+            // Verificar token y extraer perfil base
+            const applePayload = await verifyAppleToken(idToken);
+            appleId = applePayload.sub;
+
+            // Apple puede ocultar email; usamos relay basado en sub para mantener unicidad
+            const email = applePayload.email;
+            userEmail = email || `${appleId}@privaterelay.appleid.com`;
+            name = firstName && lastName
+                ? `${firstName} ${lastName}`
+                : (firstName || lastName || (email ? email.split('@')[0] : 'Usuario'));
+        }
 
         // 2. Buscar usuario existente por Apple ID
         let userResult = await query(
@@ -409,13 +518,20 @@ router.post('/apple', [
 
         // 5. Nuevo usuario → Verificar código de registro
         if (!registrationCode || registrationCode !== REGISTRATION_CODE) {
+            const generatedPendingToken = crypto.randomBytes(32).toString('hex');
+            oauthPendingData.set(generatedPendingToken, {
+                appleId,
+                userEmail,
+                name,
+                timestamp: Date.now()
+            });
+
             return res.json({
                 message: 'Código de registro requerido',
                 needsRegistrationCode: true,
+                pendingToken: generatedPendingToken,
                 email: userEmail,
-                name,
-                provider: 'apple',
-                providerId: appleId
+                name
             });
         }
 

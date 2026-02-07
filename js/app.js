@@ -590,8 +590,15 @@ const Auth = {
 
     // Login con Apple
     loginWithApple() {
-        UI.notify('Login con Apple próximamente disponible', 'info');
-        // TODO: Implementar Apple Sign In cuando esté disponible
+        console.log('[Apple OAuth] Iniciando login con Apple');
+
+        if (!window.PE_CONFIG?.APPLE_CLIENT_ID) {
+            console.error('[Apple OAuth] APPLE_CLIENT_ID no encontrado');
+            UI.notify('Configuración de Apple no disponible', 'error');
+            return;
+        }
+
+        this._initiateOAuthFlow('apple');
     },
 
     // Iniciar flujo OAuth
@@ -599,7 +606,9 @@ const Auth = {
         console.log(`[OAuth] Iniciando flujo para provider: ${provider}`);
 
         const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
-        const redirectUri = `${window.location.origin}${basePath}/auth/oauth-callback`;
+        const redirectUri = provider === 'apple'
+            ? `${window.location.origin}${basePath}/auth/oauth-callback.html`
+            : `${window.location.origin}${basePath}/auth/oauth-callback`;
         const width = 500;
         const height = 600;
         const left = (window.screen.width - width) / 2;
@@ -618,6 +627,17 @@ const Auth = {
                 `scope=${encodeURIComponent(scopes)}&` +
                 `access_type=offline`;
             console.log(`[OAuth] URL de autorización Google generada`);
+        } else if (provider === 'apple') {
+            const scopes = 'name email';
+            const state = 'apple';
+            authUrl = `https://appleid.apple.com/auth/authorize?` +
+                `client_id=${encodeURIComponent(window.PE_CONFIG.APPLE_CLIENT_ID)}&` +
+                `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+                `response_type=code&` +
+                `response_mode=query&` +
+                `scope=${encodeURIComponent(scopes)}&` +
+                `state=${encodeURIComponent(state)}`;
+            console.log('[OAuth] URL de autorización Apple generada');
         } else {
             console.error(`[OAuth] Provider ${provider} no soportado`);
             UI.notify(`Provider ${provider} no soportado`, 'error');
@@ -688,7 +708,7 @@ const Auth = {
                 code
             });
 
-            if (response.needsRegistration) {
+            if (response.needsRegistration || response.needsRegistrationCode) {
                 // Usuario necesita completar registro con código
                 this._showRegistrationModal(provider, response.email, response.name, response.pendingToken);
                 return;
