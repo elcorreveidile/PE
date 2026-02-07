@@ -324,17 +324,24 @@
         }
 
         function viewReport(studentId) {
+            console.log('viewReport called with studentId:', studentId);
             const student = allStudents.find(s => String(s.id) === String(studentId));
-            if (!student) return;
+            if (!student) {
+                console.error('Student not found:', studentId);
+                PE.UI.notify('Estudiante no encontrado', 'error');
+                return;
+            }
+
+            console.log('Student found:', student.name, 'Avg grade:', student.avgGrade);
 
             const gradeClass = getGradeClass(student.avgGrade);
             const gradeText = student.avgGrade ? student.avgGrade.toFixed(1) : '-';
-            const today = new Date().toLocaleDateString('es-ES', { 
-                year: 'numeric', month: 'long', day: 'numeric' 
+            const today = new Date().toLocaleDateString('es-ES', {
+                year: 'numeric', month: 'long', day: 'numeric'
             });
 
             const reportHtml = `
-                <div id="report-content" style="max-width: 800px; margin: 0 auto;">
+                <div id="report-content" style="max-width: 800px; margin: 0 auto; max-height: 70vh; overflow-y: auto;">
                     <!-- Cabecera del reporte -->
                     <div style="text-align: center; margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 2px solid var(--primary-color);">
                         <h2 style="margin: 0 0 0.5rem;">BOLETÍN DE CALIFICACIONES</h2>
@@ -379,7 +386,7 @@
                     <!-- Detalle de entregas -->
                     <div style="margin-bottom: 2rem;">
                         <h3 style="margin: 0 0 1rem;">📝 Detalle de Entregas</h3>
-                        ${student.userSubmissions.length === 0 ? 
+                        ${student.userSubmissions.length === 0 ?
                             '<p class="text-secondary">No hay entregas registradas.</p>' :
                             `<table style="width: 100%; border-collapse: collapse;">
                                 <thead>
@@ -433,21 +440,28 @@
                 </div>
             `;
 
-            PE.UI.showModal('📋 Boletín de Notas', reportHtml, [
-                { text: 'Cerrar' },
-                {
-                    text: '🖨️ Imprimir',
-                    class: 'btn-primary',
-                    callback: () => window.print(),
-                    close: false
-                },
-                {
-                    text: '💾 Exportar PDF',
-                    class: 'btn-outline',
-                    callback: () => exportToPDF(studentId),
-                    close: false
-                }
-            ]);
+            console.log('Calling PE.UI.showModal...');
+            if (typeof PE.UI.showModal === 'function') {
+                PE.UI.showModal('📋 Boletín de Notas', reportHtml, [
+                    { text: 'Cerrar' },
+                    {
+                        text: '🖨️ Imprimir',
+                        class: 'btn-primary',
+                        callback: () => window.print(),
+                        close: false
+                    },
+                    {
+                        text: '💾 Exportar PDF',
+                        class: 'btn-outline',
+                        callback: () => exportToPDF(studentId),
+                        close: false
+                    }
+                ]);
+                console.log('Modal displayed successfully');
+            } else {
+                console.error('PE.UI.showModal is not a function');
+                PE.UI.notify('Error al mostrar el boletín', 'error');
+            }
         }
 
         function generateEvaluationComment(student) {
@@ -610,7 +624,7 @@
             URL.revokeObjectURL(url);
             document.body.removeChild(a);
 
-            PE.UI.notify('Boletín exportado correctamente', 'success');
+            PE.UI.notify(`Boletín de ${student.name} descargado en Carpeta de Descargas`, 'success');
         }
 
         function getGradeColor(grade) {
