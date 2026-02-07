@@ -69,6 +69,13 @@
                         </div>
                         <div class="card">
                             <div class="card-body text-center">
+                                <h3 class="text-primary" style="font-size: 2.5rem; margin-bottom: 0.5rem;" id="stat-average">-</h3>
+                                <p class="text-secondary mb-0">Nota media</p>
+                                <p class="text-secondary" style="font-size: 0.85rem;" id="stat-average-meta">sin calificaciones</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-body text-center">
                                 <h3 class="text-primary" style="font-size: 2.5rem; margin-bottom: 0.5rem;" id="stat-words">0</h3>
                                 <p class="text-secondary mb-0">Palabras escritas</p>
                             </div>
@@ -161,6 +168,13 @@
             let submissions = await PE.Submissions.getByUser(user.id);
             submissions = Array.isArray(submissions) ? submissions : [];
             const reviewed = submissions.filter(s => s.status === 'reviewed');
+            const gradedSubmissions = submissions.filter(s => {
+                const grade = parseFloat(s.numericGrade ?? s.numeric_grade);
+                return !Number.isNaN(grade);
+            });
+            const averageGrade = gradedSubmissions.length > 0
+                ? (gradedSubmissions.reduce((sum, s) => sum + parseFloat(s.numericGrade ?? s.numeric_grade), 0) / gradedSubmissions.length)
+                : null;
             const totalWords = submissions.reduce((sum, s) => sum + (s.wordCount || 0), 0);
 
             // Calcular sesiones completadas (basado en fecha actual)
@@ -171,6 +185,10 @@
             document.getElementById('stat-sessions').textContent = courseProgress.completed;
             document.getElementById('stat-submissions').textContent = submissions.length;
             document.getElementById('stat-reviewed').textContent = reviewed.length;
+            document.getElementById('stat-average').textContent = averageGrade !== null ? averageGrade.toFixed(1) : '-';
+            document.getElementById('stat-average-meta').textContent = gradedSubmissions.length > 0
+                ? `${gradedSubmissions.length} calificadas`
+                : 'sin calificaciones';
             document.getElementById('stat-words').textContent = totalWords.toLocaleString('es-ES');
 
             // Barra de progreso

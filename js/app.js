@@ -798,6 +798,8 @@ const Submissions = {
             activityId: submission.activity_id ?? submission.activityId,
             activityTitle: submission.activity_title ?? submission.activityTitle,
             wordCount: submission.word_count ?? submission.wordCount,
+            grade: submission.grade,
+            numericGrade: submission.numeric_grade ?? submission.numericGrade,
             feedback: submission.feedback_text ?? submission.feedback,
             feedbackDate: submission.feedback_date ?? submission.feedbackDate,
             reviewerName: submission.reviewer_name ?? submission.reviewerName,
