@@ -97,6 +97,77 @@ router.post('/rubrics', async (req, res) => {
 });
 
 /**
+ * POST /api/migrate/grades
+ * Convierte calificaciones textuales a numéricas
+ */
+router.post('/grades', async (req, res) => {
+    try {
+        console.log('[MIGRATION] Iniciando conversión de calificaciones...');
+
+        // Primero, verificar si la columna numeric_grade existe en feedback
+        try {
+            await query(`
+                ALTER TABLE feedback 
+                ADD COLUMN IF NOT EXISTS numeric_grade DECIMAL(3,2);
+            `);
+            console.log('[MIGRATION] Columna numeric_grade verificada/creada');
+        } catch (error) {
+            if (!error.message.includes('already exists')) {
+                throw error;
+            }
+        }
+
+        // Convertir calificaciones textuales a numéricas
+        const updateResult = await query(`
+            UPDATE feedback 
+            SET numeric_grade = CASE grade
+                WHEN 'Excelente' THEN 10
+                WHEN 'Muy bien' THEN 8.5
+                WHEN 'Bien' THEN 7
+                WHEN 'Suficiente' THEN 5
+                WHEN 'Necesita mejorar' THEN 3
+                ELSE NULL
+            END
+            WHERE grade IS NOT NULL 
+            AND numeric_grade IS NULL;
+        `);
+
+        console.log(`[MIGRATION] Calificaciones convertidas: ${updateResult.rowCount} registros`);
+
+        // Verificar el estado actual
+        const statsResult = await query(`
+            SELECT 
+                COUNT(*) as total,
+                COUNT(CASE WHEN numeric_grade IS NOT NULL THEN 1 END) as with_numeric_grade,
+                COUNT(CASE WHEN grade IS NOT NULL THEN 1 END) as with_textual_grade,
+                AVG(numeric_grade) as avg_grade
+            FROM feedback
+        `);
+
+        const stats = statsResult.rows[0];
+
+        res.json({
+            success: true,
+            message: 'Calificaciones convertidas exitosamente',
+            converted: updateResult.rowCount,
+            stats: {
+                total: parseInt(stats.total),
+                withNumericGrade: parseInt(stats.with_numeric_grade),
+                withTextualGrade: parseInt(stats.with_textual_grade),
+                averageGrade: stats.avg_grade ? parseFloat(stats.avg_grade).toFixed(2) : null
+            }
+        });
+
+    } catch (error) {
+        console.error('[MIGRATION] Error en conversión de grades:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
  * GET /api/migrate/status
  * Verificar el estado de las migraciones
  */

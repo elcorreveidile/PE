@@ -121,6 +121,7 @@ router.get('/', authenticateToken, [
                 u.email as user_email,
                 f.feedback_text,
                 f.grade,
+                f.numeric_grade,
                 f.created_at as feedback_date
             FROM submissions s
             LEFT JOIN users u ON s.user_id = u.id
@@ -161,6 +162,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
                 u.email as user_email,
                 f.feedback_text,
                 f.grade,
+                f.numeric_grade,
                 f.annotations,
                 f.created_at as feedback_date,
                 r.name as reviewer_name
@@ -311,7 +313,7 @@ router.post('/:id/feedback', authenticateToken, requireAdmin, [
         }
 
         const submissionId = req.params.id;
-        const { feedback_text, grade, annotations } = req.body;
+        const { feedback_text, grade, numeric_grade, annotations } = req.body;
 
         // Verificar que la entrega existe
         const submissionResult = await query('SELECT * FROM submissions WHERE id = $1', [submissionId]);
@@ -327,14 +329,14 @@ router.post('/:id/feedback', authenticateToken, requireAdmin, [
         if (existingFeedback.rows.length > 0) {
             await query(`
                 UPDATE feedback
-                SET feedback_text = $1, grade = $2, annotations = $3, reviewer_id = $4, updated_at = CURRENT_TIMESTAMP
-                WHERE submission_id = $5
-            `, [feedback_text, grade || null, annotations || null, req.user.id, submissionId]);
+                SET feedback_text = $1, grade = $2, numeric_grade = $3, annotations = $4, reviewer_id = $5, updated_at = CURRENT_TIMESTAMP
+                WHERE submission_id = $6
+            `, [feedback_text, grade || null, numeric_grade || null, annotations || null, req.user.id, submissionId]);
         } else {
             await query(`
-                INSERT INTO feedback (submission_id, reviewer_id, feedback_text, grade, annotations)
-                VALUES ($1, $2, $3, $4, $5)
-            `, [submissionId, req.user.id, feedback_text, grade || null, annotations || null]);
+                INSERT INTO feedback (submission_id, reviewer_id, feedback_text, grade, numeric_grade, annotations)
+                VALUES ($1, $2, $3, $4, $5, $6)
+            `, [submissionId, req.user.id, feedback_text, grade || null, numeric_grade || null, annotations || null]);
         }
 
         // Actualizar estado de la entrega

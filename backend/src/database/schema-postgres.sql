@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS feedback (
     reviewer_id INTEGER NOT NULL REFERENCES users(id),
     feedback_text TEXT NOT NULL,
     grade TEXT,
+    numeric_grade DECIMAL(3,2),
     annotations JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
