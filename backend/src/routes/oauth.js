@@ -101,12 +101,18 @@ router.post('/google', [
     body('registrationCode').optional().trim()
 ], async (req, res) => {
     try {
+        console.log('=== Google OAuth Request ===');
+        console.log('Has GOOGLE_CLIENT_ID:', !!GOOGLE_CLIENT_ID);
+        console.log('Has GOOGLE_CLIENT_SECRET:', !!GOOGLE_CLIENT_SECRET);
+        console.log('FRONTEND_URL:', FRONTEND_URL);
+
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
         }
 
         const { code, registrationCode } = req.body;
+        console.log('Code received:', !!code);
 
         // 1. Intercambiar código por access token
         const tokenData = await getGoogleToken(code);
@@ -235,7 +241,13 @@ router.post('/google', [
 
     } catch (error) {
         console.error('Error en OAuth Google:', error);
-        res.status(500).json({ error: 'Error al autenticar con Google' });
+        console.error('Stack:', error.stack);
+        console.error('Message:', error.message);
+        res.status(500).json({
+            error: 'Error al autenticar con Google',
+            details: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 });
 
