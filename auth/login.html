@@ -297,7 +297,36 @@
                 return;
             }
 
-            alert('No se pudo iniciar OAuth en este momento. Haz un hard refresh e inténtalo de nuevo.');
+            // Fallback final: iniciar OAuth construyendo URL directamente
+            const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+            const redirectUri = provider === 'apple'
+                ? `${window.location.origin}${basePath}/auth/oauth-callback.html`
+                : `${window.location.origin}${basePath}/auth/oauth-callback`;
+
+            if (provider === 'google' && window.PE_CONFIG?.GOOGLE_CLIENT_ID) {
+                const googleScopes = 'openid email profile';
+                const googleUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+                    `client_id=${encodeURIComponent(window.PE_CONFIG.GOOGLE_CLIENT_ID)}&` +
+                    `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+                    `response_type=code&` +
+                    `scope=${encodeURIComponent(googleScopes)}&` +
+                    `access_type=offline`;
+                window.location.href = googleUrl;
+                return;
+            }
+
+            if (provider === 'apple' && window.PE_CONFIG?.APPLE_CLIENT_ID) {
+                const appleUrl = `https://appleid.apple.com/auth/authorize?` +
+                    `client_id=${encodeURIComponent(window.PE_CONFIG.APPLE_CLIENT_ID)}&` +
+                    `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+                    `response_type=code&` +
+                    `response_mode=query&` +
+                    `state=apple`;
+                window.location.href = appleUrl;
+                return;
+            }
+
+            alert('No se pudo iniciar OAuth en este momento. Verifica configuración de cliente OAuth.');
         }
 
         function closeOAuthRegistrationModal() {
