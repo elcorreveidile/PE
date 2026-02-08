@@ -2,6 +2,28 @@
   "version": 2,
   "cleanUrls": true,
   "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "/sesion-:num",
+      "destination": "/sesiones/sesion-:num.html"
+    },
+    {
+      "source": "/sesiones/:path*",
+      "destination": "/sesiones/:path*.html"
+    },
+    {
+      "source": "/temas/:path*",
+      "destination": "/temas/:path*.html"
+    },
+    {
+      "source": "/talleres/:path*",
+      "destination": "/talleres/:path*.html"
+    },
+    {
+      "source": "/recursos/:path*",
+      "destination": "/recursos/:path*.html"
+    }
+  ],
   "headers": [
     {
       "source": "/api/(.*)",

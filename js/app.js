@@ -44,18 +44,28 @@ const CONFIG = (() => {
         : '');
     const storedApiUrl = normalizeApiUrl(localStorage.getItem('pe_c2_api_url'));
 
-    // URL de la API en Render (o tu backend desplegado)
-    // Para cambiar la URL del backend, puedes:
-    // 1. Añadir <script>window.PE_CONFIG = { API_URL: 'https://tu-api.onrender.com' }</script> antes de cargar este script
-    // 2. O cambiar manualmente la URL aquí
+    // URL de la API en Railway (backend en producción)
+    const railwayApiUrl = 'https://produccion-escrita-c2-api-production.up.railway.app';
+
+    // URL de la API desde configuración o localStorage
     const productionApiUrl = (typeof window !== 'undefined' && window.PE_CONFIG && window.PE_CONFIG.API_URL)
-        ? window.PE_CONFIG.API_URL
+        ? normalizeApiUrl(window.PE_CONFIG.API_URL)
         : storedApiUrl;
+
+    // Prioridad: PE_CONFIG > localStorage > Railway URL > origin actual
+    const finalApiUrl = productionApiUrl || railwayApiUrl || resolvedOrigin;
+
+    console.log('[CONFIG] URLs detectadas:', {
+        PE_CONFIG: (typeof window !== 'undefined' && window.PE_CONFIG && window.PE_CONFIG.API_URL) || 'no definida',
+        localStorage: storedApiUrl || 'no configurada',
+        railway: railwayApiUrl,
+        final: finalApiUrl
+    });
 
     return {
         STORAGE_PREFIX: 'pe_c2_',
-        // URL del backend API - usa productionApiUrl si está configurado, sino el origin actual
-        API_URL: (!isLocal ? (productionApiUrl || resolvedOrigin) : (storedApiUrl || resolvedOrigin)),
+        // URL del backend API - usa la URL configurada o la de Railway por defecto
+        API_URL: finalApiUrl,
         // En producción forzamos API para evitar datos inconsistentes
         ENFORCE_API: !isLocal,
         // Si está vacío, usa localStorage como fallback (solo en local)
@@ -93,7 +103,7 @@ const API = {
         if (!CONFIG.API_URL) return false;
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
         try {
             console.log('[API] Verificando disponibilidad del backend...');
