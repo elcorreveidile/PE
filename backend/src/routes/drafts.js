@@ -6,12 +6,12 @@
 const express = require('express');
 const router = express.Router();
 const { body, param, query } = require('express-validator');
-const { authMiddleware } = require('../middleware/auth');
+const { authenticateToken } = require('../middleware/auth');
 
 // =============================================================================
 // GET /api/drafts - Obtener todos los borradores (filtrados por user_id si se proporciona)
 // =============================================================================
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', authenticateToken, async (req, res) => {
     try {
         const { user_id } = req.query;
 
@@ -76,7 +76,7 @@ router.get('/', authMiddleware, async (req, res) => {
 // =============================================================================
 // GET /api/drafts/:id - Obtener un borrador por ID
 // =============================================================================
-router.get('/:id', authMiddleware, async (req, res) => {
+router.get('/:id', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
 
@@ -131,7 +131,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 // =============================================================================
 // POST /api/drafts - Crear nuevo borrador
 // =============================================================================
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', authenticateToken, async (req, res) => {
     try {
         const { session_id, session_title, activity_id, activity_title, content } = req.body;
 
@@ -180,7 +180,7 @@ router.post('/', authMiddleware, async (req, res) => {
 // =============================================================================
 // PUT /api/drafts/:id - Actualizar borrador
 // =============================================================================
-router.put('/:id', authMiddleware, async (req, res) => {
+router.put('/:id', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
         const { content } = req.body;
@@ -241,7 +241,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
 // =============================================================================
 // DELETE /api/drafts/:id - Eliminar borrador
 // =============================================================================
-router.delete('/:id', authMiddleware, async (req, res) => {
+router.delete('/:id', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
 
