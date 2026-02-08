@@ -2004,6 +2004,29 @@ const Forms = {
 // ==========================================================================
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // Cargar configuraciones OAuth desde el backend
+    try {
+        const configResponse = await fetch(`${CONFIG.API_URL}/api/config`);
+        if (configResponse.ok) {
+            const configData = await configResponse.json();
+            if (configData.success && configData.data) {
+                // Agregar credenciales OAuth a window.PE_CONFIG
+                if (configData.data.google?.clientId) {
+                    window.PE_CONFIG = window.PE_CONFIG || {};
+                    window.PE_CONFIG.GOOGLE_CLIENT_ID = configData.data.google.clientId;
+                    console.log('[Init] GOOGLE_CLIENT_ID cargado desde backend');
+                }
+                if (configData.data.apple?.clientId) {
+                    window.PE_CONFIG = window.PE_CONFIG || {};
+                    window.PE_CONFIG.APPLE_CLIENT_ID = configData.data.apple.clientId;
+                    console.log('[Init] APPLE_CLIENT_ID cargado desde backend');
+                }
+            }
+        }
+    } catch (error) {
+        console.warn('[Init] No se pudieron cargar las configuraciones OAuth:', error);
+    }
+
     // Inicializar autenticación primero
     Auth.init();
 

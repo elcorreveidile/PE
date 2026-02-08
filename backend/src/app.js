@@ -142,6 +142,22 @@ app.get('/api/course', (req, res) => {
     });
 });
 
+// Configuración pública (para el frontend)
+app.get('/api/config', (req, res) => {
+    res.json({
+        success: true,
+        data: {
+            google: {
+                clientId: process.env.GOOGLE_CLIENT_ID || null
+            },
+            apple: {
+                clientId: process.env.APPLE_CLIENT_ID || null
+            },
+            registrationCode: process.env.REGISTRATION_CODE || null
+        }
+    });
+});
+
 // Servir archivos estáticos del frontend en producción
 if (NODE_ENV === 'production') {
     const frontendRoot = path.join(__dirname, '../../');
