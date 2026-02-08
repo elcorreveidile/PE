@@ -385,6 +385,50 @@ const Utils = {
     // Contar caracteres
     countChars(text) {
         return text.length;
+    },
+
+    // Forzar descarga de PDF (especialmente útil en móviles)
+    async forceDownload(url, filename) {
+        try {
+            // Obtener el archivo como blob
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error('No se pudo descargar el archivo');
+            }
+
+            const blob = await response.blob();
+            
+            // Crear URL temporal
+            const blobUrl = URL.createObjectURL(blob);
+            
+            // Crear enlace temporal
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = filename || url.split('/').pop();
+            
+            // Forzar descarga en iOS Safari
+            if (navigator.userAgent.match(/(iPod|iPhone|iPad)/)) {
+                // En iOS, necesitamos añadir el enlace al DOM primero
+                document.body.appendChild(link);
+                link.style.display = 'none';
+            }
+            
+            // Simular clic
+            link.click();
+            
+            // Limpieza
+            setTimeout(() => {
+                document.body.removeChild(link);
+                URL.revokeObjectURL(blobUrl);
+            }, 100);
+            
+            return true;
+        } catch (error) {
+            console.error('Error al forzar descarga:', error);
+            // Fallback: abrir en nueva pestaña
+            window.open(url, '_blank');
+            return false;
+        }
     }
 };
 
@@ -2455,6 +2499,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     console.log('[Init] Producción Escrita C2 - Aplicación iniciada');
+
+    // Configurar descarga forzada de PDFs en móviles
+    document.querySelectorAll('a[href$=".pdf"]').forEach(link => {
+        // Solo en enlaces que tienen el atributo download
+        if (!link.hasAttribute('download')) return;
+
+        link.addEventListener('click', async (e) => {
+            // Detectar dispositivos móviles
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            // Solo aplicar en móviles
+            if (!isMobile) return;
+
+            e.preventDefault();
+            
+            const url = link.getAttribute('href');
+            const filename = url.split('/').pop();
+            
+            // Usar la función forceDownload
+            const success = await Utils.forceDownload(url, filename);
+            
+            if (success) {
+                console.log('[PDF Download] Descarga forzada iniciada para:', filename);
+            }
+        });
+    });
 });
 
 // ==========================================================================
