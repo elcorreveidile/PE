@@ -351,6 +351,7 @@ router.post('/google', [
 
             return res.json({
                 message: 'Código de registro requerido',
+                needsRegistration: true,
                 needsRegistrationCode: true,
                 pendingToken,
                 email,
@@ -557,6 +558,7 @@ router.post('/apple', [
 
             return res.json({
                 message: 'Código de registro requerido',
+                needsRegistration: true,
                 needsRegistrationCode: true,
                 pendingToken: generatedPendingToken,
                 email: userEmail,
