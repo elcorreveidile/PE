@@ -128,7 +128,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
-            const user = PE.Auth.getCurrentUser();
+            const user = await PE.Auth.checkSession();
             if (!user || user.role !== 'admin') {
                 window.location.href = basePath + '/auth/login.html';
                 return;

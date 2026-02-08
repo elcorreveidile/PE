@@ -187,7 +187,7 @@
         let allUsers = [];
 
         document.addEventListener('DOMContentLoaded', async () => {
-            const user = PE.Auth.getCurrentUser();
+            const user = await PE.Auth.checkSession();
             if (!user || user.role !== 'admin') {
                 window.location.href = '../auth/login.html';
                 return;

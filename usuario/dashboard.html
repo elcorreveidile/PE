@@ -211,8 +211,8 @@
 <script src="../js/app.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            // Verificar autenticación
-            const user = PE.Auth.getCurrentUser();
+            // Verificar autenticación - esperar a checkSession para restaurar desde localStorage
+            const user = await PE.Auth.checkSession();
             if (!user) {
                 window.location.href = '../auth/login.html';
                 return;

@@ -249,7 +249,7 @@
             }
 
             // Verificar autenticación
-            const user = PE.Auth.getCurrentUser();
+            const user = await PE.Auth.checkSession();
             if (!user) {
                 // Redirigir a login preservando el código en la URL para retomar el check-in
                 const attendanceUrl = `${window.location.origin}${window.location.pathname}?code=${encodeURIComponent(code)}`;
