@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contacto | Producción Escrita C2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+<body>
+    <header class="header">
+        <div class="header-top">
+            <div class="container">
+                <span>Centro de Lenguas Modernas - Universidad de Granada</span>
+            </div>
+        </div>
+        <div class="header-main">
+            <div class="container">
+                <a href="/index.html" class="logo">
+                    <div class="logo-icon">C2</div>
+                    <div class="logo-text">
+                        <span class="logo-title">Producción Escrita</span>
+                        <span class="logo-subtitle">CLM - Universidad de Granada</span>
+                    </div>
+                </a>
+                <nav class="nav-main">
+                    <a href="/index.html">Inicio</a>
+                    <a href="/sesiones/index.html">Sesiones</a>
+                    <a href="/talleres/index.html">Talleres</a>
+                    <a href="/recursos/index.html">Recursos</a>
+                </nav>
+                <div class="nav-auth"></div>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero" style="padding: var(--spacing-2xl) 0;">
+        <div class="container">
+            <div class="hero-content">
+                <span class="hero-badge">Contacto</span>
+                <h1>¿Tienes alguna pregunta?</h1>
+                <p class="hero-description">
+                    Envíame un mensaje y te responderé lo antes posible.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <div style="max-width: 600px; margin: 0 auto;">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 style="margin: 0;">Formulario de contacto</h2>
+                    </div>
+                    <div class="card-body">
+                        <form id="contact-form" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                            <div class="form-group">
+                                <label for="name">Nombre <span style="color: var(--danger-color);">*</span></label>
+                                <input
+                                    type="text"
+                                    id="name"
+                                    name="name"
+                                    class="form-control"
+                                    placeholder="Tu nombre completo"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="email">Email <span style="color: var(--danger-color);">*</span></label>
+                                <input
+                                    type="email"
+                                    id="email"
+                                    name="email"
+                                    class="form-control"
+                                    placeholder="tu@email.com"
+                                    required
+                                >
+                                <small class="text-secondary">Usaré este email para responderte</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="subject">Asunto <span style="color: var(--danger-color);">*</span></label>
+                                <select
+                                    id="subject"
+                                    name="subject"
+                                    class="form-control"
+                                    required
+                                >
+                                    <option value="">Selecciona un asunto</option>
+                                    <option value="Información general">Información general</option>
+                                    <option value="Solicitud de tutoría">Solicitud de tutoría</option>
+                                    <option value="Problema técnico">Problema técnico</option>
+                                    <option value="Sugerencia">Sugerencia</option>
+                                    <option value="Otro">Otro</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="message">Mensaje <span style="color: var(--danger-color);">*</span></label>
+                                <textarea
+                                    id="message"
+                                    name="message"
+                                    class="form-control"
+                                    rows="6"
+                                    placeholder="Escribe tu mensaje aquí..."
+                                    required
+                                    minlength="10"
+                                ></textarea>
+                                <small class="text-secondary">Mínimo 10 caracteres</small>
+                            </div>
+
+                            <div id="form-error" class="alert alert-error" style="display: none;"></div>
+
+                            <button type="submit" class="btn btn-primary" id="submit-btn">
+                                <span id="btn-text">Enviar mensaje</span>
+                                <div id="btn-loader" class="loader" style="display: none; width: 20px; height: 20px;"></div>
+                            </button>
+                        </form>
+
+                        <div id="form-success" class="alert alert-success" style="display: none; margin-top: 1.5rem;">
+                            <strong>¡Mensaje enviado!</strong>
+                            <p style="margin: 0.5rem 0 0;">Te contactaré lo antes posible. Gracias por escribir.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 2rem;">
+                    <div class="card-body">
+                        <h3 style="margin-top: 0;">Otras formas de contacto</h3>
+                        <p style="margin-bottom: 1rem;">
+                            Si prefieres, también puedes encontrarme en:
+                        </p>
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                            <li style="padding: 0.5rem 0;">
+                                <strong>Centro de Lenguas Modernas - Universidad de Granada</strong>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom" style="border: none; padding-top: 0;">
+                <span>&copy; 2026 Javier Benítez Láinez | CLM - Universidad de Granada</span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/js/config.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('contact-form');
+            const submitBtn = document.getElementById('submit-btn');
+            const btnText = document.getElementById('btn-text');
+            const btnLoader = document.getElementById('btn-loader');
+            const formError = document.getElementById('form-error');
+            const formSuccess = document.getElementById('form-success');
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                // Ocultar mensajes anteriores
+                formError.style.display = 'none';
+                formSuccess.style.display = 'none';
+
+                // Obtener datos del formulario
+                const formData = new FormData(form);
+                const data = {
+                    name: formData.get('name').trim(),
+                    email: formData.get('email').trim(),
+                    subject: formData.get('subject'),
+                    message: formData.get('message').trim()
+                };
+
+                // Validación básica
+                if (!data.name || !data.email || !data.subject || !data.message) {
+                    formError.textContent = 'Por favor completa todos los campos requeridos.';
+                    formError.style.display = 'block';
+                    return;
+                }
+
+                if (data.message.length < 10) {
+                    formError.textContent = 'El mensaje debe tener al menos 10 caracteres.';
+                    formError.style.display = 'block';
+                    return;
+                }
+
+                // Deshabilitar botón y mostrar loader
+                submitBtn.disabled = true;
+                btnText.style.display = 'none';
+                btnLoader.style.display = 'inline-block';
+
+                try {
+                    const response = await fetch(`${window.PE_CONFIG.API_URL}/api/contact`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        // Mostrar éxito
+                        formSuccess.style.display = 'block';
+                        form.reset();
+
+                        // Ocultar mensaje de éxito después de 5 segundos
+                        setTimeout(() => {
+                            formSuccess.style.display = 'none';
+                        }, 5000);
+                    } else {
+                        // Mostrar error
+                        const errorMsg = result.error || 'Error al enviar el mensaje. Por favor intenta más tarde.';
+                        formError.textContent = errorMsg;
+                        formError.style.display = 'block';
+                    }
+                } catch (error) {
+                    console.error('Error al enviar formulario:', error);
+                    formError.textContent = 'Error de conexión. Por favor verifica tu conexión e intenta de nuevo.';
+                    formError.style.display = 'block';
+                } finally {
+                    // Restaurar botón
+                    submitBtn.disabled = false;
+                    btnText.style.display = 'inline';
+                    btnLoader.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

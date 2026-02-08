@@ -25,6 +25,7 @@ const attendanceRoutes = require('./routes/attendance');
 const migrateRoutes = require('./routes/migrate');
 const rubricsRoutes = require('./routes/rubrics');
 const statisticsRoutes = require('./routes/statistics');
+const contactRoutes = require('./routes/contact');
 
 // Importar middleware
 const { trackVisit } = require('./middleware/visits');
@@ -112,6 +113,7 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api/migrate', migrateRoutes);
 app.use('/api/rubrics', rubricsRoutes);
 app.use('/api/statistics', statisticsRoutes);
+app.use('/api/contact', contactRoutes);
 
 // Ruta de health check
 app.get('/api/health', (req, res) => {
