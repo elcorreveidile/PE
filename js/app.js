@@ -929,20 +929,29 @@ const Auth = {
                 AppState.user = response.user;
                 AppState.token = response.token;
                 AppState.isAdmin = response.user.role === 'admin';
-                Utils.storage.set('currentUser', response.user);
-                Utils.storage.set('token', response.token);
+
+                // Guardar en localStorage de forma síncrona
+                try {
+                    localStorage.setItem('currentUser', JSON.stringify(response.user));
+                    localStorage.setItem('token', response.token);
+                } catch (e) {
+                    console.error('Error guardando sesión:', e);
+                }
 
                 this._pendingOAuth = null;
                 this.closeRegistrationModal();
 
                 UI.notify(`Registro completado. Bienvenido/a, ${response.user.name}!`, 'success');
 
+                // Redirigir inmediatamente al dashboard correspondiente
+                const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+                const redirectUrl = response.user.role === 'admin'
+                    ? basePath + '/admin/index.html'
+                    : basePath + '/usuario/dashboard.html';
+
                 setTimeout(() => {
-                    const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
-                    window.location.href = response.user.role === 'admin'
-                        ? basePath + '/admin/index.html'
-                        : basePath + '/usuario/dashboard.html';
-                }, 500);
+                    window.location.replace(redirectUrl);
+                }, 300);
             }
         } catch (error) {
             console.error('Error completando registro OAuth:', error);
@@ -2037,10 +2046,14 @@ const Forms = {
             await Auth.register(validation.data);
             await Auth.login(validation.data.email, validation.data.password);
             UI.notify('Registro exitoso. Bienvenido/a al curso.', 'success');
+
+            // Redirigir inmediatamente al dashboard
+            const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+            const redirectUrl = basePath + '/usuario/dashboard.html';
+
             setTimeout(() => {
-                const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
-                window.location.href = basePath + '/usuario/dashboard.html';
-            }, 1000);
+                window.location.replace(redirectUrl);
+            }, 300);
         } catch (error) {
             errorContainer.innerHTML = `<div class="alert alert-error">${error.message}</div>`;
             submitBtn.disabled = false;
@@ -2074,10 +2087,14 @@ const Forms = {
         try {
             const user = await Auth.login(email, password);
             UI.notify('Sesión iniciada correctamente', 'success');
+
+            // Redirigir inmediatamente al dashboard correspondiente
+            const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+            const redirectUrl = user.role === 'admin' ? basePath + '/admin/index.html' : basePath + '/usuario/dashboard.html';
+
             setTimeout(() => {
-                const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
-                window.location.href = user.role === 'admin' ? basePath + '/admin/index.html' : basePath + '/usuario/dashboard.html';
-            }, 500);
+                window.location.replace(redirectUrl);
+            }, 300);
         } catch (error) {
             errorContainer.innerHTML = `<div class="alert alert-error">${error.message}</div>`;
             submitBtn.disabled = false;
