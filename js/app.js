@@ -868,18 +868,28 @@ const Auth = {
                 AppState.user = response.user;
                 AppState.token = response.token;
                 AppState.isAdmin = response.user.role === 'admin';
-                Utils.storage.set('currentUser', response.user);
-                Utils.storage.set('token', response.token);
+
+                // Guardar en localStorage de forma síncrona
+                try {
+                    localStorage.setItem('currentUser', JSON.stringify(response.user));
+                    localStorage.setItem('token', response.token);
+                } catch (e) {
+                    console.error('Error guardando sesión:', e);
+                }
 
                 UI.notify(`Bienvenido/a, ${response.user.name}!`, 'success');
 
-                // Redirigir al dashboard correspondiente
+                // Redirigir inmediatamente al dashboard correspondiente
+                // Usar location.replace para evitar que el usuario pueda volver atrás con el botón del navegador
+                const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+                const redirectUrl = response.user.role === 'admin'
+                    ? basePath + '/admin/index.html'
+                    : basePath + '/usuario/dashboard.html';
+
+                // Pequeño delay para permitir que la notificación se muestre
                 setTimeout(() => {
-                    const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
-                    window.location.href = response.user.role === 'admin'
-                        ? basePath + '/admin/index.html'
-                        : basePath + '/usuario/dashboard.html';
-                }, 500);
+                    window.location.replace(redirectUrl);
+                }, 300);
             }
         } catch (error) {
             console.error('Error en OAuth callback:', error);
