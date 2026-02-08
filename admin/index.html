@@ -488,11 +488,11 @@
 
             } catch (error) {
                 console.error('Error cargando estadísticas de visitas:', error);
-                // Mostrar guiones en caso de error
-                document.getElementById('stat-total-visits').textContent = '-';
-                document.getElementById('stat-today-visits').textContent = '-';
-                document.getElementById('stat-unique-visits').textContent = '-';
-                document.getElementById('stat-total-unique').textContent = '-';
+                // Mostrar ceros en caso de error (sistema de visitas no disponible)
+                document.getElementById('stat-total-visits').textContent = '0';
+                document.getElementById('stat-today-visits').textContent = '0';
+                document.getElementById('stat-unique-visits').textContent = '0';
+                document.getElementById('stat-total-unique').textContent = '0';
             }
         }
     </script>
