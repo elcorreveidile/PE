@@ -826,7 +826,10 @@ const Auth = {
 
     // Manejar callback de OAuth
     async _handleOAuthCallback(provider, code) {
+        console.log(`[OAuth] Procesando callback de ${provider}, code: ${code ? 'recibido' : 'no recibido'}`);
+        
         if (!code) {
+            console.error('[OAuth] Error: No se recibió código de autorización');
             UI.notify('No se recibió código de autorización', 'error');
             return;
         }
@@ -834,16 +837,21 @@ const Auth = {
         UI.notify('Procesando autenticación...', 'info');
 
         try {
+            console.log(`[OAuth] Verificando disponibilidad de API...`);
             await API.ensureAvailability();
 
             if (!CONFIG.USE_API) {
+                console.error('[OAuth] Error: OAuth requiere conexión al backend pero API no está disponible');
                 throw new Error('OAuth requiere conexión al backend');
             }
 
+            console.log(`[OAuth] Enviando código al backend /api/auth/oauth/${provider}`);
             // Enviar código al backend para intercambiarlo por token
             const response = await API.post(`/auth/oauth/${provider}`, {
                 code
             });
+            
+            console.log(`[OAuth] Respuesta del backend:`, response);
 
             if (response.needsRegistration || response.needsRegistrationCode) {
                 // Usuario necesita completar registro con código
