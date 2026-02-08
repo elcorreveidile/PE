@@ -701,7 +701,7 @@
 
                                 <div style="display: flex; gap: 0.5rem; margin-top: var(--spacing-md);">
                                     <a href="estudiantes.html" class="btn btn-sm btn-outline" style="flex: 1;">Ver detalle</a>
-                                    <button class="btn btn-sm btn-primary" style="flex: 1;" onclick="viewStudentReport('${student.id}')">Reporte</button>
+                                    <button class="btn btn-sm btn-primary btn-student-report" style="flex: 1;" data-student-id="${PE.Utils.escapeHtml(String(student.id))}">Reporte</button>
                                 </div>
                             </div>
                         `;
@@ -710,6 +710,14 @@
             `;
 
             PE.UI.notify('Comparación generada exitosamente', 'success');
+
+            // Añadir event listeners a los botones de reporte
+            document.querySelectorAll('.btn-student-report').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const studentId = e.target.dataset.studentId;
+                    viewStudentReport(studentId);
+                });
+            });
         }
 
         function viewStudentReport(studentId) {
