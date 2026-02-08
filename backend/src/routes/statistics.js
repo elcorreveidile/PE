@@ -9,6 +9,60 @@ const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const router = express.Router();
 
 /**
+ * POST /api/statistics/track
+ * Registra una visita desde el frontend (sin autenticación requerida)
+ */
+router.post('/track', async (req, res) => {
+    try {
+        const { page, sessionId } = req.body;
+
+        if (!page) {
+            return res.status(400).json({ error: 'Page is required' });
+        }
+
+        const ipAddress = req.ip || req.headers['x-forwarded-for']?.split(',')[0].trim();
+        const userAgent = req.headers['user-agent'] || '';
+        const referrer = req.headers['referer'] || req.headers['referrer'] || '';
+
+        // Obtener user_id del token si existe
+        const authHeader = req.headers['authorization'];
+        let userId = null;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            try {
+                const token = authHeader.substring(7);
+                const decoded = require('jsonwebtoken').verify(token, process.env.JWT_SECRET || 'produccion-escrita-c2-secret-key-2024');
+                userId = decoded.userId || decoded.id;
+            } catch (err) {
+                // Token inválido, continuar sin user_id
+            }
+        }
+
+        // Verificar si es una visita única hoy
+        const today = new Date().toISOString().split('T')[0];
+        const uniqueCheck = await query(`
+            SELECT id FROM visits
+            WHERE (user_id = $1 OR (session_id = $2 AND session_id IS NOT NULL))
+              AND DATE(visited_at) = $3
+            LIMIT 1
+        `, [userId, sessionId, today]);
+
+        const isUnique = uniqueCheck.rows.length === 0;
+
+        // Insertar visita
+        await query(`
+            INSERT INTO visits (page, user_id, session_id, ip_address, user_agent, referrer, is_unique)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `, [page, userId, sessionId, ipAddress, userAgent, referrer, isUnique]);
+
+        res.json({ success: true, isUnique });
+
+    } catch (error) {
+        console.error('Error tracking visit:', error);
+        res.status(500).json({ error: 'Error al registrar visita' });
+    }
+});
+
+/**
  * GET /api/statistics/overview
  * Obtiene estadísticas generales para el dashboard
  */

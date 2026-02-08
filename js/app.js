@@ -2080,7 +2080,61 @@ const Forms = {
 // Inicialización
 // ==========================================================================
 
+// Función para trackear visitas a páginas
+function trackPageVisit() {
+    try {
+        // Obtener o generar session_id
+        let sessionId = localStorage.getItem('pe_session_id');
+        if (!sessionId) {
+            sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
+            localStorage.setItem('pe_session_id', sessionId);
+        }
+
+        // Determinar el nombre de la página
+        let page = window.location.pathname;
+        if (page === '/' || page === '/index.html') {
+            page = 'index.html';
+        } else if (!page.includes('.')) {
+            // URL limpia sin extensión (ej: /usuario/dashboard)
+            // Reconstruir con .html
+            page = page.substring(1).replace(/\/$/, '') + '/index.html';
+            if (page === 'index.html') {
+                page = 'index.html';
+            }
+        } else {
+            // Eliminar barra inicial
+            page = page.substring(1);
+        }
+
+        // Enviar visita al backend (async, fire-and-forget)
+        const token = AppState.token || localStorage.getItem('pe_c2_token');
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        fetch(`${CONFIG.API_URL}/api/statistics/track`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ page, sessionId }),
+            // Mantener caché de navegador controlado
+            keepalive: true
+        }).catch(err => {
+            // Silencioso - no afectar la experiencia del usuario
+            console.debug('[Visit Tracking] Error:', err.message);
+        });
+    } catch (error) {
+        // Silencioso - no interrumpir la carga de la página
+        console.debug('[Visit Tracking] Error:', error.message);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
+    // Trackear visita (async, no bloquea la carga)
+    trackPageVisit();
+
     // Cargar configuraciones OAuth desde el backend
     try {
         const configResponse = await fetch(`${CONFIG.API_URL}/api/config`);
