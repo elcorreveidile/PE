@@ -387,46 +387,52 @@ const Utils = {
         return text.length;
     },
 
-    // Forzar descarga de PDF (especialmente útil en móviles)
-    async forceDownload(url, filename) {
+    // Abrir PDF en nueva ventana (Safari y móviles)
+    async openPdfInNewWindow(url, filename) {
         try {
-            // Obtener el archivo como blob
+            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+            // En Safari y móviles, abrir en nueva ventana/pestaña
+            // Safari bloquea descargas programáticas, así que usamos nueva pestaña
+            if (isSafari || isMobile) {
+                const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
+                
+                if (isSafari) {
+                    // Instrucciones específicas para Safari
+                    UI.notify('PDF abierto en nueva pestaña. Para guardar: menú Archivo → Guardar como o usa el botón compartir ↗', 'info', 7000);
+                } else {
+                    // Instrucciones para otros móviles
+                    UI.notify('PDF abierto en nueva pestaña. Usa el botón compartir para guardarlo', 'info', 6000);
+                }
+                
+                return newWindow !== null;
+            }
+
+            // En desktop (Chrome, Firefox, Edge), intentar descarga directa
             const response = await fetch(url);
             if (!response.ok) {
                 throw new Error('No se pudo descargar el archivo');
             }
 
             const blob = await response.blob();
-            
-            // Crear URL temporal
             const blobUrl = URL.createObjectURL(blob);
-            
-            // Crear enlace temporal
             const link = document.createElement('a');
             link.href = blobUrl;
             link.download = filename || url.split('/').pop();
-            
-            // Forzar descarga en iOS Safari
-            if (navigator.userAgent.match(/(iPod|iPhone|iPad)/)) {
-                // En iOS, necesitamos añadir el enlace al DOM primero
-                document.body.appendChild(link);
-                link.style.display = 'none';
-            }
-            
-            // Simular clic
             link.click();
-            
+
             // Limpieza
             setTimeout(() => {
-                document.body.removeChild(link);
                 URL.revokeObjectURL(blobUrl);
             }, 100);
-            
+
             return true;
         } catch (error) {
-            console.error('Error al forzar descarga:', error);
+            console.error('Error al abrir PDF:', error);
             // Fallback: abrir en nueva pestaña
-            window.open(url, '_blank');
+            window.open(url, '_blank', 'noopener,noreferrer');
+            UI.notify('PDF abierto en nueva pestaña. Usa el botón compartir para guardarlo', 'info', 6000);
             return false;
         }
     }
@@ -2500,28 +2506,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     console.log('[Init] Producción Escrita C2 - Aplicación iniciada');
 
-    // Configurar descarga forzada de PDFs en móviles
+    // Configurar descarga de PDFs (nueva pestaña en Safari/móviles)
     document.querySelectorAll('a[href$=".pdf"]').forEach(link => {
         // Solo en enlaces que tienen el atributo download
         if (!link.hasAttribute('download')) return;
 
         link.addEventListener('click', async (e) => {
-            // Detectar dispositivos móviles
+            // Detectar dispositivos móviles o Safari
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
             
-            // Solo aplicar en móviles
-            if (!isMobile) return;
+            // Solo aplicar en móviles o Safari
+            if (!isMobile && !isSafari) return;
 
             e.preventDefault();
             
             const url = link.getAttribute('href');
             const filename = url.split('/').pop();
             
-            // Usar la función forceDownload
-            const success = await Utils.forceDownload(url, filename);
+            // Usar la función openPdfInNewWindow
+            const success = await Utils.openPdfInNewWindow(url, filename);
             
             if (success) {
-                console.log('[PDF Download] Descarga forzada iniciada para:', filename);
+                console.log('[PDF Download] PDF abierto en nueva ventana para:', filename);
             }
         });
     });
