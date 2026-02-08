@@ -207,74 +207,54 @@ router.post('/google', [
     body('registrationCode').optional().trim()
 ], async (req, res) => {
     try {
-        console.log('=== Google OAuth Request ===');
-        console.log('Has GOOGLE_CLIENT_ID:', !!GOOGLE_CLIENT_ID);
-        console.log('Has GOOGLE_CLIENT_SECRET:', !!GOOGLE_CLIENT_SECRET);
-        console.log('FRONTEND_URL:', FRONTEND_URL);
-
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
         }
 
         const { code, pendingToken, registrationCode } = req.body;
-        console.log('Request with:', { hasCode: !!code, hasPendingToken: !!pendingToken, hasRegistrationCode: !!registrationCode });
+        let googleId;
+        let email;
+        let name;
+        let avatarUrl;
 
-        let googleId, email, name, avatarUrl;
-
-        // Si viene con pendingToken, usar los datos guardados
+        // 1) Obtener identidad Google (desde code o desde pendingToken)
         if (pendingToken && registrationCode) {
-            console.log('Using pending token:', pendingToken);
-
             const pendingData = oauthPendingData.get(pendingToken);
             if (!pendingData) {
-                return res.status(400).json({
-                    error: 'Sesión expirada. Por favor, inicia sesión de nuevo.'
-                });
+                return res.status(400).json({ error: 'Sesión expirada. Por favor, inicia sesión de nuevo.' });
             }
-
-            // Verificar código de registro
             if (registrationCode !== REGISTRATION_CODE) {
-                return res.status(400).json({
-                    error: 'Código de registro incorrecto'
-                });
+                return res.status(400).json({ error: 'Código de registro incorrecto' });
             }
 
-            // Usar los datos guardados
             googleId = pendingData.googleId;
             email = pendingData.email;
             name = pendingData.name;
             avatarUrl = pendingData.avatarUrl;
-
-            // Limpiar datos temporales
             oauthPendingData.delete(pendingToken);
-
         } else if (code) {
-            console.log('Code received, exchanging for token...');
-
-            // 1. Intercambiar código por access token
             const tokenData = await getGoogleToken(code);
-
-            // 2. Obtener perfil del usuario
             const profile = await getGoogleProfile(tokenData.access_token);
 
-        const googleId = profile.id;
-        const email = profile.email;
-        const name = profile.given_name && profile.family_name
-            ? `${profile.given_name} ${profile.family_name}`
-            : profile.name || profile.email.split('@')[0];
-        const avatarUrl = profile.picture;
+            googleId = profile.id;
+            email = profile.email;
+            name = profile.given_name && profile.family_name
+                ? `${profile.given_name} ${profile.family_name}`
+                : profile.name || profile.email.split('@')[0];
+            avatarUrl = profile.picture;
+        } else {
+            return res.status(400).json({ error: 'Se requiere code o pendingToken' });
+        }
 
-        // 3. Buscar usuario existente por Google ID
+        // 2) Buscar usuario existente por Google ID
         let userResult = await query(
             'SELECT * FROM users WHERE provider = $1 AND provider_id = $2',
             ['google', googleId]
         );
 
-        // 4. Si existe usuario con Google ID → Login
         if (userResult.rows.length > 0) {
             const user = userResult.rows[0];
-
             if (!user.active) {
                 return res.status(403).json({ error: 'Cuenta desactivada' });
             }
@@ -296,13 +276,11 @@ router.post('/google', [
             });
         }
 
-        // 5. Buscar usuario con mismo email (account linking)
+        // 3) Account linking por email
         userResult = await query('SELECT * FROM users WHERE email = $1', [email]);
-
         if (userResult.rows.length > 0) {
             const user = userResult.rows[0];
 
-            // Si ya existe con email pero sin provider → Link Google
             if (!user.provider) {
                 await query(
                     'UPDATE users SET provider = $1, provider_id = $2, avatar_url = $3 WHERE id = $4',
@@ -326,7 +304,6 @@ router.post('/google', [
                 });
             }
 
-            // Usuario ya existe con otro provider
             return res.status(400).json({
                 error: 'Ya existe una cuenta con este email',
                 existingProvider: user.provider,
@@ -334,12 +311,10 @@ router.post('/google', [
             });
         }
 
-        // 6. Nuevo usuario → Verificar código de registro
+        // 4) Nuevo usuario: pedir (o validar) código de registro
         if (!registrationCode || registrationCode !== REGISTRATION_CODE) {
-            // Generar token temporal y guardar datos
-            const pendingToken = crypto.randomBytes(32).toString('hex');
-
-            oauthPendingData.set(pendingToken, {
+            const generatedPendingToken = crypto.randomBytes(32).toString('hex');
+            oauthPendingData.set(generatedPendingToken, {
                 googleId,
                 email,
                 name,
@@ -347,19 +322,17 @@ router.post('/google', [
                 timestamp: Date.now()
             });
 
-            console.log('Generated pending token for new user');
-
             return res.json({
                 message: 'Código de registro requerido',
                 needsRegistration: true,
                 needsRegistrationCode: true,
-                pendingToken,
+                pendingToken: generatedPendingToken,
                 email,
                 name
             });
         }
 
-        // 7. Crear nuevo usuario
+        // 5) Crear nuevo usuario
         const newUserResult = await query(`
             INSERT INTO users (email, name, provider, provider_id, avatar_url, role, level)
             VALUES ($1, $2, $3, $4, $5, 'student', 'C2')
@@ -368,7 +341,6 @@ router.post('/google', [
 
         const newUser = newUserResult.rows[0];
 
-        // Crear notificación de bienvenida
         await query(`
             INSERT INTO notifications (user_id, type, title, message)
             VALUES ($1, 'welcome', 'Bienvenido/a al curso', 'Te has registrado correctamente en el curso de Producción Escrita C2.')
@@ -376,7 +348,7 @@ router.post('/google', [
 
         const token = generateToken(newUser.id);
 
-        res.status(201).json({
+        return res.status(201).json({
             message: 'Registro con Google exitoso',
             user: {
                 id: newUser.id,
@@ -388,7 +360,6 @@ router.post('/google', [
             },
             token
         });
-        }
 
     } catch (error) {
         console.error('Error en OAuth Google:', error);
