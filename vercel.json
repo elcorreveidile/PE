@@ -18,6 +18,10 @@
     {
       "source": "/talleres/:path*",
       "destination": "/talleres/:path*.html"
+    },
+    {
+      "source": "/recursos/:path*",
+      "destination": "/recursos/:path*.html"
     }
   ],
   "headers": [
@@ -45,28 +49,6 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=0, must-revalidate"
-        }
-      ]
-    },
-    {
-      "source": "/(.*).pdf",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=86400"
-        },
-        {
-          "key": "Content-Type",
-          "value": "application/pdf"
-        }
-      ]
-    },
-    {
-      "source": "/recursos/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=3600"
         }
       ]
     },
