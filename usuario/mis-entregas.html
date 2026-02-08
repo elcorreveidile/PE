@@ -193,10 +193,6 @@
             }
 
             // Funciones globales
-            window.viewSubmission = (id) => {
-                PE.UI.notify('Función de ver detalles próximamente', 'info');
-            };
-
             window.editDraft = async (id) => {
                 const draft = await PE.Drafts.getById(id);
                 if (!draft) {

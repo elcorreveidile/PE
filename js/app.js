@@ -2141,6 +2141,68 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Formularios de entrega de actividades
     const submissionForms = document.querySelectorAll('[data-submission-form]');
     submissionForms.forEach(form => {
+        // Verificar si ya tiene botones de acción
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (submitButton && !form.querySelector('.btn-save-draft')) {
+            // Crear botón de guardar borrador
+            const saveDraftBtn = document.createElement('button');
+            saveDraftBtn.type = 'button';
+            saveDraftBtn.className = 'btn btn-outline btn-save-draft';
+            saveDraftBtn.textContent = 'Guardar borrador';
+
+            // Insertar antes del botón de enviar
+            const buttonContainer = submitButton.parentElement;
+            if (buttonContainer) {
+                buttonContainer.insertBefore(saveDraftBtn, submitButton);
+
+                // Event listener para guardar borrador
+                saveDraftBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+
+                    if (!AppState.user) {
+                        UI.notify('Debes iniciar sesión para guardar borradores', 'error');
+                        return;
+                    }
+
+                    const content = form.querySelector('[name="content"]')?.value ||
+                                   form.querySelector('.editor-content')?.innerHTML;
+
+                    if (!content || content.trim().length < 10) {
+                        UI.notify('El texto es demasiado corto para guardar', 'error');
+                        return;
+                    }
+
+                    try {
+                        // Verificar si ya existe un borrador para esta sesión y actividad
+                        const existingDrafts = await Drafts.getBySession(form.dataset.sessionId);
+                        const existingDraft = existingDrafts.find(d =>
+                            d.activityId === form.dataset.activityId &&
+                            d.userId === AppState.user.id
+                        );
+
+                        if (existingDraft) {
+                            // Actualizar borrador existente
+                            await Drafts.update(existingDraft.id, { content });
+                            UI.notify('Borrador actualizado correctamente', 'success');
+                        } else {
+                            // Crear nuevo borrador
+                            await Drafts.create({
+                                sessionId: form.dataset.sessionId,
+                                sessionTitle: `Sesión ${form.dataset.sessionId}`,
+                                activityId: form.dataset.activityId,
+                                activityTitle: form.dataset.activityTitle,
+                                content
+                            });
+                            UI.notify('Borrador guardado correctamente', 'success');
+                        }
+                    } catch (error) {
+                        console.error('Error al guardar borrador:', error);
+                        UI.notify('Error al guardar el borrador', 'error');
+                    }
+                });
+            }
+        }
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -2169,10 +2231,61 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (form.querySelector('.editor-content')) {
                     form.querySelector('.editor-content').innerHTML = '';
                 }
+
+                // Eliminar borrador si existe después de entregar
+                try {
+                    const existingDrafts = await Drafts.getBySession(form.dataset.sessionId);
+                    const existingDraft = existingDrafts.find(d =>
+                        d.activityId === form.dataset.activityId &&
+                        d.userId === AppState.user.id
+                    );
+                    if (existingDraft) {
+                        await Drafts.delete(existingDraft.id);
+                    }
+                } catch (draftError) {
+                    console.warn('No se pudo eliminar el borrador:', draftError);
+                }
             } catch (error) {
                 UI.notify('Error al realizar la entrega', 'error');
             }
         });
+
+        // Cargar borrador existente si hay uno
+        (async () => {
+            if (AppState.user) {
+                try {
+                    const existingDrafts = await Drafts.getBySession(form.dataset.sessionId);
+                    const existingDraft = existingDrafts.find(d =>
+                        d.activityId === form.dataset.activityId &&
+                        d.userId === AppState.user.id
+                    );
+
+                    if (existingDraft) {
+                        const contentField = form.querySelector('[name="content"]');
+                        const editorContent = form.querySelector('.editor-content');
+
+                        if (contentField) {
+                            contentField.value = existingDraft.content;
+                        }
+                        if (editorContent) {
+                            editorContent.innerHTML = existingDraft.content;
+                        }
+
+                        // Mostrar notificación de que hay un borrador cargado
+                        const draftNotice = document.createElement('div');
+                        draftNotice.className = 'alert alert-info';
+                        draftNotice.style.marginBottom = '1rem';
+                        draftNotice.innerHTML = `
+                            <strong>Borrador cargado:</strong> Tienes un borrador guardado del ${PE.Utils.formatDate(existingDraft.updatedAt, 'short')}.
+                            Puedes seguir editándolo o enviarlo cuando esté listo.
+                        `;
+                        form.insertBefore(draftNotice, form.firstChild);
+                    }
+                } catch (error) {
+                    console.warn('Error al cargar borrador:', error);
+                }
+            }
+        })();
     });
 
     console.log('[Init] Producción Escrita C2 - Aplicación iniciada');
