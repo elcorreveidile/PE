@@ -151,7 +151,8 @@
             async function loadData() {
                 try {
                     if (CONFIG.USE_API) {
-                        users = await API.get('/users');
+                        const response = await API.get('/users');
+                        users = Array.isArray(response) ? response : (response.users || response.data || []);
                         submissions = [];
                     } else {
                         users = Utils.storage.get('users') || [];
@@ -160,6 +161,7 @@
                     }
                 } catch (e) {
                     console.error('Error cargando datos:', e);
+                    PE.UI.notify('Error al cargar los datos: ' + e.message, 'error');
                     users = [];
                 }
                 // Contar solo estudiantes (excluir admin)
