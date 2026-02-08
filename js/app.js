@@ -1957,3 +1957,18 @@ window.PE = {
 
 // Compatibilidad retroactiva para handlers inline antiguos (Auth.*)
 window.Auth = Auth;
+
+// Shim defensivo: si alguna versión cacheada expone Auth sin loginWithApple/loginWithGoogle,
+// añadimos wrappers para mantener los botones OAuth funcionales.
+if (window.PE && window.PE.Auth) {
+    if (typeof window.PE.Auth.loginWithGoogle !== 'function' && typeof window.PE.Auth._initiateOAuthFlow === 'function') {
+        window.PE.Auth.loginWithGoogle = function() {
+            return this._initiateOAuthFlow('google');
+        };
+    }
+    if (typeof window.PE.Auth.loginWithApple !== 'function' && typeof window.PE.Auth._initiateOAuthFlow === 'function') {
+        window.PE.Auth.loginWithApple = function() {
+            return this._initiateOAuthFlow('apple');
+        };
+    }
+}
