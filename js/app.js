@@ -1082,6 +1082,230 @@ const Submissions = {
 };
 
 // ==========================================================================
+// Sistema de Borradores
+// ==========================================================================
+
+const Drafts = {
+    // Normalizar datos de borrador
+    normalize(draft) {
+        if (!draft || typeof draft !== 'object') return draft;
+
+        return {
+            ...draft,
+            userId: draft.user_id ?? draft.userId,
+            userName: draft.user_name ?? draft.userName,
+            sessionId: draft.session_id ?? draft.sessionId,
+            sessionTitle: draft.session_title ?? draft.sessionTitle,
+            activityId: draft.activity_id ?? draft.activityId,
+            activityTitle: draft.activity_title ?? draft.activityTitle,
+            wordCount: draft.word_count ?? draft.wordCount,
+            createdAt: draft.created_at ?? draft.createdAt,
+            updatedAt: draft.updated_at ?? draft.updatedAt
+        };
+    },
+
+    // Obtener todos los borradores del usuario actual
+    async getAll() {
+        await API.ensureAvailability();
+        const user = await Auth.checkSession();
+        if (!user) return [];
+
+        if (CONFIG.USE_API) {
+            try {
+                const response = await API.get(`/drafts?user_id=${user.id}`);
+                const drafts = response.drafts || response.data || response || [];
+                return Array.isArray(drafts) ? drafts.map(this.normalize) : [];
+            } catch (error) {
+                console.error('[Drafts] Error al obtener borradores:', error);
+                return [];
+            }
+        }
+
+        // Fallback localStorage
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('Backend no disponible');
+        }
+
+        const allDrafts = Utils.storage.get('drafts') || [];
+        return allDrafts.filter(d => d.userId === user.id);
+    },
+
+    // Obtener borrador por ID
+    async getById(draftId) {
+        await API.ensureAvailability();
+
+        if (CONFIG.USE_API) {
+            try {
+                const response = await API.get(`/drafts/${draftId}`);
+                const draft = response.draft || response.data || response;
+                return draft ? this.normalize(draft) : null;
+            } catch (error) {
+                console.error('[Drafts] Error al obtener borrador:', error);
+                return null;
+            }
+        }
+
+        // Fallback localStorage
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('Backend no disponible');
+        }
+
+        const drafts = Utils.storage.get('drafts') || [];
+        return drafts.find(d => d.id === draftId) || null;
+    },
+
+    // Obtener borradores por sesión
+    async getBySession(sessionId) {
+        const drafts = await this.getAll();
+        return drafts.filter(d => d.sessionId === sessionId);
+    },
+
+    // Crear nuevo borrador
+    async create(draftData) {
+        await API.ensureAvailability();
+        const user = await Auth.checkSession();
+        if (!user) throw new Error('Usuario no autenticado');
+
+        const draft = {
+            id: Utils.generateId(),
+            userId: user.id,
+            userName: user.name,
+            sessionId: draftData.sessionId,
+            sessionTitle: draftData.sessionTitle || '',
+            activityId: draftData.activityId || null,
+            activityTitle: draftData.activityTitle || '',
+            content: draftData.content || '',
+            wordCount: draftData.content ? draftData.content.split(/\s+/).filter(w => w.length > 0).length : 0,
+            status: 'draft',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+
+        if (CONFIG.USE_API) {
+            try {
+                const response = await API.post('/drafts', {
+                    user_id: draft.userId,
+                    session_id: draft.sessionId,
+                    session_title: draft.sessionTitle,
+                    activity_id: draft.activityId,
+                    activity_title: draft.activityTitle,
+                    content: draft.content
+                });
+                const created = response.draft || response.data || response;
+                return created ? this.normalize(created) : draft;
+            } catch (error) {
+                console.error('[Drafts] Error al crear borrador:', error);
+                // Fallback a localStorage
+            }
+        }
+
+        // Fallback localStorage
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('Backend no disponible');
+        }
+
+        const drafts = Utils.storage.get('drafts') || [];
+        drafts.push(draft);
+        Utils.storage.set('drafts', drafts);
+
+        console.log('[Drafts] Borrador creado:', draft);
+        return draft;
+    },
+
+    // Actualizar borrador existente
+    async update(draftId, updates) {
+        await API.ensureAvailability();
+
+        if (CONFIG.USE_API) {
+            try {
+                const response = await API.put(`/drafts/${draftId}`, {
+                    content: updates.content
+                });
+                const updated = response.draft || response.data || response;
+                return updated ? this.normalize(updated) : null;
+            } catch (error) {
+                console.error('[Drafts] Error al actualizar borrador:', error);
+                // Fallback a localStorage
+            }
+        }
+
+        // Fallback localStorage
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('Backend no disponible');
+        }
+
+        const drafts = Utils.storage.get('drafts') || [];
+        const index = drafts.findIndex(d => d.id === draftId);
+
+        if (index === -1) return null;
+
+        drafts[index] = {
+            ...drafts[index],
+            ...updates,
+            wordCount: updates.content ? updates.content.split(/\s+/).filter(w => w.length > 0).length : drafts[index].wordCount,
+            updatedAt: new Date().toISOString()
+        };
+
+        Utils.storage.set('drafts', drafts);
+        console.log('[Drafts] Borrador actualizado:', drafts[index]);
+        return drafts[index];
+    },
+
+    // Auto-guardar borrador (para uso con debounce)
+    async autoSave(draftId, content) {
+        console.log('[Drafts] Auto-guardando borrador...');
+        return await this.update(draftId, { content });
+    },
+
+    // Eliminar borrador
+    async delete(draftId) {
+        await API.ensureAvailability();
+
+        if (CONFIG.USE_API) {
+            try {
+                await API.delete(`/drafts/${draftId}`);
+                return { success: true };
+            } catch (error) {
+                console.error('[Drafts] Error al eliminar borrador:', error);
+                // Fallback a localStorage
+            }
+        }
+
+        // Fallback localStorage
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('Backend no disponible');
+        }
+
+        const drafts = Utils.storage.get('drafts') || [];
+        const filtered = drafts.filter(d => d.id !== draftId);
+        Utils.storage.set('drafts', filtered);
+
+        console.log('[Drafts] Borrador eliminado:', draftId);
+        return { success: true };
+    },
+
+    // Convertir borrador en entrega definitiva
+    async convertToSubmission(draftId) {
+        const draft = await this.getById(draftId);
+        if (!draft) throw new Error('Borrador no encontrado');
+
+        // Crear entrega con el contenido del borrador
+        const submission = await Submissions.create({
+            sessionId: draft.sessionId,
+            activityId: draft.activityId,
+            activityTitle: draft.activityTitle,
+            content: draft.content
+        });
+
+        // Eliminar borrador después de convertir
+        await this.delete(draftId);
+
+        console.log('[Drafts] Borrador convertido a entrega:', submission);
+        return submission;
+    }
+};
+
+// ==========================================================================
 // Datos del Curso
 // ==========================================================================
 
@@ -1967,6 +2191,7 @@ const APIConfig = {
 window.PE = {
     Auth,
     Submissions,
+    Drafts,
     CourseData,
     UI,
     TextEditor,

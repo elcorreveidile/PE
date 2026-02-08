@@ -44,20 +44,27 @@
                 </aside>
 
                 <div class="main-content">
-                    <h1>Mis entregas</h1>
-                    <p class="text-secondary mb-4">Historial de todas tus entregas y su estado de corrección</p>
+                    <h1>Mis entregas y borradores</h1>
+                    <p class="text-secondary mb-4">Gestiona tus borradores y entrega tus trabajos cuando estén listos</p>
 
                     <div class="card mb-4">
                         <div class="card-body">
-                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                                <button class="btn btn-sm btn-primary filter-btn active" data-filter="all">Todas</button>
-                                <button class="btn btn-sm btn-outline filter-btn" data-filter="pending">Pendientes</button>
-                                <button class="btn btn-sm btn-outline filter-btn" data-filter="reviewed">Corregidas</button>
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                                <span style="font-weight: 500;">Ver:</span>
+                                <button class="btn btn-sm btn-primary tab-btn active" data-tab="submissions">Entregas</button>
+                                <button class="btn btn-sm btn-outline tab-btn" data-tab="drafts">Borradores</button>
+                            </div>
+                            <div id="submissions-filters" style="margin-top: 1rem;">
+                                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                    <button class="btn btn-sm btn-primary filter-btn active" data-filter="all">Todas</button>
+                                    <button class="btn btn-sm btn-outline filter-btn" data-filter="pending">Pendientes</button>
+                                    <button class="btn btn-sm btn-outline filter-btn" data-filter="reviewed">Corregidas</button>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div id="submissions-list">
+                    <div id="content-area">
                         <div class="loader"></div>
                     </div>
                 </div>
@@ -88,6 +95,10 @@
                 return;
             }
 
+            let currentTab = 'submissions';
+            let currentFilter = 'all';
+
+            // Renderizar entregas
             async function renderSubmissions(filter = 'all') {
                 let submissions = await PE.Submissions.getByUser(user.id);
                 submissions = Array.isArray(submissions) ? submissions : [];
@@ -97,7 +108,7 @@
                     submissions = submissions.filter(s => s.status === 'reviewed');
                 }
 
-                const container = document.getElementById('submissions-list');
+                const container = document.getElementById('content-area');
 
                 if (submissions.length === 0) {
                     container.innerHTML = `
@@ -137,8 +148,128 @@
                 `).join('');
             }
 
-            renderSubmissions();
+            // Renderizar borradores
+            async function renderDrafts() {
+                const drafts = await PE.Drafts.getAll();
+                const container = document.getElementById('content-area');
 
+                if (drafts.length === 0) {
+                    container.innerHTML = `
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <p class="text-secondary">No tienes borradores guardados.</p>
+                                <p class="text-secondary" style="font-size: 0.9rem;">Los borradores te permiten guardar tu trabajo y continuar más tarde.</p>
+                                <a href="../sesiones/index.html" class="btn btn-primary">Ir a las sesiones</a>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = drafts.map(d => `
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                                <div>
+                                    <h4 style="margin: 0 0 0.5rem;">${PE.Utils.escapeHtml(d.activityTitle || 'Sin título')}</h4>
+                                    <p class="text-secondary mb-2">
+                                        Última edición: ${PE.Utils.formatDate(d.updatedAt, 'long')}
+                                    </p>
+                                    <span class="badge badge-info">Borrador</span>
+                                    <span class="text-secondary" style="margin-left: 1rem;">${d.wordCount} palabras</span>
+                                    <p class="text-secondary mt-2" style="font-size: 0.9rem;">
+                                        ${PE.Utils.escapeHtml(d.content.substring(0, 150))}${d.content.length > 150 ? '...' : ''}
+                                    </p>
+                                </div>
+                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                    <button class="btn btn-primary btn-sm" onclick="editDraft('${d.id}')">Continuar</button>
+                                    <button class="btn btn-success btn-sm" onclick="convertToSubmission('${d.id}')">Entregar</button>
+                                    <button class="btn btn-outline btn-sm" onclick="deleteDraft('${d.id}')">Eliminar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Funciones globales
+            window.viewSubmission = (id) => {
+                PE.UI.notify('Función de ver detalles próximamente', 'info');
+            };
+
+            window.editDraft = async (id) => {
+                const draft = await PE.Drafts.getById(id);
+                if (!draft) {
+                    PE.UI.notify('Error al cargar el borrador', 'error');
+                    return;
+                }
+
+                // Guardar contenido en sessionStorage y redirigir a la sesión
+                sessionStorage.setItem('draftContent', draft.content);
+                sessionStorage.setItem('draftId', draft.id);
+
+                PE.UI.notify('Borrador cargado. Puedes continuar editando.', 'success');
+
+                // Redirigir a la sesión correspondiente
+                setTimeout(() => {
+                    window.location.href = `/sesiones/sesion-${String(draft.sessionId).padStart(2, '0')}.html`;
+                }, 1000);
+            };
+
+            window.convertToSubmission = async (id) => {
+                if (!confirm('¿Estás seguro de que quieres entregar este borrador? Después de entregarlo, no podrás hacer más cambios.')) {
+                    return;
+                }
+
+                try {
+                    await PE.Drafts.convertToSubmission(id);
+                    PE.UI.notify('¡Borrador entregado correctamente!', 'success');
+                    renderDrafts();
+                } catch (error) {
+                    console.error('Error al convertir borrador:', error);
+                    PE.UI.notify('Error al entregar el borrador', 'error');
+                }
+            };
+
+            window.deleteDraft = async (id) => {
+                if (!confirm('¿Estás seguro de que quieres eliminar este borrador? Esta acción no se puede deshacer.')) {
+                    return;
+                }
+
+                try {
+                    await PE.Drafts.delete(id);
+                    PE.UI.notify('Borrador eliminado', 'success');
+                    renderDrafts();
+                } catch (error) {
+                    console.error('Error al eliminar borrador:', error);
+                    PE.UI.notify('Error al eliminar el borrador', 'error');
+                }
+            };
+
+            // Manejar tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-btn').forEach(b => {
+                        b.classList.remove('active', 'btn-primary');
+                        b.classList.add('btn-outline');
+                    });
+                    btn.classList.add('active', 'btn-primary');
+                    btn.classList.remove('btn-outline');
+
+                    currentTab = btn.dataset.tab;
+                    const filters = document.getElementById('submissions-filters');
+
+                    if (currentTab === 'drafts') {
+                        filters.style.display = 'none';
+                        renderDrafts();
+                    } else {
+                        filters.style.display = 'block';
+                        renderSubmissions(currentFilter);
+                    }
+                });
+            });
+
+            // Manejar filtros
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     document.querySelectorAll('.filter-btn').forEach(b => {
@@ -147,9 +278,16 @@
                     });
                     btn.classList.add('active', 'btn-primary');
                     btn.classList.remove('btn-outline');
-                    renderSubmissions(btn.dataset.filter);
+
+                    currentFilter = btn.dataset.filter;
+                    if (currentTab === 'submissions') {
+                        renderSubmissions(currentFilter);
+                    }
                 });
             });
+
+            // Cargar contenido inicial
+            renderSubmissions();
         });
 
         async function viewSubmission(id) {

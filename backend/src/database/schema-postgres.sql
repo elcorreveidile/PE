@@ -39,6 +39,20 @@ CREATE TABLE IF NOT EXISTS submissions (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS drafts (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    session_id INTEGER NOT NULL REFERENCES course_sessions(id) ON DELETE CASCADE,
+    session_title TEXT NOT NULL DEFAULT '',
+    activity_id TEXT,
+    activity_title TEXT NOT NULL DEFAULT '',
+    content TEXT NOT NULL DEFAULT '',
+    word_count INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'draft' CHECK (status IN ('draft')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS feedback (
     id SERIAL PRIMARY KEY,
     submission_id INTEGER NOT NULL UNIQUE REFERENCES submissions(id) ON DELETE CASCADE,
@@ -94,6 +108,8 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
 CREATE INDEX IF NOT EXISTS idx_submissions_user ON submissions(user_id);
 CREATE INDEX IF NOT EXISTS idx_submissions_session ON submissions(session_id);
 CREATE INDEX IF NOT EXISTS idx_submissions_status ON submissions(status);
+CREATE INDEX IF NOT EXISTS idx_drafts_user ON drafts(user_id);
+CREATE INDEX IF NOT EXISTS idx_drafts_session ON drafts(session_id);
 CREATE INDEX IF NOT EXISTS idx_feedback_submission ON feedback(submission_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_messages_to ON messages(to_user_id);
@@ -118,6 +134,12 @@ EXECUTE FUNCTION update_updated_at_column();
 DROP TRIGGER IF EXISTS set_submissions_updated_at ON submissions;
 CREATE TRIGGER set_submissions_updated_at
 BEFORE UPDATE ON submissions
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS set_drafts_updated_at ON drafts;
+CREATE TRIGGER set_drafts_updated_at
+BEFORE UPDATE ON drafts
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
