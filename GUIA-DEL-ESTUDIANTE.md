@@ -637,7 +637,7 @@ R: Sí, la plataforma requiere conexión a internet para acceder a los materiale
 
 **Para dudas sobre el contenido:**
 - Pregunta en clase
-- Contacta al profesor por email
+- Contacta al profesor por email: benitezl@go.ugr.es
 
 **Para problemas técnicos:**
 - Revisa esta guía primero
@@ -670,7 +670,7 @@ Accesibles desde la sección "Recursos" del menú principal:
 
 **Versión:** 1.0  
 **Última actualización:** Febrero 2026  
-**Contacto:** profesor@cognoscencia.com
+**Contacto:** benitezl@go.ugr.es
 
 ---
 

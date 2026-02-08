@@ -1184,7 +1184,7 @@ Si después de intentar estas soluciones el problema persiste:
 
 **Contacto:**
 - Soporte técnico: soporte@cognoscencia.com
-- Administrador del curso: profesor@cognoscencia.com
+- Administrador del curso: benitezl@go.ugr.es
 
 ---
 
@@ -1233,7 +1233,7 @@ El Panel de Administración de Producción Escrita C2 es una herramienta complet
 
 **Versión:** 1.0  
 **Última actualización:** Febrero 2026  
-**Contacto:** profesor@cognoscencia.com
+**Contacto:** benitezl@go.ugr.es
 
 ---
 
