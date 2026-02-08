@@ -62,7 +62,7 @@ app.use(cors(corsOptions));
 if (!IS_TEST) {
     const limiter = rateLimit({
         windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutos
-        max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // 100 peticiones por ventana
+        max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 300, // 300 peticiones por ventana (aumentado)
         message: {
             success: false,
             error: 'Demasiadas peticiones. Intenta de nuevo más tarde.'
@@ -75,7 +75,7 @@ if (!IS_TEST) {
     // Rate limiting más estricto para autenticación
     const authLimiter = rateLimit({
         windowMs: 15 * 60 * 1000, // 15 minutos
-        max: 10, // 10 intentos
+        max: 20, // 20 intentos (aumentado de 10)
         message: {
             success: false,
             error: 'Demasiados intentos de inicio de sesión. Intenta de nuevo en 15 minutos.'

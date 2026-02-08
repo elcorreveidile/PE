@@ -259,11 +259,26 @@
             const pending = submissions.filter(s => s.status === 'pending');
             const totalWords = submissions.reduce((sum, s) => sum + (s.word_count || s.wordCount || 0), 0);
             const avgWords = submissions.length > 0 ? Math.round(totalWords / submissions.length) : 0;
-            
-            // Calcular estadísticas de notas
-            const gradedSubmissions = submissions.filter(s => s.numericGrade !== null && s.numericGrade !== undefined);
-            const averageGrade = gradedSubmissions.length > 0 
-                ? (gradedSubmissions.reduce((sum, s) => sum + s.numericGrade, 0) / gradedSubmissions.length).toFixed(1)
+
+            // Calcular estadísticas de notas - manejar diferentes formatos de nota
+            const gradedSubmissions = submissions.filter(s => {
+                // Verificar si tiene nota numérica en numericGrade
+                if (typeof s.numericGrade === 'number' && !isNaN(s.numericGrade)) return true;
+                // Verificar si tiene nota en formato texto (ej: "8/10", "7.5", etc)
+                if (s.grade) {
+                    const gradeStr = String(s.grade).trim();
+                    // Extraer número de notas como "8/10", "7.5/10", "8", etc
+                    const match = gradeStr.match(/^(\d+\.?\d*)/);
+                    if (match) {
+                        s.numericGrade = parseFloat(match[1]);
+                        return true;
+                    }
+                }
+                return false;
+            });
+
+            const averageGrade = gradedSubmissions.length > 0
+                ? (gradedSubmissions.reduce((sum, s) => sum + (s.numericGrade || 0), 0) / gradedSubmissions.length).toFixed(1)
                 : '-';
 
             // Estadisticas principales

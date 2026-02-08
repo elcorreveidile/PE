@@ -97,6 +97,45 @@ const AppState = {
 const API = {
     _availabilityPromise: null,
     _isAvailable: false,
+    _cache: new Map(),
+    _cacheTimeout: 2 * 60 * 1000, // 2 minutos de caché
+
+    // Generar clave de caché
+    _getCacheKey(method, endpoint, data) {
+        return `${method}:${endpoint}:${JSON.stringify(data || '')}`;
+    },
+
+    // Obtener de caché
+    _getFromCache(key) {
+        const cached = this._cache.get(key);
+        if (cached && Date.now() - cached.timestamp < this._cacheTimeout) {
+            console.log(`[API Cache] Hit: ${key}`);
+            return cached.data;
+        }
+        if (cached) {
+            this._cache.delete(key); // Eliminar caché expirado
+        }
+        return null;
+    },
+
+    // Guardar en caché
+    _saveToCache(key, data) {
+        this._cache.set(key, {
+            data,
+            timestamp: Date.now()
+        });
+        // Limitar tamaño del caché
+        if (this._cache.size > 50) {
+            const firstKey = this._cache.keys().next().value;
+            this._cache.delete(firstKey);
+        }
+    },
+
+    // Limpiar caché
+    clearCache() {
+        this._cache.clear();
+        console.log('[API Cache] Caché limpiado');
+    },
 
     // Verificar si la API está disponible (con timeout)
     async checkAvailability() {
@@ -153,6 +192,17 @@ const API = {
 
     // Hacer petición a la API
     async request(endpoint, options = {}) {
+        const method = options.method || 'GET';
+        const cacheKey = this._getCacheKey(method, endpoint, options.body);
+
+        // Para peticiones GET, intentar obtener del caché primero
+        if (method === 'GET') {
+            const cached = this._getFromCache(cacheKey);
+            if (cached !== null) {
+                return cached;
+            }
+        }
+
         const url = `${CONFIG.API_URL}/api${endpoint}`;
         const headers = {
             'Content-Type': 'application/json',
@@ -197,6 +247,14 @@ const API = {
                 console.log('API confirmada disponible tras petición exitosa');
             }
 
+            // Guardar en caché solo peticiones GET exitosas
+            if (method === 'GET') {
+                this._saveToCache(cacheKey, data);
+            } else {
+                // Para POST/PUT/DELETE, limpiar caché relacionado
+                this._invalidateRelatedCache(endpoint);
+            }
+
             return data;
         } catch (error) {
             // Diferenciar entre errores de red y errores HTTP
@@ -206,6 +264,25 @@ const API = {
             }
             console.error('API Error:', error);
             throw error;
+        }
+    },
+
+    // Invalidar caché relacionado con un endpoint
+    _invalidateRelatedCache(endpoint) {
+        // Eliminar todas las entradas de caché que empiecen con el patrón relevante
+        const keysToDelete = [];
+        for (const key of this._cache.keys()) {
+            if (endpoint.includes('/submissions') && key.includes('submissions')) {
+                keysToDelete.push(key);
+            } else if (endpoint.includes('/users') && key.includes('users')) {
+                keysToDelete.push(key);
+            } else if (endpoint.includes('/drafts') && key.includes('drafts')) {
+                keysToDelete.push(key);
+            }
+        }
+        keysToDelete.forEach(key => this._cache.delete(key));
+        if (keysToDelete.length > 0) {
+            console.log(`[API Cache] Invalidadas ${keysToDelete.length} entradas por ${endpoint}`);
         }
     },
 
