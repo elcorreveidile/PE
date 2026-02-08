@@ -877,10 +877,10 @@ const Auth = {
                 AppState.token = response.token;
                 AppState.isAdmin = response.user.role === 'admin';
 
-                // Guardar en localStorage de forma síncrona
+                // Guardar en localStorage usando Utils.storage (que incluye el prefijo pe_c2_)
                 try {
-                    localStorage.setItem('currentUser', JSON.stringify(response.user));
-                    localStorage.setItem('token', response.token);
+                    Utils.storage.set('currentUser', response.user);
+                    Utils.storage.set('token', response.token);
                 } catch (e) {
                     console.error('Error guardando sesión:', e);
                 }
@@ -938,10 +938,10 @@ const Auth = {
                 AppState.token = response.token;
                 AppState.isAdmin = response.user.role === 'admin';
 
-                // Guardar en localStorage de forma síncrona
+                // Guardar en localStorage usando Utils.storage (que incluye el prefijo pe_c2_)
                 try {
-                    localStorage.setItem('currentUser', JSON.stringify(response.user));
-                    localStorage.setItem('token', response.token);
+                    Utils.storage.set('currentUser', response.user);
+                    Utils.storage.set('token', response.token);
                 } catch (e) {
                     console.error('Error guardando sesión:', e);
                 }
