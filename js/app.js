@@ -760,6 +760,18 @@ const Auth = {
 
             if (response.needsRegistration || response.needsRegistrationCode) {
                 // Usuario necesita completar registro con código
+                // Para Apple usamos un flujo más robusto: redirigir a registro con pendingToken.
+                if (provider === 'apple' && response.pendingToken) {
+                    const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+                    const url = new URL(`${window.location.origin}${basePath}/auth/registro.html`);
+                    url.searchParams.set('provider', provider);
+                    url.searchParams.set('pendingToken', response.pendingToken);
+                    if (response.email) url.searchParams.set('email', response.email);
+                    if (response.name) url.searchParams.set('name', response.name);
+                    window.location.href = url.toString();
+                    return;
+                }
+
                 this._showRegistrationModal(provider, response.email, response.name, response.pendingToken);
                 return;
             }

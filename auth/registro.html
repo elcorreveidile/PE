@@ -214,5 +214,87 @@
         };
     </script>
     <script src="../js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const provider = params.get('provider');
+            const pendingToken = params.get('pendingToken');
+            const prefillEmail = params.get('email');
+            const prefillName = params.get('name');
+
+            if (provider !== 'apple' || !pendingToken) {
+                return;
+            }
+
+            // Modo registro OAuth (Apple): reutilizamos el formulario, pero sin contraseña.
+            const title = document.querySelector('h1');
+            if (title) title.textContent = 'Completa tu registro';
+            const subtitle = document.querySelector('.auth-header p');
+            if (subtitle) subtitle.textContent = 'Introduce el código de inscripción para activar tu cuenta.';
+
+            const nameInput = document.getElementById('name');
+            const emailInput = document.getElementById('email');
+            if (prefillName && nameInput) {
+                nameInput.value = prefillName;
+                nameInput.disabled = true;
+            }
+            if (prefillEmail && emailInput) {
+                emailInput.value = prefillEmail;
+                emailInput.disabled = true;
+            }
+
+            // Ocultar campos de contraseña y nivel/motivación (no aplican para OAuth)
+            const passwordGroup = document.getElementById('password')?.closest('.form-group');
+            const confirmGroup = document.getElementById('confirmPassword')?.closest('.form-group');
+            if (passwordGroup) passwordGroup.style.display = 'none';
+            if (confirmGroup) confirmGroup.style.display = 'none';
+
+            const levelGroup = document.getElementById('level')?.closest('.form-group');
+            const motivationGroup = document.getElementById('motivation')?.closest('.form-group');
+            if (levelGroup) levelGroup.style.display = 'none';
+            if (motivationGroup) motivationGroup.style.display = 'none';
+
+            // Ajustar botón
+            const submitBtn = document.querySelector('#register-form button[type="submit"]');
+            if (submitBtn) submitBtn.textContent = 'Completar registro';
+
+            // Interceptar submit para completar OAuth en backend
+            const form = document.getElementById('register-form');
+            if (!form) return;
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const registrationCode = document.getElementById('registrationCode')?.value?.trim();
+                if (!registrationCode) {
+                    PE.UI.notify('Introduce el código de inscripción', 'error');
+                    return;
+                }
+
+                try {
+                    const response = await PE.API.post('/auth/oauth/apple', {
+                        pendingToken,
+                        registrationCode
+                    });
+
+                    if (response.user && response.token) {
+                        PE.Utils.storage.set('currentUser', response.user);
+                        PE.Utils.storage.set('token', response.token);
+                        PE.UI.notify(`Registro completado. Bienvenido/a, ${response.user.name}!`, 'success');
+
+                        setTimeout(() => {
+                            window.location.href = response.user.role === 'admin'
+                                ? '../admin/index.html'
+                                : '../usuario/dashboard.html';
+                        }, 500);
+                        return;
+                    }
+
+                    throw new Error(response.error || 'No se pudo completar el registro');
+                } catch (err) {
+                    PE.UI.notify(err.message || 'Error al completar el registro', 'error');
+                }
+            }, { once: true });
+        });
+    </script>
 </body>
 </html>
