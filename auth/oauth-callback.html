@@ -59,6 +59,9 @@
     </div>
 
     <script>
+        // Determinar el basePath para soportar despliegues en subcarpetas
+        const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+
         // Obtener parámetros de la URL
         const params = new URLSearchParams(window.location.search);
         const code = params.get('code');
@@ -90,9 +93,9 @@
             }
             titleEl.textContent = 'Error en la autenticación';
             messageEl.innerHTML = `<div class="error">${errorDescription || error}</div>`;
-            messageEl.innerHTML += '<p style="margin-top: 1rem;"><a href="/auth/login.html" style="color: white; text-decoration: underline;">Volver a intentar</a></p>';
+            messageEl.innerHTML += `<p style="margin-top:1rem;"><a href="${basePath}/auth/login.html" style="color: white; text-decoration: underline;">Volver a intentar</a></p>`;
             if (!window.opener) {
-                window.location.href = `/auth/login.html?provider=${encodeURIComponent(provider)}&oauth_error=${encodeURIComponent(errorDescription || error)}`;
+                window.location.href = `${basePath}/auth/login.html?provider=${encodeURIComponent(provider)}&oauth_error=${encodeURIComponent(errorDescription || error)}`;
             }
         } else if (!code) {
             try {
@@ -113,9 +116,9 @@
             }
             titleEl.textContent = 'Código no encontrado';
             messageEl.textContent = 'No se recibió el código de autorización. Por favor, intenta de nuevo.';
-            messageEl.innerHTML += '<p style="margin-top: 1rem;"><a href="/auth/login.html" style="color: white; text-decoration: underline;">Volver a intentar</a></p>';
+            messageEl.innerHTML += `<p style="margin-top: 1rem;"><a href="${basePath}/auth/login.html" style="color: white; text-decoration: underline;">Volver a intentar</a></p>`;
             if (!window.opener) {
-                window.location.href = `/auth/login.html?provider=${encodeURIComponent(provider)}&oauth_error=${encodeURIComponent('No se recibió código de autorización de Apple')}`;
+                window.location.href = `${basePath}/auth/login.html?provider=${encodeURIComponent(provider)}&oauth_error=${encodeURIComponent('No se recibió código de autorización de Apple')}`;
             }
         } else {
             try {
@@ -136,7 +139,7 @@
                 window.close();
             } else {
                 // No hay opener, redirigir con el código
-                window.location.href = `/auth/login.html?provider=${provider}&code=${encodeURIComponent(code)}`;
+                window.location.href = `${basePath}/auth/login.html?provider=${provider}&code=${encodeURIComponent(code)}`;
             }
         }
     </script>
