@@ -1954,3 +1954,6 @@ window.PE = {
     API,
     APIConfig
 };
+
+// Compatibilidad retroactiva para handlers inline antiguos (Auth.*)
+window.Auth = Auth;
