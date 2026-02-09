@@ -1476,6 +1476,107 @@ const Drafts = {
 };
 
 // ==========================================================================
+// Tareas para Estudiantes (Student Tasks)
+// ==========================================================================
+
+const StudentTasks = {
+    // Normalizar datos de tarea
+    normalize(task) {
+        if (!task || typeof task !== 'object') return task;
+
+        return {
+            ...task,
+            dueDate: task.due_date ?? task.dueDate,
+            assignmentType: task.assignment_type ?? task.assignmentType,
+            assignedStudents: task.assigned_students ?? task.assignedStudents,
+            sessionId: task.session_id ?? task.sessionId,
+            rubricId: task.rubric_id ?? task.rubricId,
+            createdBy: task.created_by ?? task.createdBy,
+            createdAt: task.created_at ?? task.createdAt,
+            updatedAt: task.updated_at ?? task.updatedAt
+        };
+    },
+
+    // Obtener tareas asignadas al estudiante actual
+    async getMine() {
+        await API.ensureAvailability();
+        if (CONFIG.USE_API) {
+            try {
+                const response = await API.get('/student-tasks/me');
+                const tasks = response.tasks || response.data || response || [];
+                return Array.isArray(tasks) ? tasks.map(this.normalize) : [];
+            } catch (error) {
+                console.error('[StudentTasks] Error al obtener tareas:', error);
+                return [];
+            }
+        }
+        // Fallback localStorage (no disponible en producción)
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('Backend no disponible. No se permiten tareas en modo local en producción.');
+        }
+        return [];
+    },
+
+    // Obtener tarea por ID
+    async getById(taskId) {
+        await API.ensureAvailability();
+        if (CONFIG.USE_API) {
+            try {
+                const response = await API.get(`/student-tasks/${taskId}`);
+                const task = response.task || response.data || response;
+                return task ? this.normalize(task) : null;
+            } catch (error) {
+                console.error('[StudentTasks] Error al obtener tarea:', error);
+                return null;
+            }
+        }
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('Backend no disponible');
+        }
+        return null;
+    },
+
+    // Crear submission para una tarea de estudiante
+    async submitTask(taskId, content) {
+        await API.ensureAvailability();
+        const user = await Auth.checkSession();
+        if (!user) throw new Error('Usuario no autenticado');
+
+        if (CONFIG.USE_API) {
+            const response = await API.post('/submissions', {
+                task_id: taskId,
+                content: content
+            });
+            const submission = response.submission || response.data || response;
+            return submission;
+        }
+
+        if (CONFIG.ENFORCE_API) {
+            throw new Error('Backend no disponible. No se permiten entregas en modo local en producción.');
+        }
+        throw new Error('Funcionalidad no disponible en modo local');
+    },
+
+    // Verificar si una tarea tiene una submission del usuario actual
+    async hasSubmitted(taskId) {
+        await API.ensureAvailability();
+        const user = await Auth.checkSession();
+        if (!user) return false;
+
+        if (CONFIG.USE_API) {
+            try {
+                const response = await API.get(`/submissions?task_id=${taskId}&user_id=${user.id}`);
+                const submissions = response.submissions || response.data || response || [];
+                return Array.isArray(submissions) && submissions.length > 0;
+            } catch {
+                return false;
+            }
+        }
+        return false;
+    }
+};
+
+// ==========================================================================
 // Datos del Curso
 // ==========================================================================
 
@@ -2625,6 +2726,7 @@ window.PE = {
     Auth,
     Submissions,
     Drafts,
+    StudentTasks,
     CourseData,
     UI,
     TextEditor,

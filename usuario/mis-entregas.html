@@ -53,6 +53,7 @@
                                 <span style="font-weight: 500;">Ver:</span>
                                 <button class="btn btn-sm btn-primary tab-btn active" data-tab="submissions">Entregas</button>
                                 <button class="btn btn-sm btn-outline tab-btn" data-tab="drafts">Borradores</button>
+                                <button class="btn btn-sm btn-outline tab-btn" data-tab="tasks">Tareas asignadas</button>
                             </div>
                             <div id="submissions-filters" style="margin-top: 1rem;">
                                 <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
@@ -192,6 +193,69 @@
                 `).join('');
             }
 
+            // Renderizar tareas asignadas por el profesor
+            async function renderTasks() {
+                const tasks = await PE.StudentTasks.getMine();
+                const container = document.getElementById('content-area');
+
+                if (tasks.length === 0) {
+                    container.innerHTML = `
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <p class="text-secondary">No tienes tareas asignadas por el profesor.</p>
+                                <p class="text-secondary" style="font-size: 0.9rem;">Cuando el profesor te asigne una tarea, aparecerá aquí.</p>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Obtener submissions del usuario para verificar qué tareas ya han sido entregadas
+                const submissions = await PE.Submissions.getByUser(user.id);
+                const submittedTaskIds = new Set(
+                    submissions
+                        .filter(s => s.taskId)
+                        .map(s => String(s.taskId))
+                );
+
+                container.innerHTML = tasks.map(t => {
+                    const hasSubmitted = submittedTaskIds.has(String(t.id));
+                    const dueDate = t.dueDate ? new Date(t.dueDate) : null;
+                    const isOverdue = dueDate && dueDate < new Date();
+
+                    return `
+                        <div class="card mb-3" style="${isOverdue && !hasSubmitted ? 'border-left: 4px solid var(--danger-color);' : ''}">
+                            <div class="card-body">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                                    <div style="flex: 1; min-width: 250px;">
+                                        <h4 style="margin: 0 0 0.5rem;">${PE.Utils.escapeHtml(t.title)}</h4>
+                                        <p class="text-secondary mb-2">${PE.Utils.escapeHtml(t.description)}</p>
+                                        ${dueDate ? `
+                                            <p class="text-secondary mb-2">
+                                                📅 Fecha límite: ${PE.Utils.formatDate(t.dueDate, 'long')}
+                                                ${isOverdue && !hasSubmitted ? '<span class="badge badge-danger ml-2">Vencida</span>' : ''}
+                                            </p>
+                                        ` : ''}
+                                        ${t.rubricId ? `<span class="badge badge-info">Con rúbrica</span>` : ''}
+                                        ${hasSubmitted ? '<span class="badge badge-success ml-2">Entregada</span>' : ''}
+                                    </div>
+                                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                        ${hasSubmitted ? `
+                                            <button class="btn btn-outline btn-sm" onclick="viewTaskSubmission('${t.id}')">Ver entrega</button>
+                                        ` : `
+                                            <button class="btn btn-primary btn-sm" onclick="submitTask('${t.id}')">Entregar tarea</button>
+                                        `}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Hacer renderTasks accesible globalmente
+            window.renderTasks = renderTasks;
+
             // Funciones globales
             window.editDraft = async (id) => {
                 const draft = await PE.Drafts.getById(id);
@@ -258,6 +322,9 @@
                     if (currentTab === 'drafts') {
                         filters.style.display = 'none';
                         renderDrafts();
+                    } else if (currentTab === 'tasks') {
+                        filters.style.display = 'none';
+                        renderTasks();
                     } else {
                         filters.style.display = 'block';
                         renderSubmissions(currentFilter);
@@ -311,6 +378,91 @@
                 `, [{ text: 'Cerrar' }]);
             }
         }
+
+        // Función para entregar una tarea asignada
+        window.submitTask = async (taskId) => {
+            const task = await PE.StudentTasks.getById(taskId);
+            if (!task) {
+                PE.UI.notify('Error al cargar la tarea', 'error');
+                return;
+            }
+
+            // Crear modal con textarea para el contenido
+            const modalId = 'submit-task-modal';
+            const modalHtml = `
+                <div style="margin-bottom: 1rem;">
+                    <h4 style="margin: 0 0 0.5rem;">${PE.Utils.escapeHtml(task.title)}</h4>
+                    <p class="text-secondary mb-2">${PE.Utils.escapeHtml(task.description)}</p>
+                    ${task.dueDate ? `<p class="text-secondary">📅 Fecha límite: ${PE.Utils.formatDate(task.dueDate, 'long')}</p>` : ''}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tu respuesta:</label>
+                    <textarea id="task-content" class="form-control" rows="8" placeholder="Escribe tu respuesta aquí..." required></textarea>
+                    <small class="text-secondary">Mínimo 10 palabras</small>
+                </div>
+                <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem;">
+                    <button type="button" class="btn btn-outline" onclick="PE.UI.closeModal()">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmSubmitTask('${taskId}')">Entregar tarea</button>
+                </div>
+            `;
+
+            PE.UI.showModal('Entregar Tarea', modalHtml);
+        };
+
+        // Función para confirmar la entrega de la tarea
+        window.confirmSubmitTask = async (taskId) => {
+            const content = document.getElementById('task-content').value.trim();
+            const wordCount = content.split(/\s+/).filter(w => w.length > 0).length;
+
+            if (wordCount < 10) {
+                PE.UI.notify('La respuesta debe tener al menos 10 palabras', 'error');
+                return;
+            }
+
+            try {
+                await PE.StudentTasks.submitTask(taskId, content);
+                PE.UI.closeModal();
+                PE.UI.notify('¡Tarea entregada correctamente!', 'success');
+                // Recargar las tareas
+                const tasks = await PE.StudentTasks.getMine();
+                renderTasks();
+            } catch (error) {
+                console.error('Error al entregar tarea:', error);
+                PE.UI.notify('Error al entregar la tarea: ' + error.message, 'error');
+            }
+        };
+
+        // Función para ver la entrega de una tarea
+        window.viewTaskSubmission = async (taskId) => {
+            const currentUser = PE.Auth.getCurrentUser();
+            if (!currentUser) return;
+
+            const task = await PE.StudentTasks.getById(taskId);
+            if (!task) {
+                PE.UI.notify('Error al cargar la tarea', 'error');
+                return;
+            }
+
+            const submissions = await PE.Submissions.getByUser(currentUser.id);
+            const submission = submissions.find(s => String(s.taskId) === String(taskId));
+
+            if (submission) {
+                PE.UI.showModal(task.title, `
+                    <p class="text-secondary">Entregado: ${PE.Utils.formatDate(submission.createdAt, 'long')}</p>
+                    <div style="background: var(--bg-light); padding: 1rem; border-radius: 0.5rem; max-height: 300px; overflow-y: auto;">
+                        ${submission.content}
+                    </div>
+                    <p class="text-secondary mt-2">${submission.wordCount} palabras</p>
+                    ${submission.feedback ? `
+                        <div class="alert alert-success mt-3">
+                            <strong>Retroalimentación del profesor:</strong>
+                            <p style="margin: 0.5rem 0 0;">${PE.Utils.escapeHtml(submission.feedback)}</p>
+                            ${submission.grade ? `<p style="margin: 0.5rem 0 0;"><strong>Calificación:</strong> ${submission.grade}</p>` : ''}
+                        </div>
+                    ` : '<p class="text-secondary mt-3">Pendiente de corrección</p>'}
+                `, [{ text: 'Cerrar' }]);
+            }
+        };
     </script>
 </body>
 </html>
