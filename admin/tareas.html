@@ -758,10 +758,19 @@
                 .filter(id => id && id !== '')
                 .map(id => parseInt(id, 10));
 
+            // Convertir fecha local a ISO 8601
+            let dueDate = formData.get('dueDate');
+            if (dueDate) {
+                // datetime-local devuelve formato "2026-02-14T04:42"
+                // Necesitamos convertirlo a ISO 8601 completo
+                const date = new Date(dueDate);
+                dueDate = date.toISOString();
+            }
+
             const taskData = {
                 title: formData.get('title'),
                 description: formData.get('description'),
-                dueDate: formData.get('dueDate'),
+                dueDate: dueDate,
                 assignmentType: formData.get('assignmentType'),
                 assignedStudents: assignedStudents,
                 sessionId: sessionId,
