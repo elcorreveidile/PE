@@ -129,14 +129,64 @@
                     ts: Date.now()
                 }));
             } catch {}
+
             // Enviar el código al opener (ventana padre que abrió el popup)
+            // con handshake de confirmación para asegurar recepción
             if (window.opener) {
+                let messageReceived = false;
+                let attempts = 0;
+                const maxAttempts = 50; // 5 segundos máximo (50 * 100ms)
+
+                // Configurar listener para confirmación de recepción
+                const confirmationListener = (event) => {
+                    if (event.data && event.data.type === 'oauth-callback-ack' && event.data.provider === provider) {
+                        messageReceived = true;
+                        window.close();
+                    }
+                };
+                window.addEventListener('message', confirmationListener);
+
+                // Enviar el mensaje inicial
                 window.opener.postMessage({
                     type: 'oauth-callback',
                     provider,
                     code
                 }, '*');
-                window.close();
+
+                // Reintentar si no hay confirmación (cada 100ms)
+                const retryInterval = setInterval(() => {
+                    attempts++;
+
+                    if (messageReceived) {
+                        clearInterval(retryInterval);
+                        return;
+                    }
+
+                    if (attempts >= maxAttempts) {
+                        // Timeout: cerrar de todos modos después de 5 segundos
+                        clearInterval(retryInterval);
+                        window.removeEventListener('message', confirmationListener);
+                        window.close();
+                        return;
+                    }
+
+                    // Reenviar el mensaje
+                    try {
+                        if (window.opener && !window.opener.closed) {
+                            window.opener.postMessage({
+                                type: 'oauth-callback',
+                                provider,
+                                code
+                            }, '*');
+                        }
+                    } catch (e) {
+                        // Opener ya no está accesible
+                        clearInterval(retryInterval);
+                        window.removeEventListener('message', confirmationListener);
+                        window.close();
+                    }
+                }, 100);
+
             } else {
                 // No hay opener, redirigir con el código
                 window.location.href = `${basePath}/auth/login.html?provider=${provider}&code=${encodeURIComponent(code)}`;

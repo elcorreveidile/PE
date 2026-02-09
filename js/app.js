@@ -826,13 +826,26 @@ const Auth = {
         const messageHandler = (event) => {
             // Verificar origen (en producción, restringir a tu dominio)
             if (event.data && event.data.type === 'oauth-callback' && event.data.provider === provider) {
+                // Enviar confirmación de recepción al popup (handshake)
+                if (event.source && this._oauthWindow && !this._oauthWindow.closed) {
+                    try {
+                        event.source.postMessage({
+                            type: 'oauth-callback-ack',
+                            provider: provider,
+                            received: true
+                        }, event.origin || '*');
+                    } catch (e) {
+                        console.warn('[OAuth] Error enviando confirmación al popup:', e);
+                    }
+                }
+
                 consumePayload({
                     provider: event.data.provider,
                     code: event.data.code,
                     error: event.data.error
                 });
             }
-        };
+        }.bind(this);
 
         const storageHandler = (event) => {
             if (event.key !== this._oauthStorageKey || !event.newValue) return;
