@@ -429,6 +429,14 @@
             document.getElementById('stat-admin-completed').textContent = completed;
             document.getElementById('stat-admin-pending').textContent = pending;
 
+            // Obtener rúbricas para mostrar nombre
+            let rubrics = [];
+            try {
+                rubrics = JSON.parse(localStorage.getItem('pe_rubrics') || '[]');
+            } catch (e) {
+                console.log('No se pudieron cargar las rúbricas');
+            }
+
             if (filtered.length === 0) {
                 container.innerHTML = `
                     <div class="text-center text-secondary">
@@ -461,6 +469,15 @@
                     completed: 'Completada'
                 };
 
+                // Obtener nombre de la rúbrica si está vinculada
+                let rubricBadge = '';
+                if (task.rubricId) {
+                    const rubric = rubrics.find(r => r.id === task.rubricId);
+                    if (rubric) {
+                        rubricBadge = `<span class="badge badge-primary" style="background: var(--accent-color);">📊 ${PE.Utils.escapeHtml(rubric.name)}</span>`;
+                    }
+                }
+
                 return `
                     <div class="task-card" style="border-left: 4px solid var(--${priorityColors[task.priority]}-color);">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
@@ -469,9 +486,11 @@
                                     <strong>${PE.Utils.escapeHtml(task.title)}</strong>
                                     <span class="badge badge-${priorityColors[task.priority]}">${priorityLabels[task.priority]}</span>
                                     <span class="badge badge-${statusColors[task.status]}">${statusLabels[task.status]}</span>
+                                    ${rubricBadge}
                                 </div>
                                 <p class="text-secondary mb-0" style="font-size: 0.875rem;">${PE.Utils.escapeHtml(task.description)}</p>
                                 ${task.dueDate ? `<p class="text-secondary mb-0" style="font-size: 0.8rem; margin-top: 0.5rem;">📅 Fecha límite: ${new Date(task.dueDate).toLocaleDateString('es-ES')}</p>` : ''}
+                                ${task.sessionId ? `<p class="text-secondary mb-0" style="font-size: 0.8rem;">📚 Sesión ${task.sessionId} relacionada</p>` : ''}
                             </div>
                             <div style="display: flex; gap: 0.5rem;">
                                 ${task.status !== 'completed' ?
@@ -492,6 +511,18 @@
             const sessions = PE.CourseData.sessions;
             const sessionsOptions = sessions.map(s =>
                 `<option value="${s.id}">Sesión ${s.id}: ${s.title}</option>`
+            ).join('');
+
+            // Obtener rúbricas disponibles
+            let rubrics = [];
+            try {
+                rubrics = JSON.parse(localStorage.getItem('pe_rubrics') || '[]');
+            } catch (e) {
+                console.log('No se pudieron cargar las rúbricas');
+            }
+
+            const rubricsOptions = rubrics.map(r =>
+                `<option value="${r.id}">${PE.Utils.escapeHtml(r.name)} (${r.maxPoints} pts)</option>`
             ).join('');
 
             PE.UI.showModal('Crear nueva tarea administrativa', `
@@ -523,6 +554,16 @@
                             ${sessionsOptions}
                         </select>
                     </div>
+                    <div class="form-group">
+                        <label class="form-label">Rúbrica de evaluación (opcional)</label>
+                        <select name="rubricId" class="form-control form-select">
+                            <option value="">Sin rúbrica</option>
+                            ${rubricsOptions}
+                        </select>
+                        <p class="text-secondary" style="font-size: 0.8rem; margin-top: 0.25rem;">
+                            Vincula una rúbrica para usarla al corregir las entregas de esta tarea.
+                        </p>
+                    </div>
                     <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-md);">
                         <button type="submit" class="btn btn-primary">Crear tarea</button>
                         <button type="button" class="btn btn-outline" onclick="PE.UI.closeModal()">Cancelar</button>
@@ -544,6 +585,7 @@
                 status: 'pending',
                 dueDate: formData.get('dueDate') || null,
                 sessionId: formData.get('sessionId') || null,
+                rubricId: formData.get('rubricId') || null,
                 createdAt: new Date().toISOString(),
                 createdBy: 'admin'
             };
