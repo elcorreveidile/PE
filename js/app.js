@@ -823,7 +823,7 @@ const Auth = {
             return true;
         };
 
-        const messageHandler = (event) => {
+        const messageHandler = function(event) {
             // Verificar origen (en producción, restringir a tu dominio)
             if (event.data && event.data.type === 'oauth-callback' && event.data.provider === provider) {
                 // Enviar confirmación de recepción al popup (handshake)
