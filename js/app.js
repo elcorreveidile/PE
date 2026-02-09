@@ -2764,3 +2764,59 @@ if (window.PE && window.PE.Auth) {
         };
     }
 }
+
+// ==========================================================================
+// Flecha de scroll (subir arriba) - disponible en todo el sitio
+// ==========================================================================
+
+function initScrollToTopArrow() {
+    if (document.getElementById('pe-scroll-top')) return;
+
+    const btn = document.createElement('button');
+    btn.id = 'pe-scroll-top';
+    btn.type = 'button';
+    btn.setAttribute('aria-label', 'Subir arriba');
+    btn.title = 'Subir arriba';
+    btn.textContent = '↑';
+
+    // Estilos inline para no depender de CSS por página.
+    btn.style.cssText = `
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        width: 44px;
+        height: 44px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        border: 1px solid rgba(0,0,0,0.08);
+        background: white;
+        color: var(--primary-color);
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1;
+        cursor: pointer;
+        box-shadow: 0 10px 22px rgba(0,0,0,0.15);
+        z-index: 2500;
+    `;
+
+    btn.addEventListener('click', () => {
+        try {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch {
+            window.scrollTo(0, 0);
+        }
+    });
+
+    const toggle = () => {
+        const y = window.scrollY || document.documentElement.scrollTop || 0;
+        btn.style.display = y > 450 ? 'flex' : 'none';
+    };
+
+    window.addEventListener('scroll', toggle, { passive: true });
+    document.body.appendChild(btn);
+    toggle();
+}
+
+document.addEventListener('DOMContentLoaded', initScrollToTopArrow);
