@@ -480,7 +480,7 @@
             const s = allSubmissions.find(sub => String(sub.id) === targetId);
             const label = s ? `${s.activityTitle || 'Entrega'} (${s.userName || 'Estudiante'})` : `Entrega ${targetId}`;
 
-            if (!confirm(`¿Eliminar ${label}? Esta acción no se puede deshacer.`)) return;
+            if (!confirm(`¿Eliminar ${label} de la vista del profesor? El estudiante seguirá viendo su entrega y su nota.`)) return;
 
             try {
                 const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
@@ -497,7 +497,7 @@
                 allSubmissions = allSubmissions.filter(sub => String(sub.id) !== targetId);
                 refreshStats();
                 applyFilters();
-                PE.UI.notify('Entrega eliminada', 'success');
+                PE.UI.notify('Entrega archivada', 'success');
             } catch (e) {
                 console.error('Error eliminando entrega:', e);
                 PE.UI.notify('Error al eliminar la entrega', 'error');

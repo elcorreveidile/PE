@@ -72,11 +72,12 @@ router.get('/', authenticateToken, [
     queryValidator('session_id').optional().isInt(),
     queryValidator('user_id').optional().isInt(),
     queryValidator('task_id').optional().isString(),
+    queryValidator('include_archived').optional().isBoolean().toBoolean(),
     queryValidator('limit').optional().isInt({ min: 1, max: 100 }),
     queryValidator('offset').optional().isInt({ min: 0 })
 ], async (req, res) => {
     try {
-        const { status, session_id, user_id, task_id, limit = 50, offset = 0 } = req.query;
+        const { status, session_id, user_id, task_id, include_archived, limit = 50, offset = 0 } = req.query;
 
         let whereClause = [];
         let params = [];
@@ -89,6 +90,11 @@ router.get('/', authenticateToken, [
         } else if (user_id) {
             whereClause.push(`s.user_id = $${paramIndex++}`);
             params.push(user_id);
+        }
+
+        // Para el profesor: ocultar por defecto las entregas archivadas (soft-delete) sin afectar al estudiante.
+        if (req.user.role === 'admin' && !include_archived) {
+            whereClause.push(`COALESCE(s.archived_by_admin, false) = false`);
         }
 
         if (status && status !== 'all') {
@@ -160,6 +166,15 @@ router.get('/', authenticateToken, [
                     hasMore: false
                 },
                 warning: 'DB missing submissions.task_id'
+            });
+        }
+        // Compatibilidad: si la BD aun no tiene columnas de archivado, no romper.
+        if (error && error.code === '42703' && /archived_by_admin/i.test(error.message || '')) {
+            console.warn('[Submissions] BD sin submissions.archived_by_admin; ignorando filtro de archivadas');
+            // Reintentar sin la condición de archivado: forzar include_archived=true y recomponer vía llamada recursiva NO es viable aquí.
+            // Mejor devolver error claro para aplicar migración.
+            return res.status(500).json({
+                error: 'Base de datos desactualizada: falta migración de archivado de entregas (submissions.archived_by_admin)'
             });
         }
         console.error('Error al obtener entregas:', error);
@@ -467,7 +482,9 @@ router.post('/:id/feedback', authenticateToken, requireAdmin, [
 
 /**
  * DELETE /api/submissions/:id
- * Eliminar entrega (solo admin o propietario si esta pendiente)
+ * "Eliminar" entrega:
+ * - Admin: archivado (soft-delete) para que NO desaparezca al estudiante ni se pierdan calificaciones.
+ * - Estudiante: borrado real solo si es suya y está pendiente.
  */
 router.delete('/:id', authenticateToken, async (req, res) => {
     try {
@@ -481,19 +498,37 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 
         const submission = submissionResult.rows[0];
 
-        // Admin puede eliminar cualquiera, usuario solo las suyas si estan pendientes
-        if (req.user.role !== 'admin') {
-            if (submission.user_id !== req.user.id) {
-                return res.status(403).json({ error: 'No puedes eliminar esta entrega' });
+        // Admin: archivar para no perder feedback/nota del estudiante.
+        if (req.user.role === 'admin') {
+            try {
+                await query(`
+                    UPDATE submissions
+                    SET archived_by_admin = true,
+                        archived_at = CURRENT_TIMESTAMP
+                    WHERE id = $1
+                `, [submissionId]);
+            } catch (archiveError) {
+                if (archiveError && archiveError.code === '42703' && /archived_by_admin/i.test(archiveError.message || '')) {
+                    return res.status(500).json({
+                        error: 'Base de datos desactualizada: aplica la migración submissions.archived_by_admin antes de archivar entregas.'
+                    });
+                }
+                throw archiveError;
             }
-            if (submission.status === 'reviewed') {
-                return res.status(400).json({ error: 'No puedes eliminar una entrega corregida' });
-            }
+
+            return res.json({ message: 'Entrega archivada para el profesor (el estudiante la seguirá viendo)' });
+        }
+
+        // Estudiante: solo puede borrar las suyas si están pendientes (borrado real).
+        if (submission.user_id !== req.user.id) {
+            return res.status(403).json({ error: 'No puedes eliminar esta entrega' });
+        }
+        if (submission.status === 'reviewed') {
+            return res.status(400).json({ error: 'No puedes eliminar una entrega corregida' });
         }
 
         await query('DELETE FROM submissions WHERE id = $1', [submissionId]);
-
-        res.json({ message: 'Entrega eliminada correctamente' });
+        return res.json({ message: 'Entrega eliminada correctamente' });
 
     } catch (error) {
         console.error('Error al eliminar entrega:', error);
