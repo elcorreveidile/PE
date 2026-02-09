@@ -146,6 +146,7 @@
         let allStudents = [];
         let allSubmissions = [];
         let allUsers = [];
+        let rubricMaxById = {};
 
         document.addEventListener('DOMContentLoaded', async () => {
             const user = await PE.Auth.checkSession();
@@ -174,18 +175,30 @@
                 allUsers = Array.isArray(allUsers) ? allUsers.filter(u => (u.role || 'student') !== 'admin') : [];
                 console.log('Usuarios cargados:', allUsers.length);
 
+                // Cargar rúbricas para normalizar notas a escala /10 cuando aplique
+                rubricMaxById = {};
+                try {
+                    const rubrics = await PE.API.get('/rubrics');
+                    (Array.isArray(rubrics) ? rubrics : []).forEach(r => {
+                        if (r && r.id) rubricMaxById[String(r.id)] = parseFloat(r.maxPoints) || 0;
+                    });
+                } catch (e) {
+                    console.warn('[Boletines] No se pudieron cargar rúbricas:', e?.message || e);
+                }
+
                 // Calcular datos de estudiantes
                 allStudents = allUsers.map(user => {
                     const userSubmissions = allSubmissions.filter(s =>
                         String(s.user_id || s.userId) === String(user.id)
                     );
-                    const gradedSubmissions = userSubmissions.filter(s => {
-                        const gradeNum = parseFloat(s.numeric_grade);
-                        return !isNaN(gradeNum);
-                    });
+                    const reviewedSubmissions = userSubmissions.filter(s => (s.status || '').toString() === 'reviewed');
 
-                    const avgGrade = gradedSubmissions.length > 0
-                        ? gradedSubmissions.reduce((sum, s) => sum + parseFloat(s.numeric_grade || 0), 0) / gradedSubmissions.length
+                    const gradedReviewed = reviewedSubmissions
+                        .map(s => ({ submission: s, ...calcGradeForSubmission(s) }))
+                        .filter(x => x.hasGrade && x.value10 !== null && !Number.isNaN(x.value10));
+
+                    const avgGrade = gradedReviewed.length > 0
+                        ? gradedReviewed.reduce((sum, x) => sum + x.value10, 0) / gradedReviewed.length
                         : null;
 
                     const totalWords = userSubmissions.reduce((sum, s) => 
@@ -200,7 +213,7 @@
                     return {
                         ...user,
                         submissions: userSubmissions.length,
-                        gradedSubmissions: gradedSubmissions.length,
+                        gradedSubmissions: gradedReviewed.length,
                         avgGrade,
                         totalWords,
                         progressPercent,
@@ -230,6 +243,64 @@
                 
                 PE.UI.notify(`Error: ${error.message}`, 'error');
             }
+        }
+
+        function parseJsonMaybe(value) {
+            if (!value) return null;
+            if (typeof value === 'object') return value;
+            if (typeof value !== 'string') return null;
+            try { return JSON.parse(value); } catch { return null; }
+        }
+
+        function qualitativeTo10(grade) {
+            const v = String(grade || '').trim().toLowerCase();
+            if (!v) return null;
+            if (v === 'excelente') return 9.5;
+            if (v === 'muy bien') return 8.5;
+            if (v === 'bien') return 7.5;
+            if (v === 'suficiente') return 6.0;
+            if (v === 'necesita mejorar') return 4.5;
+            return null;
+        }
+
+        function sumCriterionScores(scores) {
+            const obj = parseJsonMaybe(scores);
+            if (!obj || typeof obj !== 'object') return null;
+            let total = 0;
+            let any = false;
+            for (const v of Object.values(obj)) {
+                const n = parseFloat(v);
+                if (!Number.isNaN(n)) {
+                    total += n;
+                    any = true;
+                }
+            }
+            return any ? total : null;
+        }
+
+        // Devuelve la nota en escala /10 si se puede calcular.
+        function calcGradeForSubmission(s) {
+            const rubricId = s.rubricId ?? s.rubric_id;
+            const maxPoints = rubricId ? (rubricMaxById[String(rubricId)] || 0) : 0;
+
+            const numeric = parseFloat(s.numericGrade ?? s.numeric_grade);
+            if (!Number.isNaN(numeric)) {
+                const value10 = maxPoints > 0 ? (numeric / maxPoints) * 10 : numeric;
+                return { hasGrade: true, value10, display: value10.toFixed(1) };
+            }
+
+            const scoresTotal = sumCriterionScores(s.criterionScores ?? s.criterion_scores);
+            if (scoresTotal !== null) {
+                const value10 = maxPoints > 0 ? (scoresTotal / maxPoints) * 10 : scoresTotal;
+                return { hasGrade: true, value10, display: value10.toFixed(1) };
+            }
+
+            const q = qualitativeTo10(s.grade);
+            if (q !== null) {
+                return { hasGrade: true, value10: q, display: String(s.grade) };
+            }
+
+            return { hasGrade: false, value10: null, display: '-' };
         }
 
         function setupEventListeners() {
@@ -409,20 +480,22 @@
                                 </thead>
                                 <tbody>
                                     ${student.userSubmissions.map(s => {
-                                        const gradeNum = parseFloat(s.numeric_grade);
-                                        const grade = !isNaN(gradeNum) ? gradeNum.toFixed(1) : '-';
-                                        const gradeColor = getGradeClass(gradeNum);
+                                        const g = calcGradeForSubmission(s);
+                                        const gradeColor = g.value10 !== null ? getGradeClass(g.value10) : 'grade-none';
+                                        const statusText = (s.status === 'reviewed')
+                                            ? (g.hasGrade ? 'Calificado' : 'Corregido')
+                                            : 'Pendiente';
                                         return `
                                             <tr style="border-bottom: 1px solid var(--border-color);">
                                                 <td style="padding: 0.75rem;">${PE.Utils.escapeHtml(s.activityTitle || 'Actividad')}</td>
                                                 <td style="padding: 0.75rem;">${s.created_at ? PE.Utils.formatDate(s.created_at) : PE.Utils.formatDate(s.createdAt)}</td>
                                                 <td style="padding: 0.75rem; text-align: center;">${s.wordCount || s.word_count || 0}</td>
                                                 <td style="padding: 0.75rem; text-align: center;">
-                                                    ${!isNaN(gradeNum) ? `<span style="padding: 0.25rem 0.5rem; border-radius: 4px;" class="${gradeColor}">${grade}</span>` : '-'}
+                                                    ${g.hasGrade ? `<span style="padding: 0.25rem 0.5rem; border-radius: 4px;" class="${gradeColor}">${PE.Utils.escapeHtml(g.display)}</span>` : '-'}
                                                 </td>
                                                 <td style="padding: 0.75rem;">
                                                     <span class="badge badge-${s.status === 'reviewed' ? 'success' : 'warning'}">
-                                                        ${s.status === 'reviewed' ? 'Corregido' : 'Pendiente'}
+                                                        ${statusText}
                                                     </span>
                                                 </td>
                                             </tr>
@@ -597,17 +670,19 @@
                         </thead>
                         <tbody>
                             ${student.userSubmissions.map(s => {
-                                const gradeNum = parseFloat(s.numeric_grade);
-                                const grade = !isNaN(gradeNum) ? gradeNum.toFixed(1) : '-';
+                                const g = calcGradeForSubmission(s);
+                                const statusText = (s.status === 'reviewed')
+                                    ? (g.hasGrade ? 'Calificado' : 'Corregido')
+                                    : 'Pendiente';
                                 return `
                                     <tr>
                                         <td>${s.activityTitle || 'Actividad'}</td>
                                         <td>${s.created_at ? PE.Utils.formatDate(s.created_at) : PE.Utils.formatDate(s.createdAt)}</td>
                                         <td>${s.wordCount || s.word_count || 0}</td>
-                                        <td>${grade}</td>
+                                        <td>${g.hasGrade ? g.display : '-'}</td>
                                         <td>
                                             <span class="badge badge-${s.status === 'reviewed' ? 'success' : 'warning'}">
-                                                ${s.status === 'reviewed' ? 'Corregido' : 'Pendiente'}
+                                                ${statusText}
                                             </span>
                                         </td>
                                     </tr>
