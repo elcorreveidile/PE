@@ -3,22 +3,17 @@
  */
 
 const express = require('express');
-const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
-const path = require('path');
-const fs = require('fs');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
-const { query } = require('../database/db');
 
 const router = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default_secret_change_me';
-const DOWNLOADS_DIR = path.join(__dirname, '../../uploads/profesor');
 
-// Asegurar que el directorio existe
-if (!fs.existsSync(DOWNLOADS_DIR)) {
-    fs.mkdirSync(DOWNLOADS_DIR, { recursive: true });
-}
+// Mapeo de archivos a URLs del frontend
+const RESOURCE_FILES = {
+    'analisis-sesion-03-perfil-personal.pdf': 'analisis-s3-85f50154cfaf495cc9a4593f.pdf'
+};
 
 /**
  * Generar un enlace temporal para descargar un recurso
@@ -114,14 +109,18 @@ router.get('/download/:filename', async (req, res) => {
             return res.status(403).json({ error: 'El token no corresponde a este archivo' });
         }
 
-        // Servir el archivo
-        const filePath = path.join(DOWNLOADS_DIR, filename);
-
-        if (!fs.existsSync(filePath)) {
+        // Obtener el nombre real del archivo en el frontend
+        const realFilename = RESOURCE_FILES[filename];
+        if (!realFilename) {
             return res.status(404).json({ error: 'Archivo no encontrado' });
         }
 
-        res.download(filePath, filename);
+        // Redirigir al archivo en el frontend
+        const frontendUrl = process.env.FRONTEND_URL || 'https://www.cognoscencia.com';
+        const fileUrl = `${frontendUrl}/recursos/profesor/${realFilename}`;
+
+        console.log(`[Recursos] Redirigiendo descarga: ${filename} -> ${fileUrl}`);
+        res.redirect(302, fileUrl);
 
     } catch (error) {
         console.error('Error descargando recurso:', error);
@@ -135,14 +134,12 @@ router.get('/download/:filename', async (req, res) => {
  */
 router.get('/list', authenticateToken, requireAdmin, async (req, res) => {
     try {
-        const files = fs.readdirSync(DOWNLOADS_DIR);
-        const fileList = files
-            .filter(f => f.endsWith('.pdf'))
-            .map(f => ({
-                filename: f,
-                size: fs.statSync(path.join(DOWNLOADS_DIR, f)).size,
-                createdAt: fs.statSync(path.join(DOWNLOADS_DIR, f)).birthtime
-            }));
+        // Listar archivos disponibles en el mapeo
+        const fileList = Object.keys(RESOURCE_FILES).map(filename => ({
+            filename,
+            realFilename: RESOURCE_FILES[filename],
+            size: 'N/A (almacenado en frontend)'
+        }));
 
         res.json({ files: fileList });
 
