@@ -789,8 +789,6 @@
                 status: 'active'
             };
 
-            console.log('[DEBUG] Datos a enviar:', taskData);
-
             if (!taskData.title || !taskData.description || !taskData.dueDate) {
                 PE.UI.notify('Por favor, completa todos los campos requeridos', 'error');
                 return false;
@@ -803,8 +801,6 @@
                     : `${window.PE_CONFIG.API_URL}/api/student-tasks`;
                 const method = taskId ? 'PUT' : 'POST';
 
-                console.log('[DEBUG] Enviando a:', url, 'método:', method);
-
                 const response = await fetch(url, {
                     method: method,
                     headers: {
@@ -814,20 +810,17 @@
                     body: JSON.stringify(taskData)
                 });
 
-                console.log('[DEBUG] Response status:', response.status);
-                console.log('[DEBUG] Response ok:', response.ok);
-
                 if (response.ok) {
                     PE.UI.notify(taskId ? 'Tarea actualizada correctamente' : 'Tarea creada correctamente', 'success');
                     await loadStudentTasks();
                     return true;
                 } else {
                     const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
-                    console.error('[DEBUG] Error response:', errorData);
+                    console.error('Error response:', errorData);
                     throw new Error(errorData.error || errorData.errors?.[0]?.msg || 'Error al guardar la tarea');
                 }
             } catch (error) {
-                console.error('[DEBUG] Error completo:', error);
+                console.error('Error saving task:', error);
                 PE.UI.notify('Error: ' + error.message, 'error');
                 return false;
             }
