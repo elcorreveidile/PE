@@ -127,6 +127,47 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// Endpoint TEMPORAL para verificar estado de la base de datos
+app.get('/api/check-db', async (req, res) => {
+    try {
+        const { query } = require('./database/db');
+
+        // Verificar si existe la tabla student_tasks
+        const tablesResult = await query(`
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = 'public'
+            AND table_name = 'student_tasks'
+        `);
+
+        const hasStudentTasks = tablesResult.rows.length > 0;
+
+        // Verificar si submissions tiene task_id
+        let hasTaskIdColumn = false;
+        try {
+            const columnsResult = await query(`
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_name = 'submissions'
+                AND column_name = 'task_id'
+            `);
+            hasTaskIdColumn = columnsResult.rows.length > 0;
+        } catch (e) {
+            // Ignorar error
+        }
+
+        res.json({
+            hasStudentTasks,
+            hasTaskIdColumn,
+            tables: tablesResult.rows
+        });
+    } catch (error) {
+        res.status(500).json({
+            error: error.message
+        });
+    }
+});
+
 // Endpoint TEMPORAL para migración de student_tasks
 app.get('/api/migrate-student-tasks', async (req, res) => {
     try {
