@@ -13,6 +13,11 @@
         .task-card { padding: var(--spacing-md); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); margin-bottom: var(--spacing-sm); }
         .task-card:hover { background: var(--bg-light); }
         .student-chip { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0.75rem; background: var(--primary-light); color: white; border-radius: 1rem; font-size: 0.875rem; margin: 0.25rem; }
+        .session-group { margin-bottom: 2rem; }
+        .session-group-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: var(--primary-color); color: white; border-radius: var(--border-radius-md) var(--border-radius-md) 0 0; }
+        .session-group-content { border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 var(--border-radius-md) var(--border-radius-md); padding: 1rem; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
     </style>
 </head>
 <body>
@@ -59,61 +64,131 @@
                 <div class="main-content">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-xl);">
                         <div>
-                            <h1 style="margin-bottom: 0.25rem;">Gestión de tareas para estudiantes</h1>
-                            <p class="text-secondary mb-0">Crea y gestiona tareas para los estudiantes del curso</p>
-                        </div>
-                        <div style="display: flex; gap: var(--spacing-sm);">
-                            <button class="btn btn-primary" onclick="showCreateStudentTaskModal()">
-                                + Nueva tarea para estudiantes
-                            </button>
+                            <h1 style="margin-bottom: 0.25rem;">Gestión de tareas</h1>
+                            <p class="text-secondary mb-0">Control de actividades y entregas</p>
                         </div>
                     </div>
 
-                    <!-- Estadísticas de tareas -->
-                    <div class="sessions-grid mb-4" style="grid-template-columns: repeat(4, 1fr);">
-                        <div class="card text-center" style="padding: 1.5rem;">
-                            <h3 class="text-primary" style="font-size: 2rem; margin: 0;" id="stat-total">0</h3>
-                            <p class="text-secondary mb-0">Total tareas</p>
-                        </div>
-                        <div class="card text-center" style="padding: 1.5rem;">
-                            <h3 style="font-size: 2rem; margin: 0; color: var(--success-color);" id="stat-active">0</h3>
-                            <p class="text-secondary mb-0">Activas</p>
-                        </div>
-                        <div class="card text-center" style="padding: 1.5rem;">
-                            <h3 style="font-size: 2rem; margin: 0; color: var(--warning-color);" id="stat-pending">0</h3>
-                            <p class="text-secondary mb-0">Entregas pendientes</p>
-                        </div>
-                        <div class="card text-center" style="padding: 1.5rem;">
-                            <h3 style="font-size: 2rem; margin: 0; color: var(--accent-color);" id="stat-completed">0</h3>
-                            <p class="text-secondary mb-0">Completadas</p>
-                        </div>
-                    </div>
-
-                    <!-- Filtros -->
+                    <!-- Pestañas para cambiar entre entregas de sesiones y tareas para estudiantes -->
                     <div class="card mb-4">
                         <div class="card-body">
-                            <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
-                                <select id="filter-status" class="form-control form-select" style="width: auto;">
-                                    <option value="">Todos los estados</option>
-                                    <option value="active">Activas</option>
-                                    <option value="expired">Caducadas</option>
-                                    <option value="draft">Borradores</option>
-                                </select>
-                                <select id="filter-assignment" class="form-control form-select" style="width: auto;">
-                                    <option value="">Todos los tipos</option>
-                                    <option value="all">Todo el curso</option>
-                                    <option value="specific">Estudiantes específicos</option>
-                                </select>
-                                <button class="btn btn-outline" onclick="exportStudentTasks()">Exportar tareas</button>
+                            <div style="display: flex; gap: var(--spacing-md);">
+                                <button class="btn btn-primary" id="tab-sesiones" onclick="switchTab('sesiones')">
+                                    Entregas de sesiones
+                                </button>
+                                <button class="btn btn-outline" id="tab-tareas" onclick="switchTab('tareas')">
+                                    Tareas para estudiantes
+                                </button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Lista de tareas para estudiantes -->
-                    <div class="card">
-                        <div class="card-body">
-                            <div id="student-tasks-list">
-                                <div class="loader"></div>
+                    <!-- CONTENIDO: ENTREGAS DE SESIONES -->
+                    <div id="content-sesiones" class="tab-content active">
+                        <!-- Estadísticas generales -->
+                        <div class="sessions-grid mb-4" style="grid-template-columns: repeat(4, 1fr);">
+                            <div class="card text-center" style="padding: 1.5rem;">
+                                <h3 class="text-primary" style="font-size: 2rem; margin: 0;" id="stat-total">0</h3>
+                                <p class="text-secondary mb-0">Total entregas</p>
+                            </div>
+                            <div class="card text-center" style="padding: 1.5rem;">
+                                <h3 style="font-size: 2rem; margin: 0; color: var(--warning-color);" id="stat-pending">0</h3>
+                                <p class="text-secondary mb-0">Pendientes</p>
+                            </div>
+                            <div class="card text-center" style="padding: 1.5rem;">
+                                <h3 style="font-size: 2rem; margin: 0; color: var(--success-color);" id="stat-reviewed">0</h3>
+                                <p class="text-secondary mb-0">Corregidas</p>
+                            </div>
+                            <div class="card text-center" style="padding: 1.5rem;">
+                                <h3 class="text-primary" style="font-size: 2rem; margin: 0;" id="stat-sessions">0</h3>
+                                <p class="text-secondary mb-0">Sesiones activas</p>
+                            </div>
+                        </div>
+
+                        <!-- Filtro por sesión -->
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                                    <select id="filter-session" class="form-control form-select" style="flex: 1; min-width: 200px;">
+                                        <option value="">Todas las sesiones</option>
+                                    </select>
+                                    <select id="filter-status" class="form-control form-select" style="width: auto;">
+                                        <option value="">Todos los estados</option>
+                                        <option value="pending">Pendientes</option>
+                                        <option value="reviewed">Corregidas</option>
+                                    </select>
+                                    <button class="btn btn-outline" onclick="exportSessionData()">Exportar datos</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Lista de entregas por sesión -->
+                        <div id="tasks-list">
+                            <div class="loader"></div>
+                        </div>
+                    </div>
+
+                    <!-- CONTENIDO: TAREAS PARA ESTUDIANTES -->
+                    <div id="content-tareas" class="tab-content">
+                        <!-- Botón de crear tarea -->
+                        <div class="card mb-4">
+                            <div class="card-body" style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <h3 style="margin: 0;">Tareas asignadas por el profesor</h3>
+                                    <p class="text-secondary mb-0">Crea tareas personalizadas para estudiantes</p>
+                                </div>
+                                <button class="btn btn-primary" onclick="showCreateStudentTaskModal()">
+                                    + Nueva tarea para estudiantes
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Estadísticas de tareas de estudiantes -->
+                        <div class="sessions-grid mb-4" style="grid-template-columns: repeat(4, 1fr);">
+                            <div class="card text-center" style="padding: 1.5rem;">
+                                <h3 class="text-primary" style="font-size: 2rem; margin: 0;" id="task-stat-total">0</h3>
+                                <p class="text-secondary mb-0">Total tareas</p>
+                            </div>
+                            <div class="card text-center" style="padding: 1.5rem;">
+                                <h3 style="font-size: 2rem; margin: 0; color: var(--success-color);" id="task-stat-active">0</h3>
+                                <p class="text-secondary mb-0">Activas</p>
+                            </div>
+                            <div class="card text-center" style="padding: 1.5rem;">
+                                <h3 style="font-size: 2rem; margin: 0; color: var(--warning-color);" id="task-stat-pending">0</h3>
+                                <p class="text-secondary mb-0">Entregas pendientes</p>
+                            </div>
+                            <div class="card text-center" style="padding: 1.5rem;">
+                                <h3 style="font-size: 2rem; margin: 0; color: var(--accent-color);" id="task-stat-completed">0</h3>
+                                <p class="text-secondary mb-0">Completadas</p>
+                            </div>
+                        </div>
+
+                        <!-- Filtros de tareas -->
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                                    <select id="filter-task-status" class="form-control form-select" style="width: auto;">
+                                        <option value="">Todos los estados</option>
+                                        <option value="active">Activas</option>
+                                        <option value="expired">Caducadas</option>
+                                        <option value="draft">Borradores</option>
+                                    </select>
+                                    <select id="filter-assignment" class="form-control form-select" style="width: auto;">
+                                        <option value="">Todos los tipos</option>
+                                        <option value="all">Todo el curso</option>
+                                        <option value="specific">Estudiantes específicos</option>
+                                    </select>
+                                    <button class="btn btn-outline" onclick="exportStudentTasks()">Exportar tareas</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Lista de tareas para estudiantes -->
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="student-tasks-list">
+                                    <div class="loader"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -141,6 +216,8 @@
         let allStudentTasks = [];
         let allRubrics = [];
         let allUsers = [];
+        let submissions = [];
+        let sessions = PE.CourseData.sessions;
 
         document.addEventListener('DOMContentLoaded', async () => {
             const user = await PE.Auth.checkSession();
@@ -149,12 +226,230 @@
                 return;
             }
 
+            // Cargar datos en paralelo
             await Promise.all([
+                loadSubmissions(),
                 loadStudentTasks(),
                 loadRubrics(),
                 loadUsers()
             ]);
+
+            // Renderizar entregas de sesiones
+            renderSessionSubmissions();
         });
+
+        // Función para cambiar entre pestañas
+        function switchTab(tab) {
+            const contentSesiones = document.getElementById('content-sesiones');
+            const contentTareas = document.getElementById('content-tareas');
+            const tabSesiones = document.getElementById('tab-sesiones');
+            const tabTareas = document.getElementById('tab-tareas');
+
+            if (tab === 'sesiones') {
+                contentSesiones.classList.add('active');
+                contentTareas.classList.remove('active');
+                tabSesiones.className = 'btn btn-primary';
+                tabTareas.className = 'btn btn-outline';
+            } else {
+                contentSesiones.classList.remove('active');
+                contentTareas.classList.add('active');
+                tabSesiones.className = 'btn btn-outline';
+                tabTareas.className = 'btn btn-primary';
+            }
+        }
+
+        // ====================================================================
+        // ENTREGAS DE SESIONES
+        // ====================================================================
+
+        async function loadSubmissions() {
+            try {
+                submissions = await PE.Submissions.getAll();
+                submissions = Array.isArray(submissions) ? submissions : [];
+            } catch (e) {
+                console.error('Error cargando entregas:', e);
+                submissions = [];
+            }
+        }
+
+        function renderSessionSubmissions(filter = {}) {
+            let filtered = submissions.filter(s => !s.taskId); // Solo entregas de sesiones, no de tareas
+
+            if (filter.session) {
+                filtered = filtered.filter(s => s.sessionId == filter.session);
+            }
+
+            if (filter.status) {
+                filtered = filtered.filter(s => s.status === filter.status);
+            }
+
+            const pending = filtered.filter(s => s.status === 'pending');
+            const reviewed = filtered.filter(s => s.status === 'reviewed');
+
+            // Actualizar estadísticas
+            document.getElementById('stat-total').textContent = filtered.length;
+            document.getElementById('stat-pending').textContent = pending.length;
+            document.getElementById('stat-reviewed').textContent = reviewed.length;
+
+            const sessionsWithSubmissions = new Set(filtered.map(s => s.sessionId));
+            document.getElementById('stat-sessions').textContent = sessionsWithSubmissions.size;
+
+            // Poblar selector de sesiones
+            const sessionSelect = document.getElementById('filter-session');
+            sessionSelect.innerHTML = '<option value="">Todas las sesiones</option>';
+            sessions.forEach(s => {
+                const count = filtered.filter(sub => sub.sessionId == s.id).length;
+                const option = document.createElement('option');
+                option.value = s.id;
+                option.textContent = `Sesión ${s.id}: ${s.title} (${count} entregas)`;
+                sessionSelect.appendChild(option);
+            });
+
+            const container = document.getElementById('tasks-list');
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="card"><div class="card-body text-center"><p class="text-secondary">No hay entregas con los filtros seleccionados.</p></div></div>';
+                return;
+            }
+
+            // Agrupar por sesión
+            const grouped = {};
+            filtered.forEach(s => {
+                const sessionId = s.sessionId || 'sin-sesion';
+                if (!grouped[sessionId]) grouped[sessionId] = [];
+                grouped[sessionId].push(s);
+            });
+
+            let html = '';
+            Object.keys(grouped).sort((a, b) => parseInt(a) - parseInt(b)).forEach(sessionId => {
+                const session = sessions.find(s => s.id == sessionId);
+                const sessionSubmissions = grouped[sessionId];
+                const sessionPending = sessionSubmissions.filter(s => s.status === 'pending').length;
+
+                html += `
+                    <div class="session-group">
+                        <div class="session-group-header">
+                            <div>
+                                <strong>Sesión ${sessionId}</strong>: ${session ? session.title : 'Sesión no identificada'}
+                            </div>
+                            <div>
+                                <span class="badge" style="background: rgba(255,255,255,0.2);">${sessionSubmissions.length} entregas</span>
+                                ${sessionPending > 0 ? `<span class="badge badge-warning" style="margin-left: 0.5rem;">${sessionPending} pendientes</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="session-group-content">
+                            ${sessionSubmissions.map(s => `
+                                <div class="task-card">
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                        <div>
+                                            <strong>${PE.Utils.escapeHtml(s.userName || 'Estudiante')}</strong>
+                                            <span class="badge badge-${s.status === 'reviewed' ? 'success' : 'warning'}" style="margin-left: 0.5rem;">
+                                                ${s.status === 'reviewed' ? 'Corregido' : 'Pendiente'}
+                                            </span>
+                                            <p class="text-secondary mb-0" style="font-size: 0.875rem; margin-top: 0.25rem;">
+                                                ${PE.Utils.escapeHtml(s.activityTitle)} - ${s.wordCount} palabras
+                                            </p>
+                                            <p class="text-secondary mb-0" style="font-size: 0.8rem;">
+                                                Entregado: ${PE.Utils.formatDate(s.createdAt, 'long')}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            ${s.status === 'pending' ?
+                                                `<a href="correcciones.html" class="btn btn-sm btn-primary">Corregir</a>` :
+                                                `<button class="btn btn-sm btn-outline" onclick="viewSubmission('${s.id}')">Ver</button>`
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        async function viewSubmission(id) {
+            const targetId = String(id);
+            const s = submissions.find(sub => String(sub.id) === targetId);
+
+            if (s) {
+                PE.UI.showModal(s.activityTitle, `
+                    <div class="mb-3">
+                        <strong>Estudiante:</strong> ${PE.Utils.escapeHtml(s.userName || 'Estudiante')}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Entregado:</strong> ${PE.Utils.formatDate(s.createdAt, 'long')}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Contenido:</strong>
+                        <div style="background: var(--bg-light); padding: 1rem; border-radius: 0.5rem; max-height: 200px; overflow-y: auto; margin-top: 0.5rem;">
+                            ${s.content}
+                        </div>
+                        <p class="text-secondary" style="font-size: 0.8rem; margin-top: 0.5rem;">${s.wordCount} palabras</p>
+                    </div>
+                    ${s.feedback ? `
+                        <div class="alert alert-success">
+                            <strong>Retroalimentación:</strong>
+                            <p style="margin: 0.5rem 0 0;">${PE.Utils.escapeHtml(s.feedback)}</p>
+                            ${s.grade ? `<p style="margin: 0.5rem 0 0;"><strong>Calificación:</strong> ${s.grade}</p>` : ''}
+                        </div>
+                    ` : ''}
+                `, [{ text: 'Cerrar' }]);
+            }
+        }
+
+        async function exportSessionData() {
+            const data = sessions.map(session => {
+                const sessionSubmissions = submissions.filter(s => s.sessionId == session.id && !s.taskId);
+                return {
+                    sesion: session.id,
+                    titulo: session.title,
+                    fecha: session.date,
+                    entregas: sessionSubmissions.length,
+                    pendientes: sessionSubmissions.filter(s => s.status === 'pending').length,
+                    corregidas: sessionSubmissions.filter(s => s.status === 'reviewed').length
+                };
+            });
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'entregas_por_sesion_' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+
+            PE.UI.notify('Datos exportados correctamente', 'success');
+        }
+
+        // Event listeners para filtros de sesiones
+        document.addEventListener('DOMContentLoaded', () => {
+            const filterSession = document.getElementById('filter-session');
+            const filterStatus = document.getElementById('filter-status');
+
+            if (filterSession) {
+                filterSession.addEventListener('change', () => {
+                    renderSessionSubmissions({
+                        session: filterSession.value,
+                        status: filterStatus.value
+                    });
+                });
+            }
+
+            if (filterStatus) {
+                filterStatus.addEventListener('change', () => {
+                    renderSessionSubmissions({
+                        session: filterSession.value,
+                        status: filterStatus.value
+                    });
+                });
+            }
+        });
+
+        // ====================================================================
+        // TAREAS PARA ESTUDIANTES
+        // ====================================================================
 
         // Cargar tareas de estudiantes desde la API
         async function loadStudentTasks() {
@@ -173,16 +468,15 @@
                     allStudentTasks = await response.json();
                     allStudentTasks = Array.isArray(allStudentTasks) ? allStudentTasks : [];
                 } else {
-                    // Si falla, intentar localStorage
-                    allStudentTasks = JSON.parse(localStorage.getItem('pe_student_tasks') || '[]');
+                    allStudentTasks = [];
                 }
             } catch (error) {
                 console.error('Error cargando tareas:', error);
-                allStudentTasks = JSON.parse(localStorage.getItem('pe_student_tasks') || '[]');
+                allStudentTasks = [];
             }
 
             renderStudentTasks();
-            updateStatistics();
+            updateTaskStatistics();
         }
 
         // Cargar rúbricas desde la API
@@ -237,11 +531,9 @@
             }
         }
 
-        function updateStatistics() {
+        function updateTaskStatistics() {
             const active = allStudentTasks.filter(t => t.status === 'active' && new Date(t.dueDate) >= new Date()).length;
-            const expired = allStudentTasks.filter(t => new Date(t.dueDate) < new Date()).length;
 
-            // Calcular entregas pendientes sumando assignedStudents que no han entregado
             let pendingSubmissions = 0;
             let completedSubmissions = 0;
 
@@ -259,10 +551,10 @@
                 }
             });
 
-            document.getElementById('stat-total').textContent = allStudentTasks.length;
-            document.getElementById('stat-active').textContent = active;
-            document.getElementById('stat-pending').textContent = pendingSubmissions;
-            document.getElementById('stat-completed').textContent = completedSubmissions;
+            document.getElementById('task-stat-total').textContent = allStudentTasks.length;
+            document.getElementById('task-stat-active').textContent = active;
+            document.getElementById('task-stat-pending').textContent = pendingSubmissions;
+            document.getElementById('task-stat-completed').textContent = completedSubmissions;
         }
 
         function renderStudentTasks(filter = {}) {
@@ -366,7 +658,6 @@
         }
 
         async function showCreateStudentTaskModal(taskId = null) {
-            const sessions = PE.CourseData.sessions;
             const sessionsOptions = sessions.map(s =>
                 `<option value="${s.id}">Sesión ${s.id}: ${s.title}</option>`
             ).join('');
@@ -498,22 +789,7 @@
                     throw new Error('Error al guardar la tarea');
                 }
             } catch (error) {
-                // Fallback a localStorage
-                if (taskId) {
-                    const index = allStudentTasks.findIndex(t => t.id === taskId);
-                    if (index >= 0) {
-                        allStudentTasks[index] = { ...allStudentTasks[index], ...taskData };
-                    }
-                } else {
-                    taskData.id = 'task_' + Date.now();
-                    allStudentTasks.push(taskData);
-                }
-
-                localStorage.setItem('pe_student_tasks', JSON.stringify(allStudentTasks));
-                PE.UI.closeModal();
-                PE.UI.notify(taskId ? 'Tarea actualizada (guardada localmente)' : 'Tarea creada (guardada localmente)', 'success');
-                renderStudentTasks();
-                updateStatistics();
+                PE.UI.notify('Error al guardar la tarea', 'error');
             }
         }
 
@@ -582,12 +858,7 @@
                     await loadStudentTasks();
                 }
             } catch (error) {
-                // Fallback a localStorage
-                task.status = newStatus;
-                localStorage.setItem('pe_student_tasks', JSON.stringify(allStudentTasks));
-                renderStudentTasks();
-                updateStatistics();
-                PE.UI.notify(`Tarea ${newStatus === 'active' ? 'activada' : 'desactivada'} (local)`, 'success');
+                PE.UI.notify('Error al cambiar estado', 'error');
             }
         }
 
@@ -606,12 +877,7 @@
                     await loadStudentTasks();
                 }
             } catch (error) {
-                // Fallback a localStorage
-                allStudentTasks = allStudentTasks.filter(t => t.id !== taskId);
-                localStorage.setItem('pe_student_tasks', JSON.stringify(allStudentTasks));
-                renderStudentTasks();
-                updateStatistics();
-                PE.UI.notify('Tarea eliminada (local)', 'success');
+                PE.UI.notify('Error al eliminar tarea', 'error');
             }
         }
 
@@ -639,15 +905,15 @@
             PE.UI.notify('Tareas exportadas correctamente', 'success');
         }
 
-        // Event listeners para filtros
+        // Event listeners para filtros de tareas
         document.addEventListener('DOMContentLoaded', () => {
-            const filterStatus = document.getElementById('filter-status');
+            const filterTaskStatus = document.getElementById('filter-task-status');
             const filterAssignment = document.getElementById('filter-assignment');
 
-            if (filterStatus) {
-                filterStatus.addEventListener('change', () => {
+            if (filterTaskStatus) {
+                filterTaskStatus.addEventListener('change', () => {
                     renderStudentTasks({
-                        status: filterStatus.value,
+                        status: filterTaskStatus.value,
                         assignment: filterAssignment.value
                     });
                 });
@@ -656,7 +922,7 @@
             if (filterAssignment) {
                 filterAssignment.addEventListener('change', () => {
                     renderStudentTasks({
-                        status: filterStatus.value,
+                        status: filterTaskStatus.value,
                         assignment: filterAssignment.value
                     });
                 });
