@@ -592,6 +592,17 @@
                 const isExpired = new Date(task.dueDate) < new Date();
                 const rubric = allRubrics.find(r => r.id === task.rubricId);
 
+                // Formatear fecha de forma segura
+                let formattedDate = 'Fecha no disponible';
+                try {
+                    const date = new Date(task.dueDate);
+                    if (!isNaN(date.getTime())) {
+                        formattedDate = PE.Utils.formatDate(task.dueDate, 'long');
+                    }
+                } catch (e) {
+                    console.warn('Error formateando fecha:', task.dueDate, e);
+                }
+
                 // Mostrar estudiantes asignados
                 let studentsHtml = '';
                 if (task.assignmentType === 'all') {
@@ -626,7 +637,7 @@
                                 </div>
                                 <p class="text-secondary mb-2" style="font-size: 0.875rem;">${PE.Utils.escapeHtml(task.description)}</p>
                                 <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem;">
-                                    <span class="text-secondary" style="font-size: 0.8rem;">📅 Límite: ${PE.Utils.formatDate(task.dueDate, 'long')}</span>
+                                    <span class="text-secondary" style="font-size: 0.8rem;">📅 Límite: ${formattedDate}</span>
                                     ${task.sessionId ? `<span class="text-secondary" style="font-size: 0.8rem;">📚 Sesión ${task.sessionId}</span>` : ''}
                                 </div>
                                 <div style="margin-bottom: 0.5rem;">
