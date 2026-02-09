@@ -13,7 +13,7 @@ const { query } = require('../database/db');
 const router = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default_secret_change_me';
-const DOWNLOADS_DIR = path.join(__dirname, '../../recursos/profesor');
+const DOWNLOADS_DIR = path.join(__dirname, '../recursos/profesor');
 
 // Asegurar que el directorio existe
 if (!fs.existsSync(DOWNLOADS_DIR)) {
