@@ -156,26 +156,6 @@
                         </div>
                     </div>
 
-                    <!-- Estadísticas de visitas -->
-                    <div class="sessions-grid mb-4" style="grid-template-columns: repeat(4, 1fr);">
-                        <div class="card stat-card" style="border-left: 4px solid #4299e1;">
-                            <span class="stat-value" id="stat-total-visits">-</span>
-                            <p class="stat-label">Total visitas</p>
-                        </div>
-                        <div class="card stat-card" style="border-left: 4px solid #48bb78;">
-                            <span class="stat-value" id="stat-today-visits">-</span>
-                            <p class="stat-label">Visitas hoy</p>
-                        </div>
-                        <div class="card stat-card" style="border-left: 4px solid #ed8936;">
-                            <span class="stat-value" id="stat-unique-visits">-</span>
-                            <p class="stat-label">Únicos hoy</p>
-                        </div>
-                        <div class="card stat-card" style="border-left: 4px solid #9f7aea;">
-                            <span class="stat-value" id="stat-total-unique">-</span>
-                            <p class="stat-label">Visitantes únicos</p>
-                        </div>
-                    </div>
-
                     <div class="text-right mb-3">
                         <a href="estadisticas.html" class="btn btn-sm btn-primary">Ver estadísticas completas →</a>
                     </div>
@@ -308,9 +288,6 @@
             document.getElementById('stat-submissions').textContent = submissions.length;
             document.getElementById('stat-pending').textContent = pending.length;
             document.getElementById('stat-progress').textContent = progress.percentage + '%';
-
-            // Cargar estadísticas de visitas
-            loadVisitStatistics(API);
 
             // Entregas pendientes
             const pendingContainer = document.getElementById('pending-submissions');
@@ -473,27 +450,6 @@
                     }
                 }
             ]);
-        }
-
-        // Función para cargar estadísticas de visitas
-        async function loadVisitStatistics(API) {
-            try {
-                const stats = await API.get('/statistics/overview');
-
-                // Actualizar tarjetas
-                document.getElementById('stat-total-visits').textContent = stats.totalVisits.toLocaleString();
-                document.getElementById('stat-today-visits').textContent = stats.todayVisits.toLocaleString();
-                document.getElementById('stat-unique-visits').textContent = stats.uniqueVisits.toLocaleString();
-                document.getElementById('stat-total-unique').textContent = stats.totalUnique.toLocaleString();
-
-            } catch (error) {
-                console.error('Error cargando estadísticas de visitas:', error);
-                // Mostrar ceros en caso de error (sistema de visitas no disponible)
-                document.getElementById('stat-total-visits').textContent = '0';
-                document.getElementById('stat-today-visits').textContent = '0';
-                document.getElementById('stat-unique-visits').textContent = '0';
-                document.getElementById('stat-total-unique').textContent = '0';
-            }
         }
     </script>
 </body>
