@@ -200,13 +200,13 @@ def crear_pdf_con_texto(ruta_salida, texto, titulo, tipo_texto):
     # Construir el contenido
     story = []
 
-    # Título principal
-    story.append(Paragraph("Texto modelo", title_style))
+    # Limpiar el texto: eliminar "Texto modelo:" si está al inicio
+    texto_limpio = re.sub(r'^Texto modelo:\s*', '', texto)
 
     # Si el texto ya viene con saltos de línea bien definidos, usarlos
-    if '\n\n' in texto or tipo_texto == "letter":
+    if '\n\n' in texto_limpio or tipo_texto == "letter":
         # Usar saltos de línea dobles como separadores de párrafo
-        parrafos_crudos = texto.split('\n\n')
+        parrafos_crudos = texto_limpio.split('\n\n')
         for parrafo in parrafos_crudos:
             parrafo = parrafo.strip()
             if parrafo:
@@ -224,7 +224,7 @@ def crear_pdf_con_texto(ruta_salida, texto, titulo, tipo_texto):
                 story.append(Paragraph(parrafo, body_style))
     else:
         # Usar división inteligente en párrafos
-        parrafos = dividir_en_parrafos_inteligente(texto)
+        parrafos = dividir_en_parrafos_inteligente(texto_limpio)
         for parrafo in parrafos:
             parrafo = parrafo.strip()
             if parrafo:
