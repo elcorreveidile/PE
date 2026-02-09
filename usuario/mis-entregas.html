@@ -401,7 +401,10 @@
                 <div class="form-group">
                     <label class="form-label">Tu respuesta:</label>
                     <textarea id="task-content" class="form-control" rows="8" placeholder="Escribe tu respuesta aquí..." required></textarea>
-                    <small class="text-secondary">Mínimo 10 palabras</small>
+                    <div style="display:flex; justify-content: space-between; gap: 0.75rem; margin-top: 0.35rem;">
+                        <small class="text-secondary">Mínimo 10 palabras</small>
+                        <small class="text-secondary" id="task-wordcount">0 palabras</small>
+                    </div>
                 </div>
                 <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem;">
                     <button type="button" class="btn btn-outline" onclick="PE.UI.closeModal()">Cancelar</button>
@@ -410,6 +413,22 @@
             `;
 
             PE.UI.showModal('Entregar Tarea', modalHtml);
+
+            // Contador de palabras en vivo
+            const textarea = document.getElementById('task-content');
+            const counter = document.getElementById('task-wordcount');
+            const countWords = (text) => (text || '').trim().split(/\s+/).filter(w => w.length > 0).length;
+            const update = () => {
+                const wc = countWords(textarea?.value || '');
+                if (counter) {
+                    counter.textContent = `${wc} palabra${wc === 1 ? '' : 's'}`;
+                    counter.style.color = wc >= 10 ? 'var(--success-color)' : 'var(--warning-color)';
+                }
+            };
+            if (textarea) {
+                textarea.addEventListener('input', update);
+                update();
+            }
         };
 
         // Función para confirmar la entrega de la tarea
