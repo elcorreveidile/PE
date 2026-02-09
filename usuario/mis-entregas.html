@@ -99,6 +99,34 @@
             let currentTab = 'submissions';
             let currentFilter = 'all';
 
+            // ==========================
+            // Borradores de tareas (localStorage)
+            // ==========================
+            const taskDraftKey = (taskId) => `task_draft_${user.id}_${taskId}`;
+
+            const countWords = (text) => (text || '').trim().split(/\s+/).filter(w => w.length > 0).length;
+
+            const getTaskDraft = (taskId) => {
+                return PE.Utils?.storage?.get(taskDraftKey(taskId)) || null;
+            };
+
+            const saveTaskDraft = (taskId, task, content) => {
+                const draft = {
+                    taskId: String(taskId),
+                    userId: user.id,
+                    title: task?.title || '',
+                    updatedAt: new Date().toISOString(),
+                    content: content || '',
+                    wordCount: countWords(content || '')
+                };
+                PE.Utils?.storage?.set(taskDraftKey(taskId), draft);
+                return draft;
+            };
+
+            const deleteTaskDraft = (taskId) => {
+                PE.Utils?.storage?.remove(taskDraftKey(taskId));
+            };
+
             // Renderizar entregas
             async function renderSubmissions(filter = 'all') {
                 let submissions = await PE.Submissions.getByUser(user.id);
@@ -223,6 +251,7 @@
 
                 container.innerHTML = tasks.map(t => {
                     const hasSubmitted = submittedTaskIds.has(String(t.id));
+                    const hasDraft = !!getTaskDraft(t.id);
                     const dueDate = t.dueDate ? new Date(t.dueDate) : null;
                     const isOverdue = dueDate && dueDate < new Date();
 
@@ -241,12 +270,14 @@
                                         ` : ''}
                                         ${t.rubricId ? `<span class="badge badge-info">Con rúbrica</span>` : ''}
                                         ${hasSubmitted ? '<span class="badge badge-success ml-2">Entregada</span>' : ''}
+                                        ${!hasSubmitted && hasDraft ? '<span class="badge badge-warning ml-2">Borrador guardado</span>' : ''}
                                     </div>
                                     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                                         ${hasSubmitted ? `
                                             <button class="btn btn-outline btn-sm" onclick="viewTaskSubmission('${t.id}')">Ver entrega</button>
                                         ` : `
-                                            <button class="btn btn-primary btn-sm" onclick="submitTask('${t.id}')">Entregar tarea</button>
+                                            ${hasDraft ? `<button class="btn btn-primary btn-sm" onclick="submitTask('${t.id}')">Continuar borrador</button>` : `<button class="btn btn-primary btn-sm" onclick="submitTask('${t.id}')">Entregar tarea</button>`}
+                                            ${hasDraft ? `<button class="btn btn-outline btn-sm" onclick="deleteTaskDraftUI('${t.id}')">Eliminar borrador</button>` : ''}
                                         `}
                                     </div>
                                 </div>
@@ -258,6 +289,12 @@
 
             // Hacer renderTasks accesible globalmente
             window.renderTasks = renderTasks;
+            window.deleteTaskDraftUI = async (taskId) => {
+                if (!confirm('¿Eliminar el borrador de esta tarea?')) return;
+                deleteTaskDraft(taskId);
+                PE.UI.notify('Borrador eliminado', 'success');
+                renderTasks();
+            };
 
             // Funciones globales
             window.editDraft = async (id) => {
@@ -408,6 +445,7 @@
                 </div>
                 <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem;">
                     <button type="button" class="btn btn-outline" onclick="PE.UI.closeModal()">Cancelar</button>
+                    <button type="button" class="btn btn-outline" onclick="saveTaskDraftFromModal('${taskId}')">Guardar borrador</button>
                     <button type="button" class="btn btn-primary" onclick="confirmSubmitTask('${taskId}')">Entregar tarea</button>
                 </div>
             `;
@@ -417,7 +455,6 @@
             // Contador de palabras en vivo
             const textarea = document.getElementById('task-content');
             const counter = document.getElementById('task-wordcount');
-            const countWords = (text) => (text || '').trim().split(/\s+/).filter(w => w.length > 0).length;
             const update = () => {
                 const wc = countWords(textarea?.value || '');
                 if (counter) {
@@ -427,7 +464,44 @@
             };
             if (textarea) {
                 textarea.addEventListener('input', update);
+                // Prefill si hay borrador
+                try {
+                    const saved = PE.Utils?.storage?.get(`task_draft_${PE.Auth.getCurrentUser()?.id || ''}_${taskId}`);
+                    if (saved && typeof saved.content === 'string' && saved.content.trim().length > 0) {
+                        textarea.value = saved.content;
+                    }
+                } catch {}
                 update();
+            }
+        };
+
+        window.saveTaskDraftFromModal = async (taskId) => {
+            try {
+                const currentUser = PE.Auth.getCurrentUser();
+                if (!currentUser) throw new Error('Usuario no autenticado');
+
+                const content = document.getElementById('task-content')?.value || '';
+                const task = await PE.StudentTasks.getById(taskId);
+                if (!task) throw new Error('No se pudo cargar la tarea');
+
+                const key = `task_draft_${currentUser.id}_${taskId}`;
+                PE.Utils.storage.set(key, {
+                    taskId: String(taskId),
+                    userId: currentUser.id,
+                    title: task.title || '',
+                    updatedAt: new Date().toISOString(),
+                    content,
+                    wordCount: countWords(content)
+                });
+
+                PE.UI.notify('Borrador guardado', 'success');
+                // refrescar lista para mostrar el badge/boton
+                if (typeof window.renderTasks === 'function') {
+                    window.renderTasks();
+                }
+            } catch (e) {
+                console.error('Error guardando borrador de tarea:', e);
+                PE.UI.notify('Error al guardar borrador', 'error');
             }
         };
 
@@ -443,6 +517,13 @@
 
             try {
                 await PE.StudentTasks.submitTask(taskId, content);
+                // Si existe borrador, eliminarlo tras entregar
+                try {
+                    const currentUser = PE.Auth.getCurrentUser();
+                    if (currentUser) {
+                        PE.Utils.storage.remove(`task_draft_${currentUser.id}_${taskId}`);
+                    }
+                } catch {}
                 PE.UI.closeModal();
                 PE.UI.notify('¡Tarea entregada correctamente!', 'success');
                 // Recargar las tareas
