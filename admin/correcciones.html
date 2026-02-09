@@ -58,6 +58,22 @@
                     <h1>Corrección de entregas</h1>
                     <p class="text-secondary mb-4">Revisa y proporciona retroalimentación a las entregas de los estudiantes</p>
 
+                    <!-- Contexto de tarea (si se accede con ?taskId=...) -->
+                    <div class="card mb-4" id="task-context" style="display:none;">
+                        <div class="card-body" style="display:flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+                            <div style="min-width: 260px; flex: 1;">
+                                <div class="text-secondary" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Tarea seleccionada</div>
+                                <h3 style="margin: 0 0 0.25rem;" id="task-context-title">-</h3>
+                                <div class="text-secondary" style="font-size: 0.9rem;" id="task-context-meta">-</div>
+                            </div>
+                            <div style="display:flex; gap: 0.5rem; flex-wrap: wrap;">
+                                <a class="btn btn-outline" href="tareas.html">↩︎ Volver a tareas</a>
+                                <button class="btn btn-outline" onclick="archiveCurrentTask()">📦 Archivar</button>
+                                <button class="btn btn-danger" onclick="deleteCurrentTask()">🗑️ Eliminar</button>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Estadísticas -->
                     <div class="sessions-grid mb-4" style="grid-template-columns: repeat(3, 1fr);">
                         <div class="card">
@@ -164,12 +180,27 @@
         let itemsPerPage = 20;
         let currentFilter = 'pending';
         let filteredSubmissions = [];
+        let currentTaskId = null;
+        let currentTask = null;
 
         document.addEventListener('DOMContentLoaded', async () => {
             const user = await PE.Auth.checkSession();
             if (!user || user.role !== 'admin') {
                 window.location.href = '../auth/login.html';
                 return;
+            }
+
+            // Si se llega desde admin/tareas.html?taskId=..., mostrar contexto y filtrar
+            const params = new URLSearchParams(window.location.search || '');
+            currentTaskId = params.get('taskId');
+            if (currentTaskId) {
+                // Mostrar UI de gestión aunque aún no hayamos podido cargar el detalle de la tarea.
+                const titleEl = document.getElementById('task-context-title');
+                const metaEl = document.getElementById('task-context-meta');
+                const cardEl = document.getElementById('task-context');
+                if (titleEl) titleEl.textContent = currentTaskId;
+                if (metaEl) metaEl.textContent = `ID: ${currentTaskId}`;
+                if (cardEl) cardEl.style.display = 'block';
             }
 
             // Cargar datos
@@ -208,9 +239,49 @@
                 // Poblar selects
                 populateFilters();
 
+                // Cargar contexto de tarea (si aplica)
+                if (currentTaskId) {
+                    await loadTaskContext(currentTaskId);
+                }
+
             } catch (error) {
                 console.error('Error cargando datos:', error);
                 PE.UI.notify('Error al cargar los datos', 'error');
+            }
+        }
+
+        async function loadTaskContext(taskId) {
+            try {
+                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+                if (!token) throw new Error('No hay token de autenticación');
+
+                // Asegurar que el panel se ve aunque luego falle el fetch.
+                const titleEl = document.getElementById('task-context-title');
+                const metaEl = document.getElementById('task-context-meta');
+                const cardEl = document.getElementById('task-context');
+                if (titleEl && (!titleEl.textContent || titleEl.textContent === '-')) titleEl.textContent = taskId;
+                if (metaEl && (!metaEl.textContent || metaEl.textContent === '-')) metaEl.textContent = `ID: ${taskId}`;
+                if (cardEl) cardEl.style.display = 'block';
+
+                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/student-tasks/${taskId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || `No se pudo cargar la tarea (${response.status})`);
+                }
+
+                currentTask = await response.json();
+                if (titleEl) titleEl.textContent = currentTask.title || taskId;
+                if (metaEl) {
+                    const due = currentTask.dueDate ? PE.Utils.formatDate(currentTask.dueDate, 'long') : 'Sin fecha';
+                    metaEl.textContent = `ID: ${taskId} · Límite: ${due}`;
+                }
+            } catch (e) {
+                console.error('Error cargando contexto de tarea:', e);
+                // Mantener el panel visible para poder archivar/eliminar aunque no cargue el detalle.
+                PE.UI.notify('No se pudo cargar el detalle de la tarea (pero puedes archivar o eliminar por ID).', 'warning');
             }
         }
 
@@ -299,6 +370,9 @@
             const studentFilter = document.getElementById('student-filter').value;
 
             filteredSubmissions = allSubmissions.filter(s => {
+                // Si estamos viendo una tarea especifica, solo mostrar sus entregas
+                if (currentTaskId && String(s.taskId || '') !== String(currentTaskId)) return false;
+
                 // Filtro principal
                 if (currentFilter === 'pending' && s.status !== 'pending') return false;
                 if (currentFilter === 'reviewed' && s.status !== 'reviewed') return false;
@@ -412,6 +486,60 @@
             document.querySelector('[data-filter="pending"]').classList.remove('btn-outline');
 
             applyFilters();
+        }
+
+        async function archiveCurrentTask() {
+            if (!currentTaskId) return;
+            if (!confirm('¿Archivar esta tarea? Quedará inactiva y no aparecerá para estudiantes.')) return;
+
+            try {
+                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/student-tasks/${currentTaskId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ status: 'inactive' })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || `Error archivando (${response.status})`);
+                }
+
+                PE.UI.notify('Tarea archivada', 'success');
+                // Mantener en pagina, pero actualizar contexto si se desea
+                await loadTaskContext(currentTaskId);
+            } catch (e) {
+                console.error('Error archivando tarea:', e);
+                PE.UI.notify('Error al archivar la tarea', 'error');
+            }
+        }
+
+        async function deleteCurrentTask() {
+            if (!currentTaskId) return;
+            if (!confirm('¿Eliminar esta tarea? Esta acción no se puede deshacer.')) return;
+
+            try {
+                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/student-tasks/${currentTaskId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || `Error eliminando (${response.status})`);
+                }
+
+                PE.UI.notify('Tarea eliminada', 'success');
+                // Volver a lista de tareas para evitar quedarse en un taskId inexistente
+                window.location.href = 'tareas.html';
+            } catch (e) {
+                console.error('Error eliminando tarea:', e);
+                PE.UI.notify('Error al eliminar la tarea', 'error');
+            }
         }
 
         async function reviewSubmission(id) {
