@@ -106,6 +106,14 @@
                                 <p class="text-secondary mb-0">Con retroalimentación</p>
                             </div>
                         </div>
+
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h3 class="text-primary" style="font-size: 2.5rem; margin-bottom: 0.5rem;" id="stat-average">-</h3>
+                                <p class="text-secondary mb-0">Nota media</p>
+                                <p class="text-secondary" style="font-size: 0.85rem;" id="stat-average-meta">sin calificaciones</p>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Próxima sesión -->
@@ -383,6 +391,77 @@
             document.getElementById('progress-sessions').style.width = progress.percentage + '%';
             document.getElementById('stat-submissions').textContent = submissions.length;
             document.getElementById('stat-reviewed').textContent = reviewed.length;
+
+            // Nota media actual (escala /10), usando numericGrade o criterionScores + rúbrica
+            try {
+                let rubricMaxById = {};
+                const needsRubrics = reviewed.some(s => (s.rubricId || s.rubric_id));
+                if (needsRubrics) {
+                    const rubrics = await PE.API.get('/rubrics');
+                    (Array.isArray(rubrics) ? rubrics : []).forEach(r => {
+                        if (r && r.id) rubricMaxById[String(r.id)] = parseFloat(r.maxPoints) || 0;
+                    });
+                }
+
+                const qualitativeTo10 = (g) => {
+                    const v = String(g || '').trim().toLowerCase();
+                    if (!v) return null;
+                    if (v === 'excelente') return 9.5;
+                    if (v === 'muy bien') return 8.5;
+                    if (v === 'bien') return 7.5;
+                    if (v === 'suficiente') return 6.0;
+                    if (v === 'necesita mejorar') return 4.5;
+                    return null;
+                };
+
+                const sumCriterionScores = (scores) => {
+                    if (!scores || typeof scores !== 'object') return null;
+                    let total = 0;
+                    let any = false;
+                    for (const v of Object.values(scores)) {
+                        const n = parseFloat(v);
+                        if (!Number.isNaN(n)) {
+                            total += n;
+                            any = true;
+                        }
+                    }
+                    return any ? total : null;
+                };
+
+                const gradeValue10 = (s) => {
+                    const numeric = parseFloat(s.numericGrade ?? s.numeric_grade);
+                    const rubricId = s.rubricId ?? s.rubric_id;
+                    const maxPoints = rubricId ? (rubricMaxById[String(rubricId)] || 0) : 0;
+
+                    if (!Number.isNaN(numeric)) {
+                        return maxPoints > 0 ? (numeric / maxPoints) * 10 : numeric;
+                    }
+
+                    const scoresTotal = sumCriterionScores(s.criterionScores ?? s.criterion_scores);
+                    if (scoresTotal !== null) {
+                        return maxPoints > 0 ? (scoresTotal / maxPoints) * 10 : scoresTotal;
+                    }
+
+                    const q = qualitativeTo10(s.grade);
+                    if (q !== null) return q;
+                    return null;
+                };
+
+                const gradedReviewed = reviewed
+                    .map(s => gradeValue10(s))
+                    .filter(v => v !== null && !Number.isNaN(v));
+
+                const avg = gradedReviewed.length > 0
+                    ? gradedReviewed.reduce((sum, v) => sum + v, 0) / gradedReviewed.length
+                    : null;
+
+                document.getElementById('stat-average').textContent = avg !== null ? avg.toFixed(1) : '-';
+                document.getElementById('stat-average-meta').textContent = gradedReviewed.length > 0
+                    ? `${gradedReviewed.length} con nota de ${reviewed.length} corregidas`
+                    : (reviewed.length > 0 ? 'corregidas sin nota' : 'sin calificaciones');
+            } catch (e) {
+                console.warn('[Dashboard] No se pudo calcular nota media:', e?.message || e);
+            }
 
             // Próxima sesión
             const nextSession = PE.CourseData.getCurrentSession();
