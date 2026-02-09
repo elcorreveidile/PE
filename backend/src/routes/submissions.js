@@ -240,6 +240,15 @@ router.post('/', authenticateToken, [
 
         // Entrega de tarea: derivar activity_id/activity_title desde student_tasks y validar permisos.
         if (task_id) {
+            // Evitar duplicados: 1 entrega por alumno y tarea.
+            const existingForTask = await query(
+                'SELECT id FROM submissions WHERE user_id = $1 AND task_id = $2 LIMIT 1',
+                [req.user.id, task_id]
+            );
+            if (existingForTask.rows.length > 0) {
+                return res.status(409).json({ error: 'Ya has entregado esta tarea' });
+            }
+
             const taskResult = await query(`
                 SELECT
                     id,

@@ -68,8 +68,9 @@
                             </div>
                             <div style="display:flex; gap: 0.5rem; flex-wrap: wrap;">
                                 <a class="btn btn-outline" href="tareas.html">↩︎ Volver a tareas</a>
-                                <button class="btn btn-outline" onclick="archiveCurrentTask()">📦 Archivar</button>
-                                <button class="btn btn-danger" onclick="deleteCurrentTask()">🗑️ Eliminar</button>
+                                <button class="btn btn-outline" onclick="deleteDuplicateSubmissionsForCurrentTask()">🧹 Borrar duplicadas</button>
+                                <button class="btn btn-outline" onclick="archiveCurrentTask()">📦 Archivar tarea</button>
+                                <button class="btn btn-danger" onclick="deleteCurrentTask()">🗑️ Eliminar tarea</button>
                             </div>
                         </div>
                     </div>
@@ -221,20 +222,7 @@
                 allUsers = await PE.API.get('/users');
                 allUsers = Array.isArray(allUsers) ? allUsers.filter(u => (u.role || 'student') !== 'admin') : [];
 
-                // Actualizar contadores
-                const pending = allSubmissions.filter(s => s.status === 'pending');
-                const recent = allSubmissions.filter(s => {
-                    const daysDiff = (Date.now() - new Date(s.createdAt).getTime()) / (1000 * 60 * 60 * 24);
-                    return daysDiff <= 7;
-                });
-                const reviewed = allSubmissions.filter(s => s.status === 'reviewed');
-
-                document.getElementById('stat-total').textContent = allSubmissions.length;
-                document.getElementById('stat-pending').textContent = pending.length;
-                document.getElementById('stat-reviewed').textContent = reviewed.length;
-                document.getElementById('count-pending').textContent = pending.length;
-                document.getElementById('count-recent').textContent = recent.length;
-                document.getElementById('count-reviewed').textContent = reviewed.length;
+                refreshStats();
 
                 // Poblar selects
                 populateFilters();
@@ -248,6 +236,22 @@
                 console.error('Error cargando datos:', error);
                 PE.UI.notify('Error al cargar los datos', 'error');
             }
+        }
+
+        function refreshStats() {
+            const pending = allSubmissions.filter(s => s.status === 'pending');
+            const recent = allSubmissions.filter(s => {
+                const daysDiff = (Date.now() - new Date(s.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+                return daysDiff <= 7;
+            });
+            const reviewed = allSubmissions.filter(s => s.status === 'reviewed');
+
+            document.getElementById('stat-total').textContent = allSubmissions.length;
+            document.getElementById('stat-pending').textContent = pending.length;
+            document.getElementById('stat-reviewed').textContent = reviewed.length;
+            document.getElementById('count-pending').textContent = pending.length;
+            document.getElementById('count-recent').textContent = recent.length;
+            document.getElementById('count-reviewed').textContent = reviewed.length;
         }
 
         async function loadTaskContext(taskId) {
@@ -450,9 +454,12 @@
                                     ${s.status === 'reviewed' ? '✓ Corregido' : '📝 Pendiente'}
                                 </span>
                             </div>
-                            <button class="btn ${s.status === 'reviewed' ? 'btn-outline' : 'btn-primary'}" onclick="reviewSubmission('${s.id}')">
-                                ${s.status === 'reviewed' ? '👁️ Ver/Editar' : '✍️ Corregir'}
-                            </button>
+                            <div style="display:flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+                                <button class="btn ${s.status === 'reviewed' ? 'btn-outline' : 'btn-primary'}" onclick="reviewSubmission('${s.id}')">
+                                    ${s.status === 'reviewed' ? '👁️ Ver/Editar' : '✍️ Corregir'}
+                                </button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteSubmission('${s.id}')">🗑️</button>
+                            </div>
                         </div>
                         <div style="background: var(--bg-light); padding: 1rem; border-radius: 0.5rem; margin-top: 1rem; max-height: 150px; overflow-y: auto;">
                             ${s.content.substring(0, 500)}${s.content.length > 500 ? '...' : ''}
@@ -466,6 +473,85 @@
                     </div>
                 </div>
             `).join('');
+        }
+
+        async function deleteSubmission(id) {
+            const targetId = String(id);
+            const s = allSubmissions.find(sub => String(sub.id) === targetId);
+            const label = s ? `${s.activityTitle || 'Entrega'} (${s.userName || 'Estudiante'})` : `Entrega ${targetId}`;
+
+            if (!confirm(`¿Eliminar ${label}? Esta acción no se puede deshacer.`)) return;
+
+            try {
+                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/submissions/${targetId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || `Error eliminando (${response.status})`);
+                }
+
+                allSubmissions = allSubmissions.filter(sub => String(sub.id) !== targetId);
+                refreshStats();
+                applyFilters();
+                PE.UI.notify('Entrega eliminada', 'success');
+            } catch (e) {
+                console.error('Error eliminando entrega:', e);
+                PE.UI.notify('Error al eliminar la entrega', 'error');
+            }
+        }
+
+        async function deleteDuplicateSubmissionsForCurrentTask() {
+            if (!currentTaskId) return;
+
+            // Duplicadas = mas de 1 entrega para (taskId, userId). Se conserva la mas reciente.
+            const list = allSubmissions
+                .filter(s => String(s.taskId || '') === String(currentTaskId))
+                .slice()
+                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+            const byUser = new Map();
+            for (const s of list) {
+                const key = String(s.userId || '');
+                if (!byUser.has(key)) byUser.set(key, []);
+                byUser.get(key).push(s);
+            }
+
+            const toDelete = [];
+            for (const subs of byUser.values()) {
+                if (subs.length <= 1) continue;
+                // Conserva la mas reciente (subs[0]). Borra el resto SOLO si estan pendientes.
+                for (const dup of subs.slice(1)) {
+                    if (dup.status === 'pending') toDelete.push(dup);
+                }
+            }
+
+            if (toDelete.length === 0) {
+                PE.UI.notify('No hay entregas duplicadas pendientes para borrar', 'info');
+                return;
+            }
+
+            if (!confirm(`Se borrarán ${toDelete.length} entregas duplicadas pendientes (se conserva la más reciente por alumno). ¿Continuar?`)) return;
+
+            try {
+                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+                for (const dup of toDelete) {
+                    await fetch(`${window.PE_CONFIG.API_URL}/api/submissions/${dup.id}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                }
+                // Recargar datos para mantener consistencia con API/estado.
+                await loadData();
+                applyFilters();
+                PE.UI.notify('Duplicadas eliminadas', 'success');
+            } catch (e) {
+                console.error('Error borrando duplicadas:', e);
+                PE.UI.notify('Error al borrar duplicadas', 'error');
+            }
         }
 
         function resetFilters() {
