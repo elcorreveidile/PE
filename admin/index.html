@@ -194,6 +194,51 @@
                         </div>
                     </div>
 
+                    <!-- Recursos del profesor -->
+                    <div class="card mt-4" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                        <div class="card-header" style="border-bottom-color: rgba(255,255,255,0.2);">
+                            <h3 style="margin: 0; color: white;">📚 Recursos del profesor</h3>
+                        </div>
+                        <div class="card-body">
+                            <p style="margin: 0 0 1rem 0;">Genera enlaces temporales para que los estudiantes puedan acceder a los análisis de textos modelo.</p>
+
+                            <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: var(--border-radius-md); margin-bottom: 1rem;">
+                                <h4 style="margin: 0 0 0.75rem 0; font-size: 1rem;">Sesión 3: Perfil personal</h4>
+
+                                <div style="display: grid; grid-template-columns: 200px 1fr; gap: 1rem; align-items: end;">
+                                    <div>
+                                        <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem;">Tiempo de expiración:</label>
+                                        <select id="recursos-expiry" class="form-control" style="background: white; color: #333;">
+                                            <option value="30m">30 minutos</option>
+                                            <option value="1h">1 hora</option>
+                                            <option value="2h" selected>2 horas</option>
+                                            <option value="4h">4 horas</option>
+                                            <option value="24h">24 horas</option>
+                                        </select>
+                                    </div>
+                                    <button type="button" class="btn btn-accent" onclick="generarEnlaceRecurso('analisis-sesion-03-perfil-personal.pdf')">
+                                        📋 Generar enlace temporal
+                                    </button>
+                                </div>
+
+                                <div id="recurso-enlace-generado" style="display: none; margin-top: 1rem;">
+                                    <div style="background: rgba(255,255,255,0.15); padding: 1rem; border-radius: var(--border-radius-md);">
+                                        <p style="margin: 0 0 0.5rem 0;"><strong>✅ Enlace generado:</strong></p>
+                                        <input type="text" id="recurso-temporal-link" class="form-control" readonly style="background: white; color: #333; font-size: 0.875rem; margin-bottom: 0.5rem;">
+                                        <button type="button" class="btn btn-outline-white btn-sm" onclick="copiarEnlaceRecurso()">
+                                            📋 Copiar enlace
+                                        </button>
+                                        <a id="recurso-download-link" href="#" target="_blank" class="btn btn-outline-white btn-sm" style="margin-left: 0.5rem;">
+                                            📥 Abrir enlace
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <small style="opacity: 0.9;">⚠️ Los enlaces expiran automáticamente. Comparte el enlace con tus estudiantes durante la clase.</small>
+                        </div>
+                    </div>
+
                     <!-- Acciones rápidas -->
                     <div class="card mt-4">
                         <div class="card-header">
@@ -450,6 +495,42 @@
                     }
                 }
             ]);
+        }
+
+        // Funciones para generación de enlaces temporales de recursos
+        async function generarEnlaceRecurso(filename) {
+            try {
+                const expiryTime = document.getElementById('recursos-expiry').value;
+
+                PE.UI.notify('Generando enlace temporal...', 'info');
+
+                const response = await PE.API.post('/recursos/temporal-link', {
+                    filename: filename,
+                    expiry: expiryTime
+                });
+
+                if (response && response.downloadLink) {
+                    document.getElementById('recurso-enlace-generado').style.display = 'block';
+                    document.getElementById('recurso-temporal-link').value = response.downloadLink;
+                    document.getElementById('recurso-download-link').href = response.downloadLink;
+
+                    PE.UI.notify(`Enlace generado. Expira en ${expiryTime}`, 'success');
+                } else {
+                    PE.UI.notify('Error al generar enlace temporal', 'error');
+                }
+
+            } catch (error) {
+                console.error('Error generando enlace:', error);
+                PE.UI.notify('Error al generar enlace temporal: ' + error.message, 'error');
+            }
+        }
+
+        function copiarEnlaceRecurso() {
+            const linkInput = document.getElementById('recurso-temporal-link');
+            linkInput.select();
+            document.execCommand('copy');
+
+            PE.UI.notify('Enlace copiado al portapapeles', 'success');
         }
     </script>
 </body>
