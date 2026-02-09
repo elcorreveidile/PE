@@ -1,60 +1,74 @@
 %PDF-1.4
+%“Œ‹ž ReportLab Generated PDF document (opensource)
 1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
+<<
+/F1 2 0 R /F2 3 0 R
+>>
 endobj
 2 0 obj
-<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+<<
+/BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font
+>>
 endobj
 3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+<<
+/BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding /Name /F2 /Subtype /Type1 /Type /Font
+>>
 endobj
 4 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+<<
+/Contents 8 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 7 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
 endobj
 5 0 obj
-<< /Length 904 >>
+<<
+/PageMode /UseNone /Pages 7 0 R /Type /Catalog
+>>
+endobj
+6 0 obj
+<<
+/Author (\(anonymous\)) /CreationDate (D:20260209013017+01'00') /Creator (\(unspecified\)) /Keywords () /ModDate (D:20260209013017+01'00') /Producer (ReportLab PDF Library - \(opensource\)) 
+  /Subject (\(unspecified\)) /Title (\(anonymous\)) /Trapped /False
+>>
+endobj
+7 0 obj
+<<
+/Count 1 /Kids [ 4 0 R ] /Type /Pages
+>>
+endobj
+8 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ] /Length 717
+>>
 stream
-BT
-/F1 16 Tf
-72 760 Td
-(Texto modelo: Coherencia y cohesion) Tj
-/F1 11 Tf
-0 -24 Td
-(El proyecto de escritura colectiva comenzo en febrero. Esta iniciativa pretendia que el) Tj
-0 -14 Td
-(grupo aprendiera a revisar textos ajenos con respeto y precision.) Tj
-0 -14 Td
-0 -14 Td
-(La primera fase consistio en definir un tema comun y seleccionar fuentes. Dichas fuentes) Tj
-0 -14 Td
-(se evaluaron segun su fiabilidad, y solo se mantuvieron aquellas que aportaban datos) Tj
-0 -14 Td
-(verificables.) Tj
-0 -14 Td
-0 -14 Td
-(En la segunda fase, el equipo redacto un borrador y lo compartio en linea. Ese documento) Tj
-0 -14 Td
-(se corrigio en varias rondas, y cada revision incorporo sugerencias concretas.) Tj
-0 -14 Td
-0 -14 Td
-(Finalmente, el texto definitivo se publico con una licencia abierta. De este modo, el) Tj
-0 -14 Td
-(aprendizaje quedo reflejado en un producto real y coherente.) Tj
-0 -14 Td
-0 -14 Td
-ET
-endstream
+GarVL4`B(/&Dd:8DG5sR%:r&4419://4DF>3KkhG!Cb_<B[lkNIA@j\#Qb#^73:@<SJBu>;>%%]U@16nGu1;?l3C4fAjuYCD>V:lTe;U9gN8p.UM,(jDUbQ<i#[mt[;PG7)f"*W;D$MMP]qIMEPDLN]$bu&IKW(In3YO2L#D+&,l;6-/NoK9d?!ehqYc9IBBh\t$,>tW,\,NX<KZf[6$Lpe$]^.WHMh*7;X7I%XK-*LX1EWQ3s?OT&Jo%b;7s>2B@9djn?d=[LuBm'Pt"<-NcrR-;;n`n:LuD@IgIBl#2)G%Tm8M=ZV;*sobOL6p(1dJDnpA:5]a;nq%/@eO'Mc=;j<J?*,-nn'(N;Qr+LnCOq%O:kCTIG&bnig=O?G;0Et9M/gQo5>D3q4TH[;-J/t\&/C0O`/i7O_2e;HBUkX>%rP[sn)`:\,3O-aI+XP5O!%HB)H"W[*Ci0VeDujT.ZCg[oL/?$sl5Te^ANkc,nW"cLMn>0@4'9`h#NiMJ4?8unb\ZINKI+ZTO]E16V&p8Q$Sepn&_%qXWrpD#AS8\q6X-KD6"fh'$NGJ#\8(bZm>7Tl5c?Q1M@[todYKX]etX)!EBinF6W-"?d8!/?&(\';%("75\LZ't4ka8,3TQa;3n/Ujc]G-hTgOcjBFoY2ZUr;IL'i-mNYbAUaj?7T"t._N%e3UA`.:cC\O7*bh.;OTOk%,AX3ooK]$X-Y~>endstream
 endobj
 xref
-0 6
+0 9
 0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000115 00000 n 
-0000000241 00000 n 
-0000000311 00000 n 
+0000000061 00000 n 
+0000000102 00000 n 
+0000000209 00000 n 
+0000000321 00000 n 
+0000000524 00000 n 
+0000000592 00000 n 
+0000000872 00000 n 
+0000000931 00000 n 
 trailer
-<< /Size 6 /Root 1 0 R >>
+<<
+/ID 
+[<bc3a9f4738a5bf06a48363af823850a5><bc3a9f4738a5bf06a48363af823850a5>]
+% ReportLab generated PDF document -- digest (opensource)
+
+/Info 6 0 R
+/Root 5 0 R
+/Size 9
+>>
 startxref
-1266
+1738
 %%EOF

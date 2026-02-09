@@ -1,57 +1,74 @@
 %PDF-1.4
+%“Œ‹ž ReportLab Generated PDF document (opensource)
 1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
+<<
+/F1 2 0 R /F2 3 0 R
+>>
 endobj
 2 0 obj
-<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+<<
+/BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font
+>>
 endobj
 3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+<<
+/BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding /Name /F2 /Subtype /Type1 /Type /Font
+>>
 endobj
 4 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+<<
+/Contents 8 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 7 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
 endobj
 5 0 obj
-<< /Length 778 >>
+<<
+/PageMode /UseNone /Pages 7 0 R /Type /Catalog
+>>
+endobj
+6 0 obj
+<<
+/Author (\(anonymous\)) /CreationDate (D:20260209013017+01'00') /Creator (\(unspecified\)) /Keywords () /ModDate (D:20260209013017+01'00') /Producer (ReportLab PDF Library - \(opensource\)) 
+  /Subject (\(unspecified\)) /Title (\(anonymous\)) /Trapped /False
+>>
+endobj
+7 0 obj
+<<
+/Count 1 /Kids [ 4 0 R ] /Type /Pages
+>>
+endobj
+8 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ] /Length 674
+>>
 stream
-BT
-/F1 16 Tf
-72 760 Td
-(Texto modelo: Apertura de conferencia) Tj
-/F1 11 Tf
-0 -24 Td
-(Buenos dias. Si pensamos en nuestra ultima compra en linea, veremos que casi siempre hubo) Tj
-0 -14 Td
-(una recomendacion automatica. Hoy quiero mostrar como esos sistemas de recomendacion) Tj
-0 -14 Td
-(influyen en nuestras decisiones.) Tj
-0 -14 Td
-0 -14 Td
-(Mi tesis es clara: los algoritmos son utiles cuando aumentan la transparencia, pero) Tj
-0 -14 Td
-(problematicos cuando sustituyen el juicio critico. Para demostrarlo, abordare tres) Tj
-0 -14 Td
-(aspectos: el funcionamiento basico, los sesgos mas comunes y las medidas de control.) Tj
-0 -14 Td
-0 -14 Td
-(Al final de la charla, espero que puedan evaluar estos sistemas con criterios mas) Tj
-0 -14 Td
-(precisos.) Tj
-0 -14 Td
-0 -14 Td
-ET
-endstream
+GarW795iQ=&;9NO'miU^QSi>YIb^*\71Uus,!,G'QIZNJMNmp-l[RfcS@EGJ#S:fmGNPB#>LO"A*oCg1FP"m[0:HuOc(=Po/ZAJ7T:<rBU7Wt%9%BDGUM7,@.D;]>kejgVX(o2tOK'(;4^X=$mqPGQ0S-+8fW;(:@8T>'=B&9T\@Ir>Ia.2h_nhX&H+0+_Xu/m884Yc14),h9H!a[&id$Gp?B:]cc^P*G?=+&"PM(3Z)Ge]O)%\UNisb2bY`V/l;sufQIS7/r:t,fZ=0QmOS<)/;Nf*66%H8T+3"\Y592'$@2OU/aedqO&mNpM@RF7A'fC8Z32qBtI.6Tu-oH,lJ3#[ZDcmSIIGFl*M$3DMn*Oj$MigbDBagA/5X$<<(81<943YYNmi\qg),XOY_R&&nIir#umgtq0,kl1f7<NV+f'nlL&-t.<j(oan_GY?W.(QTND#9QVh&L-:V1:@m/G+AjhN"S4X9FuAei:@qd(`]K0i-/5A3<%>?F%dnqVMg:5HHZT+eA;U4MLP')SEJ\Y:Pj9ZFO5dV#WN=B-6K^Mk'_D!/GB?.Sp$KBM[isa,p'5KPSmml):@[Olq"g3VE7Q`5D0``<HJU?j4KYb6u*l0J4pTr<+V=^Q4CIeM/C790\7h=b;LJ&-B_be;GOHAN8@(tlJFjj^Kl@@a8~>endstream
 endobj
 xref
-0 6
+0 9
 0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000115 00000 n 
-0000000241 00000 n 
-0000000311 00000 n 
+0000000061 00000 n 
+0000000102 00000 n 
+0000000209 00000 n 
+0000000321 00000 n 
+0000000524 00000 n 
+0000000592 00000 n 
+0000000872 00000 n 
+0000000931 00000 n 
 trailer
-<< /Size 6 /Root 1 0 R >>
+<<
+/ID 
+[<e96903befe31bef6e3718ffc75b11f5f><e96903befe31bef6e3718ffc75b11f5f>]
+% ReportLab generated PDF document -- digest (opensource)
+
+/Info 6 0 R
+/Root 5 0 R
+/Size 9
+>>
 startxref
-1140
+1695
 %%EOF

@@ -1,53 +1,74 @@
 %PDF-1.4
+%“Œ‹ž ReportLab Generated PDF document (opensource)
 1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
+<<
+/F1 2 0 R /F2 3 0 R
+>>
 endobj
 2 0 obj
-<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+<<
+/BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font
+>>
 endobj
 3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+<<
+/BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding /Name /F2 /Subtype /Type1 /Type /Font
+>>
 endobj
 4 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+<<
+/Contents 8 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 7 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
 endobj
 5 0 obj
-<< /Length 679 >>
+<<
+/PageMode /UseNone /Pages 7 0 R /Type /Catalog
+>>
+endobj
+6 0 obj
+<<
+/Author (\(anonymous\)) /CreationDate (D:20260209013017+01'00') /Creator (\(unspecified\)) /Keywords () /ModDate (D:20260209013017+01'00') /Producer (ReportLab PDF Library - \(opensource\)) 
+  /Subject (\(unspecified\)) /Title (\(anonymous\)) /Trapped /False
+>>
+endobj
+7 0 obj
+<<
+/Count 1 /Kids [ 4 0 R ] /Type /Pages
+>>
+endobj
+8 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ] /Length 604
+>>
 stream
-BT
-/F1 16 Tf
-72 760 Td
-(Texto modelo: Estilo indirecto) Tj
-/F1 11 Tf
-0 -24 Td
-(En la reunion del equipo, la coordinadora explico que el plazo se ampliaria una semana.) Tj
-0 -14 Td
-(Tambien indico que cada miembro debia entregar un resumen de avances antes del viernes.) Tj
-0 -14 Td
-0 -14 Td
-(Carlos comento que habia tenido dificultades con la parte metodologica, pero aseguro que) Tj
-0 -14 Td
-(ya tenia una propuesta alternativa. Ana afirmo que las fuentes principales eran fiables y) Tj
-0 -14 Td
-(que enviaria una bibliografia actualizada.) Tj
-0 -14 Td
-0 -14 Td
-(Por ultimo, se acordo que la proxima sesion incluiria una revision conjunta del borrador.) Tj
-0 -14 Td
-0 -14 Td
-ET
-endstream
+GarW69okc/%#46H'g?N9(#=FoPht+D4n[1%*.'DJW)rRVjs/%:YHJ0h8_%)iNF6S;mpd:?&+Z[\lj^as(-[+ETLrlf:toFem<:OsS)ZuOACb<h2eAal^Y9R)W>hh#E2!!eDVIERDC\`STu^lW"$^Wj;dF6(6>ON6'_-!:QJ(3a(BseDeWg<gI"F_AX<"McfM`mJ4(o_0I@iNKb4?BA<A/9YjirIig0PGQRti<f$>m8X8c*7:^L#Pr3_'Fp%A_fq2E4gc#bI2jB0h]2NeqCmT<EV)r4j'Qk7Qo?C[N2_'7lt()P8#Q\o`.O7cNVL+^(%[6&PoRBK@KP35-+$3$9%bds3=$SQ(]1SgO)-.P)_\at,L9'AB#ZTT*u(a:jcH'FOVm?Fq>U;A*(05F<`A=WTu'8+)S$3)In(\t.6hS%,0U#,g:q4l4(M!el3&jB&ae<GLo9p23V>+p.$X";pq[9n&B>NpP"oU+sHN.)T@sB$[pK)7<k67ggPOQTq(mJ_JRiFrbdqh;h"&FShG%o<Sk-J0.NUUa$i3:EYM9IP.5l=Lg5W]Rl5h._[t67GH:JQYW#.A$XNS*bXZKcW`%$qc@4t(D0gWV>~>endstream
 endobj
 xref
-0 6
+0 9
 0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000115 00000 n 
-0000000241 00000 n 
-0000000311 00000 n 
+0000000061 00000 n 
+0000000102 00000 n 
+0000000209 00000 n 
+0000000321 00000 n 
+0000000524 00000 n 
+0000000592 00000 n 
+0000000872 00000 n 
+0000000931 00000 n 
 trailer
-<< /Size 6 /Root 1 0 R >>
+<<
+/ID 
+[<3ae7e28d84641c7360b47bb1affc6449><3ae7e28d84641c7360b47bb1affc6449>]
+% ReportLab generated PDF document -- digest (opensource)
+
+/Info 6 0 R
+/Root 5 0 R
+/Size 9
+>>
 startxref
-1041
+1625
 %%EOF

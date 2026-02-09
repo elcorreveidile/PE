@@ -1,55 +1,74 @@
 %PDF-1.4
+%“Œ‹ž ReportLab Generated PDF document (opensource)
 1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
+<<
+/F1 2 0 R /F2 3 0 R
+>>
 endobj
 2 0 obj
-<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+<<
+/BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font
+>>
 endobj
 3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+<<
+/BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding /Name /F2 /Subtype /Type1 /Type /Font
+>>
 endobj
 4 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+<<
+/Contents 8 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 7 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
 endobj
 5 0 obj
-<< /Length 763 >>
+<<
+/PageMode /UseNone /Pages 7 0 R /Type /Catalog
+>>
+endobj
+6 0 obj
+<<
+/Author (\(anonymous\)) /CreationDate (D:20260209013017+01'00') /Creator (\(unspecified\)) /Keywords () /ModDate (D:20260209013017+01'00') /Producer (ReportLab PDF Library - \(opensource\)) 
+  /Subject (\(unspecified\)) /Title (\(anonymous\)) /Trapped /False
+>>
+endobj
+7 0 obj
+<<
+/Count 1 /Kids [ 4 0 R ] /Type /Pages
+>>
+endobj
+8 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ] /Length 672
+>>
 stream
-BT
-/F1 16 Tf
-72 760 Td
-(Texto modelo: Descripcion sensorial) Tj
-/F1 11 Tf
-0 -24 Td
-(El patio estaba lleno de una luz tibia que resbalaba por las paredes blancas. El aire olia) Tj
-0 -14 Td
-(a tierra humeda y a jazmin recien abierto, y cada paso levantaba un susurro de grava.) Tj
-0 -14 Td
-0 -14 Td
-(El silencio no era total: se mezclaba con un goteo constante, con el roce de las hojas y) Tj
-0 -14 Td
-(con el rumor lejano de una fuente. La brisa traia un sabor tenue a citricos, como si el) Tj
-0 -14 Td
-(limonero del fondo respirara lentamente.) Tj
-0 -14 Td
-0 -14 Td
-(Las sombras se movian despacio, como si el lugar se negara a terminar el dia. Todo parecia) Tj
-0 -14 Td
-(suspendido, ligero, y la calma tenia un peso exacto, casi visible.) Tj
-0 -14 Td
-0 -14 Td
-ET
-endstream
+GarVLbANe7']&X:maA48b('S6Q;uC62H<n'F+J*^ei`F1\;@u7B1VAk;1pba1M>#!$:Qrr[B,oFqU*[a?]%fKc&U:#gJIK4&'aCD;K'XVaJs*^<E.l,RG(\Ggr"-/lJcunV6&=6WiRXBCN3!U=FjCVAF?D$O=3Ac,`3cPXT(i@J'4j6<8Z/#M-\J<pU1aS73=@U0@]?fq3p[J`q,UpZ<I5R9:l88Fa!j+<r$e6d@n_5X%1[4Q5ZdB@jB<`-gQ+6rlV%OE_$^q7\6t7M%d?l`ea69$dB/7o8+gMC8Sm"'I:,'&npog%**G%DgA4;9jX19r1ir+6$eC;)Km.A/4m&U6Jd6K5q!m14j@#RVAJUcq.-l8J#C6t[fB,$#"K[90llnsjN)3n34lM5^<"8Rc64a)LVQDdoV+e`,UHt5LeW>-F-"sajjYk"3n,iF)Z1jE]cb%YjC[']6c!sJcEl(?ETtU6Z+aHcZV<U(T&1LAblX2i*gt`T,Er;rA==^O5YpCd,h2K$FQ[/^ZQ=Q]po^HqGHta7[.CHpWV]Nt7MGupfUc(e7;pqBIZ_ks2*9TN,:!+D2b#fH!9bWdA4Uf]-ir_q&?&p1^W&Vp9sK=le2rQRFUpO.#ImBY0hB+"VT\BbhC+bS4EHi9LU$0'cr!<h)Tb0j%(,jA60BPQ~>endstream
 endobj
 xref
-0 6
+0 9
 0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000115 00000 n 
-0000000241 00000 n 
-0000000311 00000 n 
+0000000061 00000 n 
+0000000102 00000 n 
+0000000209 00000 n 
+0000000321 00000 n 
+0000000524 00000 n 
+0000000592 00000 n 
+0000000872 00000 n 
+0000000931 00000 n 
 trailer
-<< /Size 6 /Root 1 0 R >>
+<<
+/ID 
+[<eff4d7371faf717180a8ab1aab6c8970><eff4d7371faf717180a8ab1aab6c8970>]
+% ReportLab generated PDF document -- digest (opensource)
+
+/Info 6 0 R
+/Root 5 0 R
+/Size 9
+>>
 startxref
-1125
+1693
 %%EOF

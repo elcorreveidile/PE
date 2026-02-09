@@ -1,62 +1,74 @@
 %PDF-1.4
+%“Œ‹ž ReportLab Generated PDF document (opensource)
 1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
+<<
+/F1 2 0 R /F2 3 0 R
+>>
 endobj
 2 0 obj
-<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+<<
+/BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font
+>>
 endobj
 3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+<<
+/BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding /Name /F2 /Subtype /Type1 /Type /Font
+>>
 endobj
 4 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+<<
+/Contents 8 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 7 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
 endobj
 5 0 obj
-<< /Length 755 >>
+<<
+/PageMode /UseNone /Pages 7 0 R /Type /Catalog
+>>
+endobj
+6 0 obj
+<<
+/Author (\(anonymous\)) /CreationDate (D:20260209013017+01'00') /Creator (\(unspecified\)) /Keywords () /ModDate (D:20260209013017+01'00') /Producer (ReportLab PDF Library - \(opensource\)) 
+  /Subject (\(unspecified\)) /Title (\(anonymous\)) /Trapped /False
+>>
+endobj
+7 0 obj
+<<
+/Count 1 /Kids [ 4 0 R ] /Type /Pages
+>>
+endobj
+8 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ] /Length 614
+>>
 stream
-BT
-/F1 16 Tf
-72 760 Td
-(Texto modelo: Preguntas abiertas y seguimiento) Tj
-/F1 11 Tf
-0 -24 Td
-(A: Como te organizaste para terminar el proyecto a tiempo?) Tj
-0 -14 Td
-0 -14 Td
-(B: Primero estableci un calendario y luego revise las prioridades cada semana.) Tj
-0 -14 Td
-0 -14 Td
-(A: Que parte te resulto mas dificil y por que?) Tj
-0 -14 Td
-0 -14 Td
-(B: La recopilacion de datos, porque algunas fuentes no eran fiables.) Tj
-0 -14 Td
-0 -14 Td
-(A: Y que hiciste para resolverlo?) Tj
-0 -14 Td
-0 -14 Td
-(B: Compare varias fuentes y pedi ayuda a un companero que conocia el tema.) Tj
-0 -14 Td
-0 -14 Td
-(A: Que aprenderias para la proxima vez?) Tj
-0 -14 Td
-0 -14 Td
-(B: Que conviene validar la informacion al inicio para evitar retrabajo.) Tj
-0 -14 Td
-0 -14 Td
-ET
-endstream
+GarVKbAPco']%q&m]o:&mF[9EA:l93$)n:V]W&j3Apb8hRYN\/7npai1H)`K.U1L!cC+:0(#@kIj&8%6qhB"&-rM?K#?&`S8^.?cDAK.(qMhT"U>D+R7I/L8:n)c`F4`+p\m-gG<0YQu<GO)TZWp?i0#4GuR6,.',YF/2M6b>,=5P<l+&uTl;Kl@Al?eAhoea7Wk)#ONfu4HQ>>D2E>\,:$!pXM\"&=d/EVht1X2u6rX"eub3c!fe&*-&-2JhV^PiL\K:;hK(0eY/D0Jh"1#Opc>4p;b$(CK]RhRmgE]&Ul!7;"_Q')O'*<>WPA1_+!LM!Mn_]$E.O8IQlDkIhUIB^hhNMJkMD!)5Pr0i4+@8O=1N3m=@5\Wm;.bHjMJa.A4UCc@;Ji!4Ij1tWcWLKegRg0!if+jt(ddDZ1iUdJcGCD/h<67qpT^!A*WAdPmo"Z1u8*C/N"H"9\UPMN-6q_?RJ:WUb.^d52;M095chCo^+,N<'@Qe/C928kiTA[I^1aTm4].9#QjK/S[/Oj:WEjt<Ad)*(2ib:"l')om&dQRk9MlmA;[^1I"Hd:^[Jit!<EW<K_T7>rq*i=#8X7Hl&cq'd$Xr3!F%"`^RGX8~>endstream
 endobj
 xref
-0 6
+0 9
 0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000115 00000 n 
-0000000241 00000 n 
-0000000311 00000 n 
+0000000061 00000 n 
+0000000102 00000 n 
+0000000209 00000 n 
+0000000321 00000 n 
+0000000524 00000 n 
+0000000592 00000 n 
+0000000872 00000 n 
+0000000931 00000 n 
 trailer
-<< /Size 6 /Root 1 0 R >>
+<<
+/ID 
+[<ab6094ce65dd09d3c75c04a45eba14ca><ab6094ce65dd09d3c75c04a45eba14ca>]
+% ReportLab generated PDF document -- digest (opensource)
+
+/Info 6 0 R
+/Root 5 0 R
+/Size 9
+>>
 startxref
-1117
+1635
 %%EOF

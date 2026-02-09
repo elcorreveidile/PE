@@ -1,62 +1,74 @@
 %PDF-1.4
+%“Œ‹ž ReportLab Generated PDF document (opensource)
 1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
+<<
+/F1 2 0 R /F2 3 0 R
+>>
 endobj
 2 0 obj
-<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+<<
+/BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font
+>>
 endobj
 3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+<<
+/BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding /Name /F2 /Subtype /Type1 /Type /Font
+>>
 endobj
 4 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+<<
+/Contents 8 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 7 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
 endobj
 5 0 obj
-<< /Length 872 >>
+<<
+/PageMode /UseNone /Pages 7 0 R /Type /Catalog
+>>
+endobj
+6 0 obj
+<<
+/Author (\(anonymous\)) /CreationDate (D:20260209013017+01'00') /Creator (\(unspecified\)) /Keywords () /ModDate (D:20260209013017+01'00') /Producer (ReportLab PDF Library - \(opensource\)) 
+  /Subject (\(unspecified\)) /Title (\(anonymous\)) /Trapped /False
+>>
+endobj
+7 0 obj
+<<
+/Count 1 /Kids [ 4 0 R ] /Type /Pages
+>>
+endobj
+8 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ] /Length 654
+>>
 stream
-BT
-/F1 16 Tf
-72 760 Td
-(Texto modelo: Entrevista) Tj
-/F1 11 Tf
-0 -24 Td
-(Entrevistador: Que aspectos considera esenciales en una buena entrevista de trabajo?) Tj
-0 -14 Td
-0 -14 Td
-(Especialista: En primer lugar, la preparacion. Investigar la empresa y comprender el) Tj
-0 -14 Td
-(puesto permite responder con ejemplos concretos.) Tj
-0 -14 Td
-0 -14 Td
-(Entrevistador: Y que errores observa con mas frecuencia?) Tj
-0 -14 Td
-0 -14 Td
-(Especialista: El mas comun es improvisar. Tambien se nota cuando el candidato no escucha) Tj
-0 -14 Td
-(la pregunta y ofrece respuestas generales.) Tj
-0 -14 Td
-0 -14 Td
-(Entrevistador: Que consejo daria a quienes buscan su primer empleo?) Tj
-0 -14 Td
-0 -14 Td
-(Especialista: Practicar la presentacion personal y demostrar actitud de aprendizaje. La) Tj
-0 -14 Td
-(claridad y la honestidad suelen marcar la diferencia.) Tj
-0 -14 Td
-0 -14 Td
-ET
-endstream
+GarVLbDP%.']%q&c>m*G)``a<R8'B:6=CWMl:mtA)sJ]E?qZMjKhfCs=3f;/P/1NOhoC"NKt0<\I-V:;g>MQ]"]_;M5qS!@RR_1_fl<lq40,Zcf&^)/?Iaa5=)44fEhVc=[9TITQOC4";<2r36J0UpVj_#]d<#Feb45s<Q5SWK-V+&\;(WberIBkH!hX9KkQ@7URZElQP<A<==B+<0ZZrsQR[6sjEAeo^f;+Y2ca6*N)O4AKXbQia*h>7FqFb!.8)qJhSe?Zbc[,'mg:M#-#6ID=g/?*+m#W2qS(LH0meCXm@17^qFRWYAadZfl(G[K:?onj3e"4E(Zm6a'Va/s^=5^\PE?)(0Eeuk,7`*?%U4*%%KFt^_T;:/8kKqn5+hbQ2CI/tfOR`%G5mJ/_`O43&3/UfJ_9;%qiO=reM8gh^7I1*A1lB&1duFl(.LBF7'lmX3;^g!h\$b3pA2sT)rgcgFN6gju*3::qi8br%da.Q#a?DWSnHD*dT7pjUK!f5=Bh/Ri@O/DjRp>$,LS8)^,Vk(2&DX-2W/0\f%+ui=M<Tf60j&i6+\*[6NWDiS@X7U+>2a/)o25&ga?r<M3I_rGZ@D,S"WkY+<gX^ZdP!,C]uqkfHVE48p,SZ%-3Rh&*(JP<WuhSQIsG3XpA~>endstream
 endobj
 xref
-0 6
+0 9
 0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000115 00000 n 
-0000000241 00000 n 
-0000000311 00000 n 
+0000000061 00000 n 
+0000000102 00000 n 
+0000000209 00000 n 
+0000000321 00000 n 
+0000000524 00000 n 
+0000000592 00000 n 
+0000000872 00000 n 
+0000000931 00000 n 
 trailer
-<< /Size 6 /Root 1 0 R >>
+<<
+/ID 
+[<b5ef6f0a4753b55cd8145c41e71387bb><b5ef6f0a4753b55cd8145c41e71387bb>]
+% ReportLab generated PDF document -- digest (opensource)
+
+/Info 6 0 R
+/Root 5 0 R
+/Size 9
+>>
 startxref
-1234
+1675
 %%EOF

@@ -1,59 +1,74 @@
 %PDF-1.4
+%“Œ‹ž ReportLab Generated PDF document (opensource)
 1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
+<<
+/F1 2 0 R /F2 3 0 R
+>>
 endobj
 2 0 obj
-<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+<<
+/BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font
+>>
 endobj
 3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+<<
+/BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding /Name /F2 /Subtype /Type1 /Type /Font
+>>
 endobj
 4 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+<<
+/Contents 8 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 7 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
 endobj
 5 0 obj
-<< /Length 905 >>
+<<
+/PageMode /UseNone /Pages 7 0 R /Type /Catalog
+>>
+endobj
+6 0 obj
+<<
+/Author (\(anonymous\)) /CreationDate (D:20260209013017+01'00') /Creator (\(unspecified\)) /Keywords () /ModDate (D:20260209013017+01'00') /Producer (ReportLab PDF Library - \(opensource\)) 
+  /Subject (\(unspecified\)) /Title (\(anonymous\)) /Trapped /False
+>>
+endobj
+7 0 obj
+<<
+/Count 1 /Kids [ 4 0 R ] /Type /Pages
+>>
+endobj
+8 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ] /Length 754
+>>
 stream
-BT
-/F1 16 Tf
-72 760 Td
-(Texto modelo: Desarrollo y cierre de conferencia) Tj
-/F1 11 Tf
-0 -24 Td
-(En el desarrollo hemos visto que los algoritmos aprenden a partir de datos historicos. Por) Tj
-0 -14 Td
-(eso, cuando los datos contienen sesgos, el sistema los reproduce. Un ejemplo es la) Tj
-0 -14 Td
-(recomendacion de contenidos que refuerza ideas previas y reduce la diversidad.) Tj
-0 -14 Td
-0 -14 Td
-(Sin embargo, existen estrategias de mitigacion: auditorias externas, explicaciones) Tj
-0 -14 Td
-(accesibles y limites en el uso de perfiles. Estas medidas permiten equilibrar innovacion y) Tj
-0 -14 Td
-(responsabilidad.) Tj
-0 -14 Td
-0 -14 Td
-(Para concluir, la tecnologia no es neutral; depende de como se diseña y se aplica. Si) Tj
-0 -14 Td
-(exigimos transparencia y responsabilidad, los sistemas de recomendacion pueden ser una) Tj
-0 -14 Td
-(herramienta valiosa. Muchas gracias.) Tj
-0 -14 Td
-0 -14 Td
-ET
-endstream
+GarVL?ZX[M%"I`Dd,X%VW7//Nisci$E&WgH`f"T4R<FU]b"5b3oZ1p:K<`U*l<;X)O/*Upk[VciFoWU&Gl-0EWM/!t\ZW*/q#\%MlnC5^b]R3n\+S=fB!nV^G.lEe%9I.?YHG?2e^mI#gd%.^oa7Lc.AiMHhEfU>7BPL9U96;geTXX`F1GT]W0]I40nqgt"j71;8VCD9o)R&$XQ5j70<&*Wb:0K;0k%boVhDs(;8UYu)7)?HdghbnJT[:QAl1-\gJna_JuaVILBq1-jPp\sU4a`<qZs*X=E"E:0+55iaQqrPGY_U=E9*fSLQTC<5P/e,*]3BIF]$eq<tn.*&:0Rl-)3OA[,aCQ#ht^r\;LEQiZ.<@_8QJ$c;Gqj;c&-8WJtV``?[%3%\K]&Ek5(#d>aGApn<QeW9[G6-1Iif)`uT$Q=IH")^qr>]'M[q5Ebq6?q6SL2'5tN:D8:U7a=hjO!KQ&\dH0X&p6:#<gD-D(8Vg]&0.Xn!6Wg]^hr&D!?<+mb8SbOO9A8KM1QdqcaIAaBXCfaC?P87!mcau-Rt;s;p<$?adt@r_/1))Yp60H;SLK1RX,h(o1i+/%LsX'cV6Bul.!b8E2QjXc5d8Sc<*<:bd5uRCkt9T(C6k(JOXeFhlD8kch6):0'[C&'$#k$@kai$M#`I9goT;*QLjMm7S(*$k6:`Yb.Psu1??m&Ig.keocq#Q(]n24h+J@HFBJg$,C5AABto]%?85X2;G>WI0+hfG!6E8_nG~>endstream
 endobj
 xref
-0 6
+0 9
 0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000115 00000 n 
-0000000241 00000 n 
-0000000311 00000 n 
+0000000061 00000 n 
+0000000102 00000 n 
+0000000209 00000 n 
+0000000321 00000 n 
+0000000524 00000 n 
+0000000592 00000 n 
+0000000872 00000 n 
+0000000931 00000 n 
 trailer
-<< /Size 6 /Root 1 0 R >>
+<<
+/ID 
+[<9e8e6004bde0d9009a046020109c1d87><9e8e6004bde0d9009a046020109c1d87>]
+% ReportLab generated PDF document -- digest (opensource)
+
+/Info 6 0 R
+/Root 5 0 R
+/Size 9
+>>
 startxref
-1267
+1775
 %%EOF

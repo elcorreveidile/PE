@@ -1,57 +1,74 @@
 %PDF-1.4
+%“Œ‹ž ReportLab Generated PDF document (opensource)
 1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
+<<
+/F1 2 0 R /F2 3 0 R
+>>
 endobj
 2 0 obj
-<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+<<
+/BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font
+>>
 endobj
 3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+<<
+/BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding /Name /F2 /Subtype /Type1 /Type /Font
+>>
 endobj
 4 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+<<
+/Contents 8 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 7 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
 endobj
 5 0 obj
-<< /Length 714 >>
+<<
+/PageMode /UseNone /Pages 7 0 R /Type /Catalog
+>>
+endobj
+6 0 obj
+<<
+/Author (\(anonymous\)) /CreationDate (D:20260209013017+01'00') /Creator (\(unspecified\)) /Keywords () /ModDate (D:20260209013017+01'00') /Producer (ReportLab PDF Library - \(opensource\)) 
+  /Subject (\(unspecified\)) /Title (\(anonymous\)) /Trapped /False
+>>
+endobj
+7 0 obj
+<<
+/Count 1 /Kids [ 4 0 R ] /Type /Pages
+>>
+endobj
+8 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ] /Length 581
+>>
 stream
-BT
-/F1 16 Tf
-72 760 Td
-(Texto modelo: Nominalizacion) Tj
-/F1 11 Tf
-0 -24 Td
-(La implementacion del plan requerira la coordinacion de varios equipos y la asignacion de) Tj
-0 -14 Td
-(responsabilidades claras. La definicion de plazos facilitara la supervision y la) Tj
-0 -14 Td
-(evaluacion posterior.) Tj
-0 -14 Td
-0 -14 Td
-(La identificacion de riesgos, asi como la elaboracion de protocolos, permitiran una) Tj
-0 -14 Td
-(respuesta rapida ante incidencias. La comunicacion interna sera clave para la deteccion) Tj
-0 -14 Td
-(temprana de problemas.) Tj
-0 -14 Td
-0 -14 Td
-(En definitiva, la planificacion rigurosa y la revision constante garantizan la mejora) Tj
-0 -14 Td
-(continua del proyecto.) Tj
-0 -14 Td
-0 -14 Td
-ET
-endstream
+GarW6:N+uA%)q]2'KgP+iDk'\/3=@*:;q`l546;/N57gr*D$alI/6]\ra8r=5S0_]rnaDdi(6.3<]^A1mGQGP"/^h@!+oN=TmM@RDKT3PMmBIcG$",@CcC+km+S#]l#gRGok(miWa7W]fg:tUH37SXBhrffI"lN<7'4]iU96<1i?q(ne[1=fj"Kn-7eZ'@N-75[!8T/I+1%(OqRpO=C!/,uGur?Nl^QhBH7IPHH.sn41qtL8gL@=\haq4?St,^q:-?03n2NEHaf"5gAM?.:&El)Pi.0_sX@VQ_n03Ds#*sKCp7P<T,f3d:@cZLN$kt)Z&bkY%a.=JWLB1nMff^A.o2VgCZSjgWXlG(gHpbhtU2]+Z[08oFFRt)]FAf.P8lP.8$m4-Y4YXi@ia]Eo;+<#-%egU=RN#lHP/N7$E[?a9F9EXsO!VqB1$K/q%0Pf-!IL;mQ7nZ5s6Qq.<^kB`8DtUY#B8+u90d&9Z:19sS<S_=(.%Zj/@jrM^W\.s#p44[I\1u&^r%-;@N!>u''M)%X4'k`l(CG8bZWt>PEB0/I_JSDB3ZKAa;`eXeN^f"XSr4V/IiQ~>endstream
 endobj
 xref
-0 6
+0 9
 0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000115 00000 n 
-0000000241 00000 n 
-0000000311 00000 n 
+0000000061 00000 n 
+0000000102 00000 n 
+0000000209 00000 n 
+0000000321 00000 n 
+0000000524 00000 n 
+0000000592 00000 n 
+0000000872 00000 n 
+0000000931 00000 n 
 trailer
-<< /Size 6 /Root 1 0 R >>
+<<
+/ID 
+[<b303d71c591c3b444377846162dc9a3c><b303d71c591c3b444377846162dc9a3c>]
+% ReportLab generated PDF document -- digest (opensource)
+
+/Info 6 0 R
+/Root 5 0 R
+/Size 9
+>>
 startxref
-1076
+1602
 %%EOF

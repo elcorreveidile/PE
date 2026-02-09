@@ -1,57 +1,74 @@
 %PDF-1.4
+%“Œ‹ž ReportLab Generated PDF document (opensource)
 1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
+<<
+/F1 2 0 R /F2 3 0 R
+>>
 endobj
 2 0 obj
-<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+<<
+/BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font
+>>
 endobj
 3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+<<
+/BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding /Name /F2 /Subtype /Type1 /Type /Font
+>>
 endobj
 4 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+<<
+/Contents 8 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 7 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
 endobj
 5 0 obj
-<< /Length 816 >>
+<<
+/PageMode /UseNone /Pages 7 0 R /Type /Catalog
+>>
+endobj
+6 0 obj
+<<
+/Author (\(anonymous\)) /CreationDate (D:20260209013017+01'00') /Creator (\(unspecified\)) /Keywords () /ModDate (D:20260209013017+01'00') /Producer (ReportLab PDF Library - \(opensource\)) 
+  /Subject (\(unspecified\)) /Title (\(anonymous\)) /Trapped /False
+>>
+endobj
+7 0 obj
+<<
+/Count 1 /Kids [ 4 0 R ] /Type /Pages
+>>
+endobj
+8 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ] /Length 689
+>>
 stream
-BT
-/F1 16 Tf
-72 760 Td
-(Texto modelo: Critica cinematografica) Tj
-/F1 11 Tf
-0 -24 Td
-(La pelicula El umbral narra la historia de una arquitecta que regresa a su ciudad para) Tj
-0 -14 Td
-(reconstruir un edificio historico. La trama combina memoria familiar y conflicto urbano) Tj
-0 -14 Td
-(con un ritmo pausado.) Tj
-0 -14 Td
-0 -14 Td
-(El guion destaca por la coherencia de los dialogos y por la construccion del personaje) Tj
-0 -14 Td
-(principal, que evoluciona de la duda a la decision. La fotografia, sobria y luminosa,) Tj
-0 -14 Td
-(refuerza el contraste entre pasado y presente.) Tj
-0 -14 Td
-0 -14 Td
-(Aunque el segundo acto se extiende mas de lo necesario, el cierre resulta convincente. En) Tj
-0 -14 Td
-(conjunto, es una obra sensible y bien interpretada que merece ser vista con calma.) Tj
-0 -14 Td
-0 -14 Td
-ET
-endstream
+GarVL997d\&AI`dk.%NiM?AO.\$i$/]i<6r07u'b7Xfk0BXbajT>NRPcmk4?b`'<''1E9kC0\.kqVK\fT8HT@rINIu=],2e]7+pkWV=N;D7XSr<O>nI)R\t@3/;[P2XPguV5@NMeT+#O?/%6Uis_;iU3WQkJYE<mV.eUUnF0YFH!YYe:MoikI`1F2HC^%-d`.4**0)GLe,cCAe=W]>>XeV.o9$7g2t!]M%gP/g3"9,)Mm7]6;_?Kn.Denk(u;-tQe*4uKgBOR9$No#Xr?P]kq(EL@[VD*MVCY0j>f[VP[7&++W@4DW-BYLQX[8a4LogK'VQqq-ja`_"VbP+J^+[[-p%-f@keSY8Ho8t'E6tUcr:0/Z@fOBp')L3>c!qr%d]-3*9dnWrW'4m<T9TuW.g*:F"W!J,TZpl,KF9?)C/mKbB&KiN=ITS`Ts!8)q)YZ(q/B?&iccA;7G+8*/g1n$D($[k@fBcAilo*?EV,13d*m0$NDs&2i'?uSRs'tgI$4HTBDHU^8Ccs[Q*;767L'N8Gp@.:5D.n.>%aB0QT*R73ZW6UnM_GO!<pYOlTV,VRYcQd!Er+4JXu42rE[bj1:rko9%!_N:df^Z$CG?Ku"`+cI_ehn[ZsE&$13gd#JJMT?Q.!7.!9-#0.qKAOZr*R7$%=0Giu2>9EB,ZZY'Yr?4#p$S%u1F8~>endstream
 endobj
 xref
-0 6
+0 9
 0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000115 00000 n 
-0000000241 00000 n 
-0000000311 00000 n 
+0000000061 00000 n 
+0000000102 00000 n 
+0000000209 00000 n 
+0000000321 00000 n 
+0000000524 00000 n 
+0000000592 00000 n 
+0000000872 00000 n 
+0000000931 00000 n 
 trailer
-<< /Size 6 /Root 1 0 R >>
+<<
+/ID 
+[<b49c2d1eade8a994de7d5f5979fb74e6><b49c2d1eade8a994de7d5f5979fb74e6>]
+% ReportLab generated PDF document -- digest (opensource)
+
+/Info 6 0 R
+/Root 5 0 R
+/Size 9
+>>
 startxref
-1178
+1710
 %%EOF

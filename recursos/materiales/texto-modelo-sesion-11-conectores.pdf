@@ -1,57 +1,74 @@
 %PDF-1.4
+%“Œ‹ž ReportLab Generated PDF document (opensource)
 1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
+<<
+/F1 2 0 R /F2 3 0 R
+>>
 endobj
 2 0 obj
-<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+<<
+/BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font
+>>
 endobj
 3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+<<
+/BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding /Name /F2 /Subtype /Type1 /Type /Font
+>>
 endobj
 4 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+<<
+/Contents 8 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 7 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
 endobj
 5 0 obj
-<< /Length 820 >>
+<<
+/PageMode /UseNone /Pages 7 0 R /Type /Catalog
+>>
+endobj
+6 0 obj
+<<
+/Author (\(anonymous\)) /CreationDate (D:20260209013017+01'00') /Creator (\(unspecified\)) /Keywords () /ModDate (D:20260209013017+01'00') /Producer (ReportLab PDF Library - \(opensource\)) 
+  /Subject (\(unspecified\)) /Title (\(anonymous\)) /Trapped /False
+>>
+endobj
+7 0 obj
+<<
+/Count 1 /Kids [ 4 0 R ] /Type /Pages
+>>
+endobj
+8 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ] /Length 709
+>>
 stream
-BT
-/F1 16 Tf
-72 760 Td
-(Texto modelo: Conectores y marcadores) Tj
-/F1 11 Tf
-0 -24 Td
-(En primer lugar, es necesario definir el objetivo del proyecto; de lo contrario, el equipo) Tj
-0 -14 Td
-(avanza sin un rumbo claro. Ademas, conviene asignar tareas especificas para evitar) Tj
-0 -14 Td
-(duplicidades.) Tj
-0 -14 Td
-0 -14 Td
-(Por otra parte, la comunicacion debe ser continua. Sin embargo, no basta con reunirse: es) Tj
-0 -14 Td
-(imprescindible cerrar acuerdos y registrar decisiones. En consecuencia, un acta breve) Tj
-0 -14 Td
-(despues de cada reunion mejora la continuidad del trabajo.) Tj
-0 -14 Td
-0 -14 Td
-(Por ultimo, la evaluacion final permite identificar aciertos y errores. En conclusion, una) Tj
-0 -14 Td
-(planificacion con conectores adecuados refleja orden y claridad en el discurso.) Tj
-0 -14 Td
-0 -14 Td
-ET
-endstream
+GarW7bAQ'"$q9pi$80fE<B[W>a6BTUdT%)8U1H:5Lc/qj6^c?39u"F'UiCu/&0U1&nt(1W)-G!hlIgK600O^\B#(e#+2D]]%J8Q:[U7fCbl>hgD7Y/-2mD'))RJo+dO24;ZYR%>4Z)P<D:Ud^o\==-*>^K[>\("2pEJ#-E0Y*@'tCiMbeM`b3e/qDn21EUF%hhU6%=Lc]b:7-j"6.2=0IkJc%=5G?OH3;X8;ZMPZaDE/9,R-o<)QqoOj3Bj%(f:`.A6`Qn49jju1#>fM_iQNgQ+Tc_Q^Z-B9e.JHI8B#B;`Nb\)@dSt(422(Q#jCpq^jL8ucB#M&Sp-/^!")!7W(QJ,./Kr53$`pacfF+=lG'gG6__\='b4Hdate@m_;+Mc4AJ-fg]KU4Z"<K-K:Q4Idd_h8>Ic7F)lQH?Dn&P'tQr.kZR5\S8595l<.I0n>63<fL)#dTh!<Xo9P\E!(SF@CYoF;4]c@DG!@[m6,c8==?P/,#1FBK;#63!)`E/-FTmBoJL'U*F<q6,Y<e;,sjTB+Z#L8a:q>>\Y[#7;,56->CS#&JYUO(5@muK&Gl-`Ds<E_:>c-#"31@;lnP''#i,^A$o*FFQLo_X;2gMPW[7p4H`Cd5S]n?bnXU`k]`c>Wb#I5$d'ol3XiD`a1_,?PttbV/A`1P/.rsCSIf6C.2f7'YM=.Gj<J;A;NB#&rrs8=!3*al+9~>endstream
 endobj
 xref
-0 6
+0 9
 0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000115 00000 n 
-0000000241 00000 n 
-0000000311 00000 n 
+0000000061 00000 n 
+0000000102 00000 n 
+0000000209 00000 n 
+0000000321 00000 n 
+0000000524 00000 n 
+0000000592 00000 n 
+0000000872 00000 n 
+0000000931 00000 n 
 trailer
-<< /Size 6 /Root 1 0 R >>
+<<
+/ID 
+[<48f4f31b555e1a1b8e4c1be68c020ec7><48f4f31b555e1a1b8e4c1be68c020ec7>]
+% ReportLab generated PDF document -- digest (opensource)
+
+/Info 6 0 R
+/Root 5 0 R
+/Size 9
+>>
 startxref
-1182
+1730
 %%EOF

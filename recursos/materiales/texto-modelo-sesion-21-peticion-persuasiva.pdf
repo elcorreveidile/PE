@@ -1,58 +1,74 @@
 %PDF-1.4
+%“Œ‹ž ReportLab Generated PDF document (opensource)
 1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
+<<
+/F1 2 0 R /F2 3 0 R
+>>
 endobj
 2 0 obj
-<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+<<
+/BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font
+>>
 endobj
 3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+<<
+/BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding /Name /F2 /Subtype /Type1 /Type /Font
+>>
 endobj
 4 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+<<
+/Contents 8 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 7 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
 endobj
 5 0 obj
-<< /Length 732 >>
+<<
+/PageMode /UseNone /Pages 7 0 R /Type /Catalog
+>>
+endobj
+6 0 obj
+<<
+/Author (\(anonymous\)) /CreationDate (D:20260209013017+01'00') /Creator (\(unspecified\)) /Keywords () /ModDate (D:20260209013017+01'00') /Producer (ReportLab PDF Library - \(opensource\)) 
+  /Subject (\(unspecified\)) /Title (\(anonymous\)) /Trapped /False
+>>
+endobj
+7 0 obj
+<<
+/Count 1 /Kids [ 4 0 R ] /Type /Pages
+>>
+endobj
+8 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ] /Length 642
+>>
 stream
-BT
-/F1 16 Tf
-72 760 Td
-(Texto modelo: Peticion persuasiva) Tj
-/F1 11 Tf
-0 -24 Td
-(Estimado profesor:) Tj
-0 -14 Td
-0 -14 Td
-(Le escribo para solicitar una pequena ampliacion del plazo de entrega del proyecto final.) Tj
-0 -14 Td
-(Durante esta semana he tenido que atender un compromiso laboral imprevisto que ha reducido) Tj
-0 -14 Td
-(el tiempo disponible.) Tj
-0 -14 Td
-0 -14 Td
-(Agradeceria poder entregar el trabajo el lunes por la manana. Con esa extension podre) Tj
-0 -14 Td
-(revisar la cohesion del texto y asegurar la calidad del resultado. Me comprometo a) Tj
-0 -14 Td
-(enviarle un avance el viernes.) Tj
-0 -14 Td
-0 -14 Td
-(Gracias por su comprension y por la flexibilidad. Quedo atento a su respuesta.) Tj
-0 -14 Td
-0 -14 Td
-ET
-endstream
+GarW6bAQ&g&4Q?mMHRLob)2?5=5!8/G*;t:Wb"(uBl#Su89mb:8\_u,qLQ!_":u9d\bF;gBdi&iH0n+P:E@+JW^2uuD*cdRL@,Oh]>\3PcSq=k2/V#]=Kg:J[nSAqnlb4"\Z/k1AR4P8%4\LA$@'#k9msGF!8T%=V2-LWZ:kJGT+oL:ePm#NI02\^Rf<4K&Vh6V3T;"A*hdqMB^Xu-NMpU_/ePdCTrI>CKu9Y+TDo!uSHpMESO7'G@7O,@_rq?2r^,gUik]JfB#MO'`-t@qo*sIe;!?SKj:E1PGUm>;).nY%H^Mo\qc_u==bBjX>[Xl4gWL)J7A_)s%bX'F0-jc^cmnfG1V/riU<(f>U:Ve/jG]1V5+q6IiiC8hT_G5FN$`eR\FGLnN1A8BKQo!#,;9RJT1$UT)B'u30k'XuCb.%1\76MW-T9D/IpqiL:dnS)>%7C5b;24m'ug\HAjJL?$<"nG!"%AQK$Vk)"U%Dc>fc1+JI+(Kk,Z2Q;n)rEdmu+"7C#SCX*'Oo-Jm(!JT_[QW>)HPE6+;<@CB$FV;OF@iZRJkbh^Yh>ET9n*msYFG`RS]L_Y;I)%^EP^RUX!53\TZT.eH+/NoM]akdBmB9G[38@"Wt$-G*&l)B13Dclo<7Re7=~>endstream
 endobj
 xref
-0 6
+0 9
 0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000115 00000 n 
-0000000241 00000 n 
-0000000311 00000 n 
+0000000061 00000 n 
+0000000102 00000 n 
+0000000209 00000 n 
+0000000321 00000 n 
+0000000524 00000 n 
+0000000592 00000 n 
+0000000872 00000 n 
+0000000931 00000 n 
 trailer
-<< /Size 6 /Root 1 0 R >>
+<<
+/ID 
+[<41c88a2751f4066d305d3de8b469c931><41c88a2751f4066d305d3de8b469c931>]
+% ReportLab generated PDF document -- digest (opensource)
+
+/Info 6 0 R
+/Root 5 0 R
+/Size 9
+>>
 startxref
-1094
+1663
 %%EOF

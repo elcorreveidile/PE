@@ -1,58 +1,74 @@
 %PDF-1.4
+%“Œ‹ž ReportLab Generated PDF document (opensource)
 1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
+<<
+/F1 2 0 R /F2 3 0 R
+>>
 endobj
 2 0 obj
-<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+<<
+/BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font
+>>
 endobj
 3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+<<
+/BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding /Name /F2 /Subtype /Type1 /Type /Font
+>>
 endobj
 4 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+<<
+/Contents 8 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 7 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
 endobj
 5 0 obj
-<< /Length 824 >>
+<<
+/PageMode /UseNone /Pages 7 0 R /Type /Catalog
+>>
+endobj
+6 0 obj
+<<
+/Author (\(anonymous\)) /CreationDate (D:20260209013017+01'00') /Creator (\(unspecified\)) /Keywords () /ModDate (D:20260209013017+01'00') /Producer (ReportLab PDF Library - \(opensource\)) 
+  /Subject (\(unspecified\)) /Title (\(anonymous\)) /Trapped /False
+>>
+endobj
+7 0 obj
+<<
+/Count 1 /Kids [ 4 0 R ] /Type /Pages
+>>
+endobj
+8 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ] /Length 671
+>>
 stream
-BT
-/F1 16 Tf
-72 760 Td
-(Texto modelo: Guion de presentacion final) Tj
-/F1 11 Tf
-0 -24 Td
-(Buenos dias. Somos el equipo [nombre] y presentamos nuestro proyecto sobre [tema]. El) Tj
-0 -14 Td
-(objetivo principal es mostrar [objetivo] y explicar por que es relevante para [publico].) Tj
-0 -14 Td
-0 -14 Td
-(En primer lugar, expondremos el contexto y la pregunta que nos guia. A continuacion,) Tj
-0 -14 Td
-(describiremos el proceso de trabajo, las fuentes consultadas y las decisiones de) Tj
-0 -14 Td
-(redaccion.) Tj
-0 -14 Td
-0 -14 Td
-(Despues presentaremos los resultados con dos ejemplos concretos y un breve analisis de) Tj
-0 -14 Td
-(impacto. Por ultimo, cerraremos con las conclusiones y las posibles mejoras.) Tj
-0 -14 Td
-0 -14 Td
-(Muchas gracias por su atencion. Quedamos disponibles para preguntas.) Tj
-0 -14 Td
-0 -14 Td
-ET
-endstream
+GarVLa_oie&A@rkk*QngCWa(*pXZ!O0.kNn]"'gteC^V674(GJrqju;?@j:2+Of?1gI@>[UJ$obFoW$^I/+pO<mYYK0#Rg[?gu]A%MO+Wes32ceQTh)\IrpgYN[$D$b<:'M`$<*0phJH#ejA5Lq<t5b,``L1l`h2,%lb4@Y).(9]kfVSpRD:?f>WU_*];!Tc]L?G<S=!LZUC^H(sUL6h@mjf[,D(>2ETeLWQW6^\9*gEcahuaAP?1*&dRQ"E:&%)_MU^Ht/?=DiIg6*]!SRTJJ&(GRfbbBE8XsoDpj6\2N=SS1]*T/ee`d):K-!d=r<L&kml'YSkfe(BKR46G(:S*#W4u2E_@U,%#Fc7G(kR8HA7f[mmEC;[O*H)>QNcMauk68t_o19qPY,#1h_pNPc#[mo5f4:%2H,EtBAU'R+NuX#U,3PBl<(l>ZZ,2G1co!]N<0Ju7%"da>Gab!nZSVSH20J6)'TP\:_HWPj@8dd`RhTK7D=K'=c5Tf.`u#t0OnG"T)qJFAkOWpr-=;9K.R4`Z7n$iGp0FM/\:k_K>CDNi0`W;RrmU:HFh;)5:U1`6=DW(j!BN\"t)nLVW&S:Co_5!(=HTb#8P(2k'1mR-'ejEK2T#dB6:;ZT?Y):X1cbk.,KT.=h[U1k=-EH7BH,k::)J]WD0NAa-~>endstream
 endobj
 xref
-0 6
+0 9
 0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000115 00000 n 
-0000000241 00000 n 
-0000000311 00000 n 
+0000000061 00000 n 
+0000000102 00000 n 
+0000000209 00000 n 
+0000000321 00000 n 
+0000000524 00000 n 
+0000000592 00000 n 
+0000000872 00000 n 
+0000000931 00000 n 
 trailer
-<< /Size 6 /Root 1 0 R >>
+<<
+/ID 
+[<423c1c39f4763c330e753ad47d3ee8c9><423c1c39f4763c330e753ad47d3ee8c9>]
+% ReportLab generated PDF document -- digest (opensource)
+
+/Info 6 0 R
+/Root 5 0 R
+/Size 9
+>>
 startxref
-1186
+1692
 %%EOF

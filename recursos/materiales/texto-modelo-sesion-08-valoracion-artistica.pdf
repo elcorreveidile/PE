@@ -1,59 +1,74 @@
 %PDF-1.4
+%“Œ‹ž ReportLab Generated PDF document (opensource)
 1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
+<<
+/F1 2 0 R /F2 3 0 R
+>>
 endobj
 2 0 obj
-<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+<<
+/BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font
+>>
 endobj
 3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+<<
+/BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding /Name /F2 /Subtype /Type1 /Type /Font
+>>
 endobj
 4 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+<<
+/Contents 8 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 7 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
 endobj
 5 0 obj
-<< /Length 883 >>
+<<
+/PageMode /UseNone /Pages 7 0 R /Type /Catalog
+>>
+endobj
+6 0 obj
+<<
+/Author (\(anonymous\)) /CreationDate (D:20260209013017+01'00') /Creator (\(unspecified\)) /Keywords () /ModDate (D:20260209013017+01'00') /Producer (ReportLab PDF Library - \(opensource\)) 
+  /Subject (\(unspecified\)) /Title (\(anonymous\)) /Trapped /False
+>>
+endobj
+7 0 obj
+<<
+/Count 1 /Kids [ 4 0 R ] /Type /Pages
+>>
+endobj
+8 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ] /Length 729
+>>
 stream
-BT
-/F1 16 Tf
-72 760 Td
-(Texto modelo: Valoracion artistica) Tj
-/F1 11 Tf
-0 -24 Td
-(La exposicion Luz y Memoria propone un recorrido por fotografias urbanas en blanco y) Tj
-0 -14 Td
-(negro. La serie destaca por la composicion equilibrada y por un uso preciso del contraste,) Tj
-0 -14 Td
-(que subraya la textura de la piedra y las fachadas.) Tj
-0 -14 Td
-0 -14 Td
-(El principal acierto es la coherencia visual: cada imagen dialoga con la siguiente y) Tj
-0 -14 Td
-(construye un relato de la ciudad sin recurrir a lugares comunes. Sin embargo, algunas) Tj
-0 -14 Td
-(piezas centrales pierden fuerza por su repeticion tematica.) Tj
-0 -14 Td
-0 -14 Td
-(En conjunto, se trata de una propuesta solida, sobria y bien editada, capaz de despertar) Tj
-0 -14 Td
-(una mirada atenta. Recomiendo la visita por la calidad tecnica y por la sensibilidad del) Tj
-0 -14 Td
-(enfoque.) Tj
-0 -14 Td
-0 -14 Td
-ET
-endstream
+GarVLbAQ&g&A7ljp6ZVH)To6C`rbKS4gYfIb%2m$'a>@$o23I*q@740%>$iqBJ4RBAnP2&DXaUqmREr>%=S,I8Cc5V8Zf!-2%Ofd/.N&1akYCrAlnF8D:dN7m5@&UiOVqAHG/$0<Nh^'\YUdjlS\KH!DGB"geoq[U'>k>W9[,rodE*j/N6<q[s.J"NUtq2!pnsrEkMr[GPm/`(M^Zr6,2o:->L(?^Tse6'/hfBS8_TcPj=AKQ.hg0_?a/#fG'U1]LGDdlc$C610r;+Ma2SrP1ReZ?/cCZ6q@)&U[spgnnrJK-s?,h3U_+ZBQF*SX/iplDXb<j*%:WK/P`S#)Rc1=OHmYo.WYa_>,[c!)5P%j_pl5:AsPg47^nt97U]%_G32?s]TAe+U)+NtkW)&AVF(t'$$Ab`O:`K\ccF9/-7upWGQu%YgcYa&<-3&/VJW4Y2?ZCc7lPK\3(nT601]OJX$^?;7pVFX7ip#cYMnT)dqm;>H:V4U'MoqeU//gfD2+gtW9JEh\Y"_10"*+Zl3ZJ!^`MPj-!>fA8)2;?Z6.jZYo-G_(EK&cFHR(e;?FRfU4!Z(3]e;/bi*,rGW%P(aEccYhe&!(a[Q78+X"b`(`:E>;]ZSUB6;J@E,Ap9,IM3IUt:`M\DrEA1JqM642FM^"_Z=rPT6A2SA2<n,O2O!VH=1iGmu_Hoha;o]TU=EM]aqA<gVQb9EmSeG8P`#iU`e_5PTLqBE~>endstream
 endobj
 xref
-0 6
+0 9
 0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000115 00000 n 
-0000000241 00000 n 
-0000000311 00000 n 
+0000000061 00000 n 
+0000000102 00000 n 
+0000000209 00000 n 
+0000000321 00000 n 
+0000000524 00000 n 
+0000000592 00000 n 
+0000000872 00000 n 
+0000000931 00000 n 
 trailer
-<< /Size 6 /Root 1 0 R >>
+<<
+/ID 
+[<61c3ca7a25253e4777ebdd47d5ba7324><61c3ca7a25253e4777ebdd47d5ba7324>]
+% ReportLab generated PDF document -- digest (opensource)
+
+/Info 6 0 R
+/Root 5 0 R
+/Size 9
+>>
 startxref
-1245
+1750
 %%EOF
