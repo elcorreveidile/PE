@@ -195,6 +195,20 @@
                 return null;
             };
 
+            const sumCriterionScores = (scores) => {
+                if (!scores || typeof scores !== 'object') return null;
+                let total = 0;
+                let any = false;
+                for (const v of Object.values(scores)) {
+                    const n = parseFloat(v);
+                    if (!Number.isNaN(n)) {
+                        total += n;
+                        any = true;
+                    }
+                }
+                return any ? total : null;
+            };
+
             const gradeValue10 = (s) => {
                 const numeric = parseFloat(s.numericGrade ?? s.numeric_grade);
                 if (!Number.isNaN(numeric)) {
@@ -205,6 +219,16 @@
                     }
                     return numeric; // asume ya está en escala /10 si no hay info de rúbrica
                 }
+
+                // Si no hay numericGrade pero hay criterionScores (rúbrica), sumar y normalizar.
+                const rubricId = s.rubricId ?? s.rubric_id;
+                const maxPoints = rubricId ? (rubricMaxById[String(rubricId)] || 0) : 0;
+                const scoresTotal = sumCriterionScores(s.criterionScores ?? s.criterion_scores);
+                if (scoresTotal !== null) {
+                    if (maxPoints > 0) return (scoresTotal / maxPoints) * 10;
+                    return scoresTotal; // fallback
+                }
+
                 const q = qualitativeTo10(s.grade);
                 if (q !== null) return q;
                 return null;

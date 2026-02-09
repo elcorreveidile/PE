@@ -1058,6 +1058,8 @@ const Submissions = {
             activityTitle: submission.activity_title ?? submission.activityTitle,
             taskId: submission.task_id ?? submission.taskId,
             wordCount: submission.word_count ?? submission.wordCount,
+            rubricId: submission.rubric_id ?? submission.rubricId,
+            criterionScores: submission.criterion_scores ?? submission.criterionScores,
             grade: submission.grade,
             numericGrade: submission.numeric_grade ?? submission.numericGrade,
             feedback: submission.feedback_text ?? submission.feedback,
