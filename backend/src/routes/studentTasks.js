@@ -175,8 +175,8 @@ router.post('/', authenticateToken, requireAdmin, [
     body('dueDate').isISO8601().withMessage('Fecha límite inválida'),
     body('assignmentType').isIn(['all', 'specific']).withMessage('Tipo de asignación inválido'),
     body('assignedStudents').optional().isArray(),
-    body('sessionId').optional().isInt(),
-    body('rubricId').optional().isString(),
+    body('sessionId').optional({ nullable: true }).isInt().withMessage('Sesión inválida'),
+    body('rubricId').optional({ nullable: true }).isString().withMessage('Rúbrica inválida'),
     body('status').optional().isIn(['active', 'inactive', 'draft'])
 ], async (req, res) => {
     try {
@@ -234,8 +234,8 @@ router.put('/:id', authenticateToken, requireAdmin, [
     body('dueDate').isISO8601().withMessage('Fecha límite inválida'),
     body('assignmentType').isIn(['all', 'specific']).withMessage('Tipo de asignación inválido'),
     body('assignedStudents').optional().isArray(),
-    body('sessionId').optional().isInt(),
-    body('rubricId').optional().isString(),
+    body('sessionId').optional({ nullable: true }).isInt().withMessage('Sesión inválida'),
+    body('rubricId').optional({ nullable: true }).isString().withMessage('Rúbrica inválida'),
     body('status').optional().isIn(['active', 'inactive', 'draft'])
 ], async (req, res) => {
     try {
