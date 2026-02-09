@@ -71,11 +71,12 @@ router.get('/', authenticateToken, [
     queryValidator('status').optional().isIn(['pending', 'reviewed', 'all']),
     queryValidator('session_id').optional().isInt(),
     queryValidator('user_id').optional().isInt(),
+    queryValidator('task_id').optional().isString(),
     queryValidator('limit').optional().isInt({ min: 1, max: 100 }),
     queryValidator('offset').optional().isInt({ min: 0 })
 ], async (req, res) => {
     try {
-        const { status, session_id, user_id, limit = 50, offset = 0 } = req.query;
+        const { status, session_id, user_id, task_id, limit = 50, offset = 0 } = req.query;
 
         let whereClause = [];
         let params = [];
@@ -98,6 +99,11 @@ router.get('/', authenticateToken, [
         if (session_id) {
             whereClause.push(`s.session_id = $${paramIndex++}`);
             params.push(session_id);
+        }
+
+        if (task_id) {
+            whereClause.push(`s.task_id = $${paramIndex++}`);
+            params.push(task_id);
         }
 
         const whereSQL = whereClause.length > 0 ? 'WHERE ' + whereClause.join(' AND ') : '';
@@ -142,6 +148,20 @@ router.get('/', authenticateToken, [
         });
 
     } catch (error) {
+        // Compatibilidad: si la BD aun no tiene submissions.task_id, devolver lista vacia en vez de 500.
+        if (error && error.code === '42703' && /task_id/i.test(error.message || '')) {
+            console.warn('[Submissions] BD sin submissions.task_id; devolviendo lista vacia');
+            return res.json({
+                submissions: [],
+                pagination: {
+                    total: 0,
+                    limit: parseInt(req.query.limit || 50),
+                    offset: parseInt(req.query.offset || 0),
+                    hasMore: false
+                },
+                warning: 'DB missing submissions.task_id'
+            });
+        }
         console.error('Error al obtener entregas:', error);
         res.status(500).json({ error: 'Error al obtener entregas' });
     }
@@ -198,8 +218,9 @@ router.get('/:id', authenticateToken, async (req, res) => {
  */
 router.post('/', authenticateToken, [
     body('session_id').optional().isInt(),
-    body('activity_id').notEmpty().withMessage('ID de actividad requerido'),
-    body('activity_title').notEmpty().withMessage('Titulo de actividad requerido'),
+    body('task_id').optional().isString(),
+    body('activity_id').optional().isString(),
+    body('activity_title').optional().isString(),
     body('content').isLength({ min: 10 }).withMessage('El contenido debe tener al menos 10 caracteres')
 ], async (req, res) => {
     try {
@@ -208,14 +229,83 @@ router.post('/', authenticateToken, [
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { session_id, activity_id, activity_title, content } = req.body;
+        let { session_id, activity_id, activity_title, task_id, content } = req.body;
+
+        // Validacion cruzada: o bien viene task_id (entrega de tarea), o bien activity_id+activity_title (entrega normal).
+        if (!task_id && (!activity_id || !activity_title)) {
+            return res.status(400).json({
+                error: 'Datos incompletos: se requiere task_id o activity_id + activity_title'
+            });
+        }
+
+        // Entrega de tarea: derivar activity_id/activity_title desde student_tasks y validar permisos.
+        if (task_id) {
+            const taskResult = await query(`
+                SELECT
+                    id,
+                    title,
+                    session_id as "sessionId",
+                    due_date as "dueDate",
+                    assignment_type as "assignmentType",
+                    assigned_students as "assignedStudents",
+                    status
+                FROM student_tasks
+                WHERE id = $1
+            `, [task_id]);
+
+            if (taskResult.rows.length === 0) {
+                return res.status(404).json({ error: 'Tarea no encontrada' });
+            }
+
+            const task = taskResult.rows[0];
+
+            if (task.status !== 'active') {
+                return res.status(400).json({ error: 'Esta tarea no está activa' });
+            }
+
+            if (task.dueDate && new Date(task.dueDate) < new Date()) {
+                return res.status(400).json({ error: 'La fecha límite de esta tarea ya ha pasado' });
+            }
+
+            // assignedStudents puede venir como string o array dependiendo del parser de PG.
+            let assignedStudents = task.assignedStudents;
+            try {
+                if (typeof assignedStudents === 'string') assignedStudents = JSON.parse(assignedStudents || '[]');
+            } catch {
+                assignedStudents = [];
+            }
+
+            if (task.assignmentType === 'specific') {
+                const list = Array.isArray(assignedStudents) ? assignedStudents.map(String) : [];
+                if (!list.includes(String(req.user.id))) {
+                    return res.status(403).json({ error: 'No tienes permiso para entregar esta tarea' });
+                }
+            }
+
+            session_id = task.sessionId ?? null;
+            activity_id = task.id;
+            activity_title = task.title;
+        }
+
         const wordCount = countWords(content);
 
-        const result = await query(`
-            INSERT INTO submissions (user_id, session_id, activity_id, activity_title, content, word_count)
-            VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id
-        `, [req.user.id, session_id || null, activity_id, activity_title, content, wordCount]);
+        // Nota: task_id es opcional y puede no existir en BDs antiguas.
+        let result;
+        try {
+            result = await query(`
+                INSERT INTO submissions (user_id, session_id, activity_id, activity_title, task_id, content, word_count)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                RETURNING id
+            `, [req.user.id, session_id || null, activity_id, activity_title, task_id || null, content, wordCount]);
+        } catch (insertError) {
+            if (task_id && insertError && insertError.code === '42703' && /task_id/i.test(insertError.message || '')) {
+                console.error('[Submissions] BD sin submissions.task_id; no se puede entregar tareas hasta aplicar migracion');
+                return res.status(500).json({
+                    error: 'Funcionalidad de tareas no disponible (base de datos desactualizada). Contacta con el administrador.'
+                });
+            }
+            throw insertError;
+        }
 
         const submissionId = result.rows[0].id;
 
@@ -235,6 +325,7 @@ router.post('/', authenticateToken, [
                 id: submissionId,
                 activity_id,
                 activity_title,
+                task_id: task_id || null,
                 word_count: wordCount,
                 status: 'pending',
                 created_at: new Date().toISOString()

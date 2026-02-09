@@ -226,21 +226,32 @@ router.get('/:id', authenticateToken, async (req, res) => {
         }
 
         // Obtener submissions de esta tarea
-        const submissionsResult = await query(`
-            SELECT
-                s.id,
-                s.user_id as userId,
-                s.user_name as userName,
-                s.content,
-                s.word_count as wordCount,
-                s.status,
-                s.created_at as createdAt
-            FROM submissions s
-            WHERE s.task_id = $1
-            ORDER BY s.created_at DESC
-        `, [taskId]);
+        try {
+            const submissionsResult = await query(`
+                SELECT
+                    s.id,
+                    s.user_id as "userId",
+                    COALESCE(u.name, u.email) as "userName",
+                    s.content,
+                    s.word_count as "wordCount",
+                    s.status,
+                    s.created_at as "createdAt"
+                FROM submissions s
+                LEFT JOIN users u ON s.user_id = u.id
+                WHERE s.task_id = $1
+                ORDER BY s.created_at DESC
+            `, [taskId]);
 
-        task.submissions = submissionsResult.rows;
+            task.submissions = submissionsResult.rows;
+        } catch (submissionsError) {
+            // Compatibilidad: si la BD aun no tiene submissions.task_id, no romper el fetch de la tarea.
+            if (submissionsError && submissionsError.code === '42703' && /task_id/i.test(submissionsError.message || '')) {
+                console.warn('[StudentTasks] BD sin submissions.task_id; devolviendo tarea sin submissions');
+                task.submissions = [];
+            } else {
+                throw submissionsError;
+            }
+        }
 
         res.json(task);
 
