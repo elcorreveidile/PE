@@ -103,6 +103,9 @@
             async function renderSubmissions(filter = 'all') {
                 let submissions = await PE.Submissions.getByUser(user.id);
                 submissions = Array.isArray(submissions) ? submissions : [];
+                // Las entregas de tareas (student_tasks) se gestionan en la pestaña "Tareas asignadas".
+                // Evita que aparezcan mezcladas aquí, especialmente si el profesor archivó o eliminó la tarea.
+                submissions = submissions.filter(s => !s.taskId);
                 if (filter === 'pending') {
                     submissions = submissions.filter(s => s.status === 'pending');
                 } else if (filter === 'reviewed') {
