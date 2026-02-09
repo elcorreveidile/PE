@@ -164,6 +164,34 @@
                         </div>
                     </section>
 
+                    <!-- Análisis del profesor (protegido con contraseña) -->
+                    <section class="activity mb-4" id="analisis-profesor">
+                        <div class="activity-header">
+                            <span class="activity-type">Análisis del profesor</span>
+                            <h3 class="activity-title">Análisis del texto modelo</h3>
+                        </div>
+                        <div class="activity-body">
+                            <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                                <div class="card-body">
+                                    <p style="margin: 0 0 1rem 0;"><strong>Este material está protegido con contraseña.</strong> El profesor te proporcionará la contraseña durante la clase cuando corresponda.</p>
+                                    <div id="password-section">
+                                        <div class="form-group" style="max-width: 400px;">
+                                            <input type="password" id="analisis-password" class="form-control" placeholder="Introduce la contraseña..." style="margin-bottom: 0.5rem;">
+                                            <div id="password-error" style="color: #ffeb3b; font-size: 0.875rem; display: none;">Contraseña incorrecta. Inténtalo de nuevo.</div>
+                                        </div>
+                                        <button type="button" class="btn btn-accent" onclick="verificarAnalisis()">Acceder al análisis</button>
+                                    </div>
+                                    <div id="analisis-content" style="display: none;">
+                                        <p style="margin: 0 0 1rem 0;">Contraseña correcta. Puedes descargar el análisis del texto modelo:</p>
+                                        <a class="btn btn-outline-white" href="../recursos/profesor/analisis-s13-7d4661bb9dba837f68018ecf.pdf" download>
+                                            Descargar análisis del texto modelo (PDF)
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
                     <!-- Actividad 3: Práctica guiada -->
                     <section class="activity mb-4">
                         <div class="activity-header">
@@ -242,7 +270,7 @@
 <script src="../js/app.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            
+
             // Quiz de activación
             PE.Activities.initQuiz('quiz-activacion', [
                 {
@@ -270,6 +298,48 @@
 
             // Editor de texto
             PE.TextEditor.init('editor-produccion-13');
+        });
+
+        // Contraseña para acceder al análisis del profesor
+        // CAMBIA ESTA CONTRASEÑA POR LA QUE QUIERAS USAR EN CLASE
+        const ANALISIS_PASSWORD = 'expositivo2026';
+
+        function verificarAnalisis() {
+            const passwordInput = document.getElementById('analisis-password');
+            const passwordSection = document.getElementById('password-section');
+            const analisisContent = document.getElementById('analisis-content');
+            const passwordError = document.getElementById('password-error');
+
+            const enteredPassword = passwordInput.value.trim();
+
+            if (enteredPassword === ANALISIS_PASSWORD) {
+                // Contraseña correcta
+                passwordSection.style.display = 'none';
+                analisisContent.style.display = 'block';
+                passwordError.style.display = 'none';
+            } else {
+                // Contraseña incorrecta
+                passwordError.style.display = 'block';
+                passwordInput.value = '';
+                passwordInput.focus();
+
+                // Ocultar el error después de 3 segundos
+                setTimeout(() => {
+                    passwordError.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        // Permitir presionar Enter para verificar
+        document.addEventListener('DOMContentLoaded', function() {
+            const passwordInput = document.getElementById('analisis-password');
+            if (passwordInput) {
+                passwordInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        verificarAnalisis();
+                    }
+                });
+            }
         });
     </script>
 </body>
