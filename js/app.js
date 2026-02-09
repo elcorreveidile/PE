@@ -1043,6 +1043,7 @@ const Submissions = {
             sessionId: submission.session_id ?? submission.sessionId,
             activityId: submission.activity_id ?? submission.activityId,
             activityTitle: submission.activity_title ?? submission.activityTitle,
+            taskId: submission.task_id ?? submission.taskId,
             wordCount: submission.word_count ?? submission.wordCount,
             grade: submission.grade,
             numericGrade: submission.numeric_grade ?? submission.numericGrade,
@@ -1118,6 +1119,7 @@ const Submissions = {
                 session_id: submissionData.sessionId,
                 activity_id: submissionData.activityId,
                 activity_title: submissionData.activityTitle,
+                task_id: submissionData.taskId,
                 content: submissionData.content
             });
             const created = response.submission || response.data || response;
@@ -1140,6 +1142,7 @@ const Submissions = {
                     sessionId: submissionData.sessionId,
                     activityId: submissionData.activityId,
                     activityTitle: submissionData.activityTitle,
+                    taskId: submissionData.taskId,
                     content: submissionData.content,
                     wordCount: Utils.countWords(submissionData.content),
                     status: 'pending',

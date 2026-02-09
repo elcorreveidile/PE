@@ -481,6 +481,190 @@
             }
         }
 
+        // Cargar tareas asignadas al estudiante
+        async function loadAssignedTasks(currentUser) {
+            const container = document.getElementById('assigned-tasks');
+            const countBadge = document.getElementById('tasks-count');
+
+            try {
+                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+
+                if (!token) {
+                    console.warn('No hay token para cargar tareas');
+                    showNoTasksMessage(container);
+                    return;
+                }
+
+                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/student-tasks/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error al cargar tareas');
+                }
+
+                const allTasks = await response.json();
+                allTasks = Array.isArray(allTasks) ? allTasks : [];
+
+                // Filtrar tareas asignadas a este estudiante o a todo el curso
+                const myTasks = allTasks.filter(task => {
+                    if (task.status !== 'active') return false;
+                    if (new Date(task.dueDate) < new Date()) return false; // No mostrar caducadas
+                    if (task.assignmentType === 'all') return true;
+                    return task.assignedStudents?.includes(currentUser.id);
+                });
+
+                // Obtener submissions del estudiante para ver qué tareas ya han entregado
+                const submissions = await PE.Submissions.getByUser(currentUser.id);
+                submissions = Array.isArray(submissions) ? submissions : [];
+
+                countBadge.textContent = `${myTasks.length} tarea${myTasks.length !== 1 ? 's' : ''}`;
+
+                if (myTasks.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center text-secondary" style="padding: 2rem;">
+                            <p style="font-size: 2rem; margin-bottom: 0.5rem;">📝</p>
+                            <p style="margin: 0;">No tienes tareas pendientes</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = myTasks.map(task => {
+                    const dueDate = new Date(task.dueDate);
+                    const isUrgent = dueDate < new Date(Date.now() + 48 * 60 * 60 * 1000); // Menos de 48 horas
+                    const hasSubmitted = submissions.some(s => s.taskId === task.id);
+
+                    return `
+                        <div class="card mb-3" style="border-left: 4px solid ${isUrgent ? 'var(--danger-color)' : 'var(--primary-color)'}; ${hasSubmitted ? 'opacity: 0.7;' : ''}">
+                            <div class="card-body" style="padding: 1rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+                                    <div style="flex: 1;">
+                                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
+                                            <strong style="font-size: 1rem;">${PE.Utils.escapeHtml(task.title)}</strong>
+                                            ${isUrgent ? '<span class="badge badge-danger">¡Urgente!</span>' : '<span class="badge badge-info">Pendiente</span>'}
+                                            ${hasSubmitted ? '<span class="badge badge-success">Entregado</span>' : ''}
+                                        </div>
+                                        <p class="text-secondary mb-2" style="font-size: 0.875rem;">${PE.Utils.escapeHtml(task.description)}</p>
+                                        <div style="display: flex; gap: 1rem; align-items: center; font-size: 0.8rem;">
+                                            <span class="text-secondary">📅 ${PE.Utils.formatDate(task.dueDate, 'long')}</span>
+                                            ${task.sessionId ? `<span class="text-secondary">📚 Sesión ${task.sessionId}</span>` : ''}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        ${hasSubmitted ?
+                                            `<button class="btn btn-sm btn-outline" disabled>✓ Entregado</button>` :
+                                            `<button class="btn btn-sm btn-primary" onclick="openTaskSubmission('${task.id}')">Entregar tarea</button>`
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                console.error('Error cargando tareas:', error);
+                showNoTasksMessage(container);
+            }
+        }
+
+        function showNoTasksMessage(container) {
+            container.innerHTML = `
+                <div class="text-center text-secondary" style="padding: 2rem;">
+                    <p style="font-size: 2rem; margin-bottom: 0.5rem;">📝</p>
+                    <p style="margin: 0;">No tienes tareas pendientes</p>
+                </div>
+            `;
+        }
+
+        // Abrir modal para enviar tarea
+        window.openTaskSubmission = async function(taskId) {
+            try {
+                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/student-tasks`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error al cargar la tarea');
+                }
+
+                const allTasks = await response.json();
+                const task = allTasks.find(t => t.id === taskId);
+
+                if (!task) {
+                    PE.UI.notify('Tarea no encontrada', 'error');
+                    return;
+                }
+
+                PE.UI.showModal(`📝 ${task.title}`, `
+                    <div class="mb-3">
+                        <p class="text-secondary mb-2">${PE.Utils.escapeHtml(task.description)}</p>
+                        <p class="text-secondary" style="font-size: 0.875rem;">
+                            <strong>Fecha límite:</strong> ${PE.Utils.formatDate(task.dueDate, 'long')}
+                        </p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tu respuesta *</label>
+                        <textarea id="task-content" class="form-control" rows="10" placeholder="Escribe aquí tu respuesta..." required></textarea>
+                        <small class="text-secondary" id="word-count">0 palabras</small>
+                    </div>
+                    <div class="alert alert-info" style="font-size: 0.875rem;">
+                        <strong>ℹ️ Nota:</strong> Una vez enviada, no podrás modificar tu respuesta. El profesor te dará retroalimentación.
+                    </div>
+                `, [
+                    { text: 'Cancelar' },
+                    {
+                        text: '📤 Enviar tarea',
+                        class: 'btn-primary',
+                        callback: async () => {
+                            const content = document.getElementById('task-content').value.trim();
+
+                            if (!content) {
+                                PE.UI.notify('Por favor, escribe tu respuesta', 'error');
+                                return false;
+                            }
+
+                            const wordCount = content.split(/\s+/).filter(w => w.length > 0).length;
+                            if (wordCount < 10) {
+                                PE.UI.notify('Tu respuesta es demasiado corta. Mínimo 10 palabras.', 'error');
+                                return false;
+                            }
+
+                            try {
+                                await PE.Submissions.create({
+                                    taskId: taskId,
+                                    activityTitle: task.title,
+                                    content: content
+                                });
+                                PE.UI.notify('Tarea enviada correctamente', 'success');
+                                location.reload();
+                            } catch (error) {
+                                PE.UI.notify('Error al enviar la tarea', 'error');
+                                return false;
+                            }
+                        },
+                        close: false
+                    }
+                ]);
+
+                // Añadir contador de palabras
+                const textarea = document.getElementById('task-content');
+                const wordCount = document.getElementById('word-count');
+                if (textarea && wordCount) {
+                    textarea.addEventListener('input', () => {
+                        const words = textarea.value.split(/\s+/).filter(w => w.length > 0).length;
+                        wordCount.textContent = `${words} palabra${words !== 1 ? 's' : ''}`;
+                    });
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                PE.UI.notify('Error al cargar la tarea', 'error');
+            }
+        };
+
         // Confirmar asistencia
         window.confirmAttendance = async function() {
             const codeInput = document.getElementById('attendance-code');

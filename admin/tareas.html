@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion de Tareas | Panel de Administracion</title>
+    <title>Gestión de Tareas | Panel de Administración</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/styles.css">
@@ -12,9 +12,7 @@
         .admin-badge { background: #c53030; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; margin-left: 0.5rem; }
         .task-card { padding: var(--spacing-md); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); margin-bottom: var(--spacing-sm); }
         .task-card:hover { background: var(--bg-light); }
-        .session-group { margin-bottom: 2rem; }
-        .session-group-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: var(--primary-color); color: white; border-radius: var(--border-radius-md) var(--border-radius-md) 0 0; }
-        .session-group-content { border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 var(--border-radius-md) var(--border-radius-md); padding: 1rem; }
+        .student-chip { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0.75rem; background: var(--primary-light); color: white; border-radius: 1rem; font-size: 0.875rem; margin: 0.25rem; }
     </style>
 </head>
 <body>
@@ -24,7 +22,7 @@
                 <a href="../index.html" class="logo">
                     <div class="logo-icon">C2</div>
                     <div class="logo-text">
-                        <span class="logo-title">Panel de Administracion <span class="admin-badge">ADMIN</span></span>
+                        <span class="logo-title">Panel de Administración <span class="admin-badge">ADMIN</span></span>
                         <span class="logo-subtitle">CLM - UGR</span>
                     </div>
                 </a>
@@ -39,144 +37,83 @@
             <div class="page-with-sidebar">
                 <aside class="sidebar">
                     <div class="sidebar-section">
-                        <h4 class="sidebar-title">Administracion</h4>
+                        <h4 class="sidebar-title">Administración</h4>
                         <ul class="sidebar-nav">
                             <li><a href="index.html">Panel principal</a></li>
                             <li><a href="estudiantes.html">Estudiantes</a></li>
                             <li><a href="correcciones.html">Correcciones</a></li>
                             <li><a href="notificaciones.html">Notificaciones</a></li>
-                            <li><a href="tareas.html" class="active">Gestion de tareas</a></li>
-                            <li><a href="estadisticas.html">Estadisticas</a></li>
-                            <li><a href="comparacion.html">Comparacion</a></li>
+                            <li><a href="asistencia.html">Asistencia QR</a></li>
+                            <li><a href="tareas.html" class="active">Gestión de tareas</a></li>
+                            <li><a href="estadisticas.html">Estadísticas</a></li>
+                            <li><a href="comparacion.html">Comparación</a></li>
                             <li><a href="rubricas.html">📊 Rúbricas</a></li>
                             <li><a href="boletines.html">📋 Boletines</a></li>
                         </ul>
                     </div>
                     <div class="sidebar-section">
-                        <button onclick="PE.Auth.logout()" class="btn btn-outline btn-block">Cerrar sesion</button>
+                        <button onclick="PE.Auth.logout()" class="btn btn-outline btn-block">Cerrar sesión</button>
                     </div>
                 </aside>
 
                 <div class="main-content">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-xl);">
                         <div>
-                            <h1 style="margin-bottom: 0.25rem;">Gestion de tareas</h1>
-                            <p class="text-secondary mb-0">Control de actividades y entregas por sesion</p>
+                            <h1 style="margin-bottom: 0.25rem;">Gestión de tareas para estudiantes</h1>
+                            <p class="text-secondary mb-0">Crea y gestiona tareas para los estudiantes del curso</p>
                         </div>
                         <div style="display: flex; gap: var(--spacing-sm);">
-                            <button class="btn btn-primary" onclick="showCreateTaskModal()">
-                                + Nueva tarea
+                            <button class="btn btn-primary" onclick="showCreateStudentTaskModal()">
+                                + Nueva tarea para estudiantes
                             </button>
                         </div>
                     </div>
 
-                    <!-- Pestañas para cambiar entre entregas y tareas -->
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <div style="display: flex; gap: var(--spacing-md);">
-                                <button class="btn btn-primary" id="tab-entregas" onclick="switchTab('entregas')">
-                                    Entregas de estudiantes
-                                </button>
-                                <button class="btn btn-outline" id="tab-tareas" onclick="switchTab('tareas')">
-                                    Tareas administrativas
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Resumen de tareas -->
+                    <!-- Estadísticas de tareas -->
                     <div class="sessions-grid mb-4" style="grid-template-columns: repeat(4, 1fr);">
                         <div class="card text-center" style="padding: 1.5rem;">
                             <h3 class="text-primary" style="font-size: 2rem; margin: 0;" id="stat-total">0</h3>
-                            <p class="text-secondary mb-0">Total entregas</p>
+                            <p class="text-secondary mb-0">Total tareas</p>
+                        </div>
+                        <div class="card text-center" style="padding: 1.5rem;">
+                            <h3 style="font-size: 2rem; margin: 0; color: var(--success-color);" id="stat-active">0</h3>
+                            <p class="text-secondary mb-0">Activas</p>
                         </div>
                         <div class="card text-center" style="padding: 1.5rem;">
                             <h3 style="font-size: 2rem; margin: 0; color: var(--warning-color);" id="stat-pending">0</h3>
-                            <p class="text-secondary mb-0">Pendientes</p>
+                            <p class="text-secondary mb-0">Entregas pendientes</p>
                         </div>
                         <div class="card text-center" style="padding: 1.5rem;">
-                            <h3 style="font-size: 2rem; margin: 0; color: var(--success-color);" id="stat-reviewed">0</h3>
-                            <p class="text-secondary mb-0">Corregidas</p>
-                        </div>
-                        <div class="card text-center" style="padding: 1.5rem;">
-                            <h3 class="text-primary" style="font-size: 2rem; margin: 0;" id="stat-sessions">0</h3>
-                            <p class="text-secondary mb-0">Sesiones activas</p>
+                            <h3 style="font-size: 2rem; margin: 0; color: var(--accent-color);" id="stat-completed">0</h3>
+                            <p class="text-secondary mb-0">Completadas</p>
                         </div>
                     </div>
 
-                    <!-- Contenido de Entregas de Estudiantes -->
-                    <div id="entregas-content">
-                        <!-- Filtro por sesion -->
+                    <!-- Filtros -->
                     <div class="card mb-4">
                         <div class="card-body">
                             <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
-                                <select id="filter-session" class="form-control form-select" style="flex: 1; min-width: 200px;">
-                                    <option value="">Todas las sesiones</option>
-                                </select>
                                 <select id="filter-status" class="form-control form-select" style="width: auto;">
                                     <option value="">Todos los estados</option>
-                                    <option value="pending">Pendientes</option>
-                                    <option value="reviewed">Corregidas</option>
+                                    <option value="active">Activas</option>
+                                    <option value="expired">Caducadas</option>
+                                    <option value="draft">Borradores</option>
                                 </select>
-                                <button class="btn btn-outline" onclick="exportSessionData()">Exportar datos</button>
+                                <select id="filter-assignment" class="form-control form-select" style="width: auto;">
+                                    <option value="">Todos los tipos</option>
+                                    <option value="all">Todo el curso</option>
+                                    <option value="specific">Estudiantes específicos</option>
+                                </select>
+                                <button class="btn btn-outline" onclick="exportStudentTasks()">Exportar tareas</button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Lista de tareas por sesion -->
-                    <div id="tasks-list">
-                        <div class="loader"></div>
-                    </div>
-                    </div>
-
-                    <!-- Contenido de Tareas Administrativas -->
-                    <div id="tareas-content" style="display: none;">
-                        <!-- Estadísticas de tareas administrativas -->
-                        <div class="sessions-grid mb-4" style="grid-template-columns: repeat(3, 1fr);">
-                            <div class="card text-center" style="padding: 1.5rem;">
-                                <h3 class="text-primary" style="font-size: 2rem; margin: 0;" id="stat-admin-total">0</h3>
-                                <p class="text-secondary mb-0">Total tareas</p>
-                            </div>
-                            <div class="card text-center" style="padding: 1.5rem;">
-                                <h3 style="font-size: 2rem; margin: 0; color: var(--success-color);" id="stat-admin-completed">0</h3>
-                                <p class="text-secondary mb-0">Completadas</p>
-                            </div>
-                            <div class="card text-center" style="padding: 1.5rem;">
-                                <h3 style="font-size: 2rem; margin: 0; color: var(--warning-color);" id="stat-admin-pending">0</h3>
-                                <p class="text-secondary mb-0">Pendientes</p>
-                            </div>
-                        </div>
-
-                        <!-- Filtro de tareas administrativas -->
-                        <div class="card mb-4">
-                            <div class="card-body">
-                                <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
-                                    <select id="filter-admin-status" class="form-control form-select" style="width: auto;">
-                                        <option value="">Todos los estados</option>
-                                        <option value="pending">Pendientes</option>
-                                        <option value="in_progress">En progreso</option>
-                                        <option value="completed">Completadas</option>
-                                    </select>
-                                    <select id="filter-admin-priority" class="form-control form-select" style="width: auto;">
-                                        <option value="">Todas las prioridades</option>
-                                        <option value="high">Alta</option>
-                                        <option value="medium">Media</option>
-                                        <option value="low">Baja</option>
-                                    </select>
-                                    <button class="btn btn-outline" onclick="exportTasks()">Exportar tareas</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Lista de tareas administrativas -->
-                        <div class="card">
-                            <div class="card-body">
-                                <div id="admin-tasks-list">
-                                    <div class="text-center text-secondary">
-                                        <p>No hay tareas administrativas.</p>
-                                        <button class="btn btn-primary mt-3" onclick="showCreateTaskModal()">+ Crear primera tarea</button>
-                                    </div>
-                                </div>
+                    <!-- Lista de tareas para estudiantes -->
+                    <div class="card">
+                        <div class="card-body">
+                            <div id="student-tasks-list">
+                                <div class="loader"></div>
                             </div>
                         </div>
                     </div>
@@ -201,305 +138,226 @@
     <script src="../js/config.js"></script>
 <script src="../js/app.js"></script>
     <script>
+        let allStudentTasks = [];
+        let allRubrics = [];
+        let allUsers = [];
+
         document.addEventListener('DOMContentLoaded', async () => {
             const user = await PE.Auth.checkSession();
             if (!user || user.role !== 'admin') {
-                const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
-                window.location.href = basePath + '/auth/login.html';
+                window.location.href = '../auth/login.html';
                 return;
             }
 
-            let submissions = await PE.Submissions.getAll();
+            await Promise.all([
+                loadStudentTasks(),
+                loadRubrics(),
+                loadUsers()
+            ]);
+        });
 
-            submissions = Array.isArray(submissions) ? submissions : [];
-            const sessions = PE.CourseData.sessions;
-            const pending = submissions.filter(s => s.status === 'pending');
-            const reviewed = submissions.filter(s => s.status === 'reviewed');
+        // Cargar tareas de estudiantes desde la API
+        async function loadStudentTasks() {
+            try {
+                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
 
-            // Estadisticas
-            document.getElementById('stat-total').textContent = submissions.length;
-            document.getElementById('stat-pending').textContent = pending.length;
-            document.getElementById('stat-reviewed').textContent = reviewed.length;
-
-            // Sesiones con entregas
-            const sessionsWithSubmissions = new Set(submissions.map(s => s.sessionId));
-            document.getElementById('stat-sessions').textContent = sessionsWithSubmissions.size;
-
-            // Poblar selector de sesiones
-            const sessionSelect = document.getElementById('filter-session');
-            sessions.forEach(s => {
-                const count = submissions.filter(sub => sub.sessionId == s.id).length;
-                const option = document.createElement('option');
-                option.value = s.id;
-                option.textContent = `Sesion ${s.id}: ${s.title} (${count} entregas)`;
-                sessionSelect.appendChild(option);
-            });
-
-            function renderTasks(filter = {}) {
-                let filtered = [...submissions];
-
-                if (filter.session) {
-                    filtered = filtered.filter(s => s.sessionId == filter.session);
+                if (!token) {
+                    throw new Error('No hay token de autenticación');
                 }
 
-                if (filter.status) {
-                    filtered = filtered.filter(s => s.status === filter.status);
+                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/student-tasks`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    allStudentTasks = await response.json();
+                    allStudentTasks = Array.isArray(allStudentTasks) ? allStudentTasks : [];
+                } else {
+                    // Si falla, intentar localStorage
+                    allStudentTasks = JSON.parse(localStorage.getItem('pe_student_tasks') || '[]');
                 }
+            } catch (error) {
+                console.error('Error cargando tareas:', error);
+                allStudentTasks = JSON.parse(localStorage.getItem('pe_student_tasks') || '[]');
+            }
 
-                const container = document.getElementById('tasks-list');
+            renderStudentTasks();
+            updateStatistics();
+        }
 
-                if (filtered.length === 0) {
-                    container.innerHTML = '<div class="card"><div class="card-body text-center"><p class="text-secondary">No hay entregas con los filtros seleccionados.</p></div></div>';
+        // Cargar rúbricas desde la API
+        async function loadRubrics() {
+            try {
+                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+
+                if (!token) {
+                    console.warn('No hay token para cargar rúbricas');
                     return;
                 }
 
-                // Agrupar por sesion
-                const grouped = {};
-                filtered.forEach(s => {
-                    const sessionId = s.sessionId || 'sin-sesion';
-                    if (!grouped[sessionId]) grouped[sessionId] = [];
-                    grouped[sessionId].push(s);
+                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/rubrics`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
 
-                let html = '';
-                Object.keys(grouped).sort((a, b) => parseInt(a) - parseInt(b)).forEach(sessionId => {
-                    const session = sessions.find(s => s.id == sessionId);
-                    const sessionSubmissions = grouped[sessionId];
-                    const sessionPending = sessionSubmissions.filter(s => s.status === 'pending').length;
-
-                    html += `
-                        <div class="session-group">
-                            <div class="session-group-header">
-                                <div>
-                                    <strong>Sesion ${sessionId}</strong>: ${session ? session.title : 'Sesion no identificada'}
-                                </div>
-                                <div>
-                                    <span class="badge" style="background: rgba(255,255,255,0.2);">${sessionSubmissions.length} entregas</span>
-                                    ${sessionPending > 0 ? `<span class="badge badge-warning" style="margin-left: 0.5rem;">${sessionPending} pendientes</span>` : ''}
-                                </div>
-                            </div>
-                            <div class="session-group-content">
-                                ${sessionSubmissions.map(s => `
-                                    <div class="task-card">
-                                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                                            <div>
-                                                <strong>${PE.Utils.escapeHtml(s.userName || 'Estudiante')}</strong>
-                                                <span class="badge badge-${s.status === 'reviewed' ? 'success' : 'warning'}" style="margin-left: 0.5rem;">
-                                                    ${s.status === 'reviewed' ? 'Corregido' : 'Pendiente'}
-                                                </span>
-                                                <p class="text-secondary mb-0" style="font-size: 0.875rem; margin-top: 0.25rem;">
-                                                    ${PE.Utils.escapeHtml(s.activityTitle)} - ${s.wordCount} palabras
-                                                </p>
-                                                <p class="text-secondary mb-0" style="font-size: 0.8rem;">
-                                                    Entregado: ${PE.Utils.formatDate(s.createdAt, 'long')}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                ${s.status === 'pending' ?
-                                                    `<a href="correcciones.html" class="btn btn-sm btn-primary">Corregir</a>` :
-                                                    `<button class="btn btn-sm btn-outline" onclick="viewSubmission('${s.id}')">Ver</button>`
-                                                }
-                                            </div>
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    `;
-                });
-
-                container.innerHTML = html;
-            }
-
-            renderTasks();
-
-            // Filtros
-            document.getElementById('filter-session').addEventListener('change', (e) => {
-                renderTasks({
-                    session: e.target.value,
-                    status: document.getElementById('filter-status').value
-                });
-            });
-
-            document.getElementById('filter-status').addEventListener('change', (e) => {
-                renderTasks({
-                    session: document.getElementById('filter-session').value,
-                    status: e.target.value
-                });
-            });
-        });
-
-        async function viewSubmission(id) {
-            let submissions = await PE.Submissions.getAll();
-            submissions = Array.isArray(submissions) ? submissions : [];
-            const targetId = String(id);
-            const s = submissions.find(sub => String(sub.id) === targetId);
-            if (s) {
-                PE.UI.showModal(s.activityTitle, `
-                    <div class="mb-3">
-                        <strong>Estudiante:</strong> ${PE.Utils.escapeHtml(s.userName || 'Estudiante')}
-                    </div>
-                    <div class="mb-3">
-                        <strong>Entregado:</strong> ${PE.Utils.formatDate(s.createdAt, 'long')}
-                    </div>
-                    <div class="mb-3">
-                        <strong>Contenido:</strong>
-                        <div style="background: var(--bg-light); padding: 1rem; border-radius: 0.5rem; max-height: 200px; overflow-y: auto; margin-top: 0.5rem;">
-                            ${s.content}
-                        </div>
-                        <p class="text-secondary" style="font-size: 0.8rem; margin-top: 0.5rem;">${s.wordCount} palabras</p>
-                    </div>
-                    ${s.feedback ? `
-                        <div class="alert alert-success">
-                            <strong>Retroalimentacion:</strong>
-                            <p style="margin: 0.5rem 0 0;">${PE.Utils.escapeHtml(s.feedback)}</p>
-                            ${s.grade ? `<p style="margin: 0.5rem 0 0;"><strong>Calificacion:</strong> ${s.grade}</p>` : ''}
-                        </div>
-                    ` : ''}
-                `, [{ text: 'Cerrar' }]);
+                if (response.ok) {
+                    allRubrics = await response.json();
+                    allRubrics = Array.isArray(allRubrics) ? allRubrics : [];
+                } else {
+                    allRubrics = [];
+                }
+            } catch (error) {
+                console.error('Error cargando rúbricas:', error);
+                allRubrics = [];
             }
         }
 
-        async function exportSessionData() {
-            let submissions = await PE.Submissions.getAll();
-            submissions = Array.isArray(submissions) ? submissions : [];
-            const sessions = PE.CourseData.sessions;
+        // Cargar usuarios (estudiantes)
+        async function loadUsers() {
+            try {
+                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
 
-            const data = sessions.map(session => {
-                const sessionSubmissions = submissions.filter(s => s.sessionId == session.id);
-                return {
-                    sesion: session.id,
-                    titulo: session.title,
-                    fecha: session.date,
-                    entregas: sessionSubmissions.length,
-                    pendientes: sessionSubmissions.filter(s => s.status === 'pending').length,
-                    corregidas: sessionSubmissions.filter(s => s.status === 'reviewed').length
-                };
-            });
+                if (!token) {
+                    console.warn('No hay token para cargar usuarios');
+                    return;
+                }
 
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'tareas_por_sesion_' + new Date().toISOString().split('T')[0] + '.json';
-            a.click();
+                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/users`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
 
-            PE.UI.notify('Datos exportados correctamente', 'success');
-        }
-
-        // Funciones para gestión de tareas administrativas
-        let adminTasks = JSON.parse(localStorage.getItem('pe_admin_tasks') || '[]');
-
-        function switchTab(tab) {
-            const entregasContent = document.getElementById('entregas-content');
-            const tareasContent = document.getElementById('tareas-content');
-            const tabEntregas = document.getElementById('tab-entregas');
-            const tabTareas = document.getElementById('tab-tareas');
-
-            if (tab === 'entregas') {
-                entregasContent.style.display = 'block';
-                tareasContent.style.display = 'none';
-                tabEntregas.className = 'btn btn-primary';
-                tabTareas.className = 'btn btn-outline';
-            } else {
-                entregasContent.style.display = 'none';
-                tareasContent.style.display = 'block';
-                tabEntregas.className = 'btn btn-outline';
-                tabTareas.className = 'btn btn-primary';
-                renderAdminTasks();
+                if (response.ok) {
+                    allUsers = await response.json();
+                    allUsers = Array.isArray(allUsers) ? allUsers : [];
+                } else {
+                    allUsers = [];
+                }
+            } catch (error) {
+                console.error('Error cargando usuarios:', error);
+                allUsers = [];
             }
         }
 
-        function renderAdminTasks(filter = {}) {
-            let filtered = [...adminTasks];
+        function updateStatistics() {
+            const active = allStudentTasks.filter(t => t.status === 'active' && new Date(t.dueDate) >= new Date()).length;
+            const expired = allStudentTasks.filter(t => new Date(t.dueDate) < new Date()).length;
+
+            // Calcular entregas pendientes sumando assignedStudents que no han entregado
+            let pendingSubmissions = 0;
+            let completedSubmissions = 0;
+
+            allStudentTasks.forEach(task => {
+                if (task.assignmentType === 'all') {
+                    const studentCount = allUsers.filter(u => (u.role || 'student') !== 'admin').length;
+                    const submissionCount = task.submissions?.length || 0;
+                    pendingSubmissions += (studentCount - submissionCount);
+                    completedSubmissions += submissionCount;
+                } else {
+                    const assignedCount = task.assignedStudents?.length || 0;
+                    const submissionCount = task.submissions?.length || 0;
+                    pendingSubmissions += (assignedCount - submissionCount);
+                    completedSubmissions += submissionCount;
+                }
+            });
+
+            document.getElementById('stat-total').textContent = allStudentTasks.length;
+            document.getElementById('stat-active').textContent = active;
+            document.getElementById('stat-pending').textContent = pendingSubmissions;
+            document.getElementById('stat-completed').textContent = completedSubmissions;
+        }
+
+        function renderStudentTasks(filter = {}) {
+            let filtered = [...allStudentTasks];
 
             if (filter.status) {
-                filtered = filtered.filter(t => t.status === filter.status);
+                const now = new Date();
+                if (filter.status === 'active') {
+                    filtered = filtered.filter(t => t.status === 'active' && new Date(t.dueDate) >= now);
+                } else if (filter.status === 'expired') {
+                    filtered = filtered.filter(t => new Date(t.dueDate) < now);
+                } else if (filter.status === 'draft') {
+                    filtered = filtered.filter(t => t.status === 'draft');
+                }
             }
 
-            if (filter.priority) {
-                filtered = filtered.filter(t => t.priority === filter.priority);
+            if (filter.assignment) {
+                filtered = filtered.filter(t => t.assignmentType === filter.assignment);
             }
 
-            const container = document.getElementById('admin-tasks-list');
-            const completed = adminTasks.filter(t => t.status === 'completed').length;
-            const pending = adminTasks.filter(t => t.status !== 'completed').length;
-
-            document.getElementById('stat-admin-total').textContent = adminTasks.length;
-            document.getElementById('stat-admin-completed').textContent = completed;
-            document.getElementById('stat-admin-pending').textContent = pending;
-
-            // Obtener rúbricas para mostrar nombre
-            let rubrics = [];
-            try {
-                rubrics = JSON.parse(localStorage.getItem('pe_rubrics') || '[]');
-            } catch (e) {
-                console.log('No se pudieron cargar las rúbricas');
-            }
+            const container = document.getElementById('student-tasks-list');
 
             if (filtered.length === 0) {
                 container.innerHTML = `
-                    <div class="text-center text-secondary">
-                        <p>No hay tareas administrativas ${Object.keys(filter).length > 0 ? 'con los filtros seleccionados' : ''}.</p>
-                        <button class="btn btn-primary mt-3" onclick="showCreateTaskModal()">+ Crear tarea</button>
+                    <div class="text-center text-secondary" style="padding: 3rem;">
+                        <p style="font-size: 3rem; margin-bottom: 1rem;">📝</p>
+                        <p>No hay tareas para estudiantes ${Object.keys(filter).length > 0 ? 'con los filtros seleccionados' : ''}.</p>
+                        <button class="btn btn-primary mt-3" onclick="showCreateStudentTaskModal()">+ Crear primera tarea</button>
                     </div>
                 `;
                 return;
             }
 
             container.innerHTML = filtered.map(task => {
-                const priorityColors = {
-                    high: 'danger',
-                    medium: 'warning',
-                    low: 'secondary'
-                };
-                const priorityLabels = {
-                    high: 'Alta',
-                    medium: 'Media',
-                    low: 'Baja'
-                };
-                const statusColors = {
-                    pending: 'warning',
-                    in_progress: 'primary',
-                    completed: 'success'
-                };
-                const statusLabels = {
-                    pending: 'Pendiente',
-                    in_progress: 'En progreso',
-                    completed: 'Completada'
-                };
+                const isExpired = new Date(task.dueDate) < new Date();
+                const rubric = allRubrics.find(r => r.id === task.rubricId);
 
-                // Obtener nombre de la rúbrica si está vinculada
-                let rubricBadge = '';
-                if (task.rubricId) {
-                    const rubric = rubrics.find(r => r.id === task.rubricId);
-                    if (rubric) {
-                        rubricBadge = `<span class="badge badge-primary" style="background: var(--accent-color);">📊 ${PE.Utils.escapeHtml(rubric.name)}</span>`;
-                    }
+                // Mostrar estudiantes asignados
+                let studentsHtml = '';
+                if (task.assignmentType === 'all') {
+                    studentsHtml = '<span class="badge badge-success">Todo el curso</span>';
+                } else if (task.assignedStudents && task.assignedStudents.length > 0) {
+                    const studentNames = task.assignedStudents.map(studentId => {
+                        const student = allUsers.find(u => u.id === studentId);
+                        return student ? student.name : 'Estudiante';
+                    });
+                    studentsHtml = studentNames.map(name =>
+                        `<span class="student-chip">${PE.Utils.escapeHtml(name)}</span>`
+                    ).join('');
                 }
 
+                // Obtener entregas
+                const submissionsCount = task.submissions?.length || 0;
+                const totalStudents = task.assignmentType === 'all'
+                    ? allUsers.filter(u => (u.role || 'student') !== 'admin').length
+                    : (task.assignedStudents?.length || 0);
+
                 return `
-                    <div class="task-card" style="border-left: 4px solid var(--${priorityColors[task.priority]}-color);">
+                    <div class="task-card" style="border-left: 4px solid ${isExpired ? 'var(--danger-color)' : 'var(--primary-color)'};">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                             <div style="flex: 1;">
-                                <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem;">
+                                <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap;">
                                     <strong>${PE.Utils.escapeHtml(task.title)}</strong>
-                                    <span class="badge badge-${priorityColors[task.priority]}">${priorityLabels[task.priority]}</span>
-                                    <span class="badge badge-${statusColors[task.status]}">${statusLabels[task.status]}</span>
-                                    ${rubricBadge}
+                                    ${isExpired ?
+                                        '<span class="badge badge-danger">Caducada</span>' :
+                                        '<span class="badge badge-success">Activa</span>'
+                                    }
+                                    ${rubric ? `<span class="badge badge-primary" style="background: var(--accent-color);">📊 ${PE.Utils.escapeHtml(rubric.name)}</span>` : ''}
                                 </div>
-                                <p class="text-secondary mb-0" style="font-size: 0.875rem;">${PE.Utils.escapeHtml(task.description)}</p>
-                                ${task.dueDate ? `<p class="text-secondary mb-0" style="font-size: 0.8rem; margin-top: 0.5rem;">📅 Fecha límite: ${new Date(task.dueDate).toLocaleDateString('es-ES')}</p>` : ''}
-                                ${task.sessionId ? `<p class="text-secondary mb-0" style="font-size: 0.8rem;">📚 Sesión ${task.sessionId} relacionada</p>` : ''}
+                                <p class="text-secondary mb-2" style="font-size: 0.875rem;">${PE.Utils.escapeHtml(task.description)}</p>
+                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem;">
+                                    <span class="text-secondary" style="font-size: 0.8rem;">📅 Límite: ${PE.Utils.formatDate(task.dueDate, 'long')}</span>
+                                    ${task.sessionId ? `<span class="text-secondary" style="font-size: 0.8rem;">📚 Sesión ${task.sessionId}</span>` : ''}
+                                </div>
+                                <div style="margin-bottom: 0.5rem;">
+                                    <span class="text-secondary" style="font-size: 0.8rem;">Asignada a: </span>
+                                    ${studentsHtml}
+                                </div>
+                                <div style="display: flex; gap: 1rem; align-items: center;">
+                                    <span class="text-secondary" style="font-size: 0.8rem;">
+                                        📥 ${submissionsCount}/${totalStudents} entregas
+                                    </span>
+                                    ${submissionsCount > 0 ? `<a href="correcciones.html?taskId=${task.id}" class="btn btn-sm btn-outline">Ver entregas</a>` : ''}
+                                </div>
                             </div>
                             <div style="display: flex; gap: 0.5rem;">
-                                ${task.status !== 'completed' ?
-                                    `<button class="btn btn-sm btn-outline" onclick="toggleTaskStatus('${task.id}')">
-                                        ${task.status === 'pending' ? '▶' : '✓'}
+                                <button class="btn btn-sm btn-outline" onclick="viewStudentTask('${task.id}')">👁️ Ver</button>
+                                <button class="btn btn-sm btn-outline" onclick="editStudentTask('${task.id}')">✏️ Editar</button>
+                                ${task.status !== 'inactive' ?
+                                    `<button class="btn btn-sm btn-${task.status === 'active' ? 'warning' : 'success'}" onclick="toggleTaskStatus('${task.id}')">
+                                        ${task.status === 'active' ? '⏸️ Pausar' : '▶️ Activar'}
                                     </button>` :
-                                    '<span class="text-secondary">✓</span>'
+                                    `<button class="btn btn-sm btn-success" onclick="toggleTaskStatus('${task.id}')">▶️ Activar</button>`
                                 }
-                                <button class="btn btn-sm btn-outline" onclick="deleteTask('${task.id}')">🗑</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteStudentTask('${task.id}')">🗑️</button>
                             </div>
                         </div>
                     </div>
@@ -507,45 +365,64 @@
             }).join('');
         }
 
-        function showCreateTaskModal() {
+        async function showCreateStudentTaskModal(taskId = null) {
             const sessions = PE.CourseData.sessions;
             const sessionsOptions = sessions.map(s =>
                 `<option value="${s.id}">Sesión ${s.id}: ${s.title}</option>`
             ).join('');
 
-            // Obtener rúbricas disponibles
-            let rubrics = [];
-            try {
-                rubrics = JSON.parse(localStorage.getItem('pe_rubrics') || '[]');
-            } catch (e) {
-                console.log('No se pudieron cargar las rúbricas');
-            }
-
-            const rubricsOptions = rubrics.map(r =>
+            const rubricsOptions = allRubrics.map(r =>
                 `<option value="${r.id}">${PE.Utils.escapeHtml(r.name)} (${r.maxPoints} pts)</option>`
             ).join('');
 
-            PE.UI.showModal('Crear nueva tarea administrativa', `
-                <form id="create-task-form" onsubmit="createTask(event)">
+            // Obtener lista de estudiantes
+            const students = allUsers.filter(u => (u.role || 'student') !== 'admin');
+            const studentsOptions = students.map(s =>
+                `<option value="${s.id}">${PE.Utils.escapeHtml(s.name)} (${s.email})</option>`
+            ).join('');
+
+            const isEdit = taskId !== null;
+            const task = isEdit ? allStudentTasks.find(t => t.id === taskId) : null;
+
+            const taskData = task || {
+                id: null,
+                title: '',
+                description: '',
+                assignmentType: 'all',
+                assignedStudents: [],
+                dueDate: '',
+                sessionId: '',
+                rubricId: '',
+                status: 'active'
+            };
+
+            PE.UI.showModal(isEdit ? '✏️ Editar tarea para estudiantes' : '📝 Nueva tarea para estudiantes', `
+                <form id="create-student-task-form" onsubmit="saveStudentTask(event, '${taskId || ''}')">
                     <div class="form-group">
-                        <label class="form-label">Título *</label>
-                        <input type="text" name="title" class="form-control" required placeholder="Ej: Revisar correcciones de la sesión 5">
+                        <label class="form-label">Título de la tarea *</label>
+                        <input type="text" name="title" class="form-control" required placeholder="Ej: Ensayo argumentativo sobre cambio climático" value="${PE.Utils.escapeHtml(taskData.title)}">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Descripción *</label>
-                        <textarea name="description" class="form-control" rows="3" required placeholder="Describe la tarea..."></textarea>
+                        <textarea name="description" class="form-control" rows="3" required placeholder="Instrucciones detalladas de la tarea...">${PE.Utils.escapeHtml(taskData.description)}</textarea>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Prioridad *</label>
-                        <select name="priority" class="form-control form-select" required>
-                            <option value="high">Alta</option>
-                            <option value="medium" selected>Media</option>
-                            <option value="low">Baja</option>
+                        <label class="form-label">Fecha límite *</label>
+                        <input type="datetime-local" name="dueDate" class="form-control" required value="${taskData.dueDate ? taskData.dueDate.slice(0, 16) : ''}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tipo de asignación *</label>
+                        <select name="assignmentType" class="form-control form-select" required onchange="toggleStudentSelector(this.value)">
+                            <option value="all" ${taskData.assignmentType === 'all' ? 'selected' : ''}>Todo el curso</option>
+                            <option value="specific" ${taskData.assignmentType === 'specific' ? 'selected' : ''}>Estudiantes específicos</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Fecha límite (opcional)</label>
-                        <input type="date" name="dueDate" class="form-control">
+                    <div class="form-group" id="student-selector-group" style="display: ${taskData.assignmentType === 'specific' ? 'block' : 'none'};">
+                        <label class="form-label">Estudiantes asignados</label>
+                        <select name="assignedStudents" class="form-control form-select" multiple size="5" style="height: auto;">
+                            ${studentsOptions}
+                        </select>
+                        <small class="text-secondary">Mantén presionado Ctrl/Cmd para seleccionar varios estudiantes</small>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Sesión relacionada (opcional)</label>
@@ -561,87 +438,194 @@
                             ${rubricsOptions}
                         </select>
                         <p class="text-secondary" style="font-size: 0.8rem; margin-top: 0.25rem;">
-                            Vincula una rúbrica para usarla al corregir las entregas de esta tarea.
+                            La rúbrica seleccionada se usará para corregir las entregas de esta tarea.
                         </p>
                     </div>
                     <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-md);">
-                        <button type="submit" class="btn btn-primary">Crear tarea</button>
+                        <button type="submit" class="btn btn-primary">${isEdit ? '💾 Guardar cambios' : '✅ Crear tarea'}</button>
                         <button type="button" class="btn btn-outline" onclick="PE.UI.closeModal()">Cancelar</button>
                     </div>
                 </form>
             `);
         }
 
-        async function createTask(event) {
+        function toggleStudentSelector(value) {
+            const group = document.getElementById('student-selector-group');
+            if (group) {
+                group.style.display = value === 'specific' ? 'block' : 'none';
+            }
+        }
+
+        async function saveStudentTask(event, taskId) {
             event.preventDefault();
             const form = event.target;
             const formData = new FormData(form);
 
-            const task = {
-                id: 'task_' + Date.now(),
+            const taskData = {
                 title: formData.get('title'),
                 description: formData.get('description'),
-                priority: formData.get('priority'),
-                status: 'pending',
-                dueDate: formData.get('dueDate') || null,
+                dueDate: formData.get('dueDate'),
+                assignmentType: formData.get('assignmentType'),
+                assignedStudents: formData.getAll('assignedStudents'),
                 sessionId: formData.get('sessionId') || null,
                 rubricId: formData.get('rubricId') || null,
-                createdAt: new Date().toISOString(),
-                createdBy: 'admin'
+                status: 'active',
+                submissions: [],
+                createdAt: new Date().toISOString()
             };
 
-            adminTasks.push(task);
-            localStorage.setItem('pe_admin_tasks', JSON.stringify(adminTasks));
-
-            PE.UI.closeModal();
-            PE.UI.notify('Tarea creada correctamente', 'success');
-            renderAdminTasks();
-
-            // Si la API está disponible, enviar a backend
             try {
-                const API = PE.API;
-                await API.post('/admin/tasks', task);
-            } catch (e) {
-                console.log('Tarea guardada solo en localStorage (API no disponible)');
-            }
-        }
+                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+                const url = taskId
+                    ? `${window.PE_CONFIG.API_URL}/api/student-tasks/${taskId}`
+                    : `${window.PE_CONFIG.API_URL}/api/student-tasks`;
+                const method = taskId ? 'PUT' : 'POST';
 
-        function toggleTaskStatus(taskId) {
-            const task = adminTasks.find(t => t.id === taskId);
-            if (task) {
-                if (task.status === 'pending') {
-                    task.status = 'in_progress';
-                } else if (task.status === 'in_progress') {
-                    task.status = 'completed';
-                    task.completedAt = new Date().toISOString();
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(taskData)
+                });
+
+                if (response.ok) {
+                    PE.UI.closeModal();
+                    PE.UI.notify(taskId ? 'Tarea actualizada correctamente' : 'Tarea creada correctamente', 'success');
+                    await loadStudentTasks();
                 } else {
-                    task.status = 'pending';
-                    delete task.completedAt;
+                    throw new Error('Error al guardar la tarea');
+                }
+            } catch (error) {
+                // Fallback a localStorage
+                if (taskId) {
+                    const index = allStudentTasks.findIndex(t => t.id === taskId);
+                    if (index >= 0) {
+                        allStudentTasks[index] = { ...allStudentTasks[index], ...taskData };
+                    }
+                } else {
+                    taskData.id = 'task_' + Date.now();
+                    allStudentTasks.push(taskData);
                 }
 
-                localStorage.setItem('pe_admin_tasks', JSON.stringify(adminTasks));
-                renderAdminTasks();
-                PE.UI.notify('Estado de tarea actualizado', 'success');
+                localStorage.setItem('pe_student_tasks', JSON.stringify(allStudentTasks));
+                PE.UI.closeModal();
+                PE.UI.notify(taskId ? 'Tarea actualizada (guardada localmente)' : 'Tarea creada (guardada localmente)', 'success');
+                renderStudentTasks();
+                updateStatistics();
             }
         }
 
-        function deleteTask(taskId) {
-            if (confirm('¿Estás seguro de que quieres eliminar esta tarea?')) {
-                adminTasks = adminTasks.filter(t => t.id !== taskId);
-                localStorage.setItem('pe_admin_tasks', JSON.stringify(adminTasks));
-                renderAdminTasks();
-                PE.UI.notify('Tarea eliminada', 'success');
+        async function viewStudentTask(taskId) {
+            const task = allStudentTasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            const rubric = allRubrics.find(r => r.id === task.rubricId);
+            const studentsHtml = task.assignmentType === 'all'
+                ? '<span class="badge badge-success">Todo el curso</span>'
+                : task.assignedStudents?.map(studentId => {
+                    const student = allUsers.find(u => u.id === studentId);
+                    return student ? `<span class="student-chip">${PE.Utils.escapeHtml(student.name)}</span>` : '';
+                  }).join('') || '';
+
+            PE.UI.showModal(task.title, `
+                <div class="mb-3">
+                    <strong>📝 Descripción:</strong>
+                    <p class="text-secondary">${PE.Utils.escapeHtml(task.description)}</p>
+                </div>
+                <div class="mb-3">
+                    <strong>📅 Fecha límite:</strong> ${PE.Utils.formatDate(task.dueDate, 'long')}
+                </div>
+                <div class="mb-3">
+                    <strong>👥 Asignada a:</strong><br>
+                    ${studentsHtml}
+                </div>
+                ${task.sessionId ? `<div class="mb-3"><strong>📚 Sesión relacionada:</strong> ${task.sessionId}</div>` : ''}
+                ${rubric ? `<div class="mb-3"><strong>📊 Rúbrica:</strong> ${PE.Utils.escapeHtml(rubric.name)} (${rubric.maxPoints} pts)</div>` : ''}
+                <div class="mb-3">
+                    <strong>📥 Entregas:</strong> ${task.submissions?.length || 0}
+                </div>
+                <div class="alert alert-info">
+                    <strong>ℹ️ Estado:</strong>
+                    <small class="mb-0">${task.status === 'active' ? 'Activa - visible para estudiantes' : 'Inactiva - no visible'}</small>
+                </div>
+            `, [
+                { text: 'Cerrar' },
+                { text: 'Editar', class: 'btn-primary', callback: () => { PE.UI.closeModal(); editStudentTask(taskId); }}
+            ]);
+        }
+
+        function editStudentTask(taskId) {
+            showCreateStudentTaskModal(taskId);
+        }
+
+        async function toggleTaskStatus(taskId) {
+            const task = allStudentTasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            const newStatus = task.status === 'active' ? 'inactive' : 'active';
+
+            try {
+                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/student-tasks/${taskId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                if (response.ok) {
+                    PE.UI.notify(`Tarea ${newStatus === 'active' ? 'activada' : 'desactivada'}`, 'success');
+                    await loadStudentTasks();
+                }
+            } catch (error) {
+                // Fallback a localStorage
+                task.status = newStatus;
+                localStorage.setItem('pe_student_tasks', JSON.stringify(allStudentTasks));
+                renderStudentTasks();
+                updateStatistics();
+                PE.UI.notify(`Tarea ${newStatus === 'active' ? 'activada' : 'desactivada'} (local)`, 'success');
             }
         }
 
-        async function exportTasks() {
-            const data = adminTasks.map(task => ({
+        async function deleteStudentTask(taskId) {
+            if (!confirm('¿Estás seguro de que deseas eliminar esta tarea? Las entregas asociadas también se eliminarán.')) return;
+
+            try {
+                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/student-tasks/${taskId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    PE.UI.notify('Tarea eliminada', 'success');
+                    await loadStudentTasks();
+                }
+            } catch (error) {
+                // Fallback a localStorage
+                allStudentTasks = allStudentTasks.filter(t => t.id !== taskId);
+                localStorage.setItem('pe_student_tasks', JSON.stringify(allStudentTasks));
+                renderStudentTasks();
+                updateStatistics();
+                PE.UI.notify('Tarea eliminada (local)', 'success');
+            }
+        }
+
+        function exportStudentTasks() {
+            const data = allStudentTasks.map(task => ({
                 titulo: task.title,
                 descripcion: task.description,
-                prioridad: task.priority,
-                estado: task.status,
                 fecha_limite: task.dueDate,
+                tipo_asignacion: task.assignmentType === 'all' ? 'Todo el curso' : 'Específico',
+                estudiantes_asignados: task.assignedStudents?.length || 0,
                 sesion: task.sessionId,
+                rubrica: task.rubricId,
+                estado: task.status,
+                entregas: task.submissions?.length || 0,
                 creada: task.createdAt
             }));
 
@@ -649,31 +633,31 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'tareas_administrativas_' + new Date().toISOString().split('T')[0] + '.json';
+            a.download = 'tareas_estudiantes_' + new Date().toISOString().split('T')[0] + '.json';
             a.click();
 
             PE.UI.notify('Tareas exportadas correctamente', 'success');
         }
 
-        // Event listeners para filtros de tareas administrativas
+        // Event listeners para filtros
         document.addEventListener('DOMContentLoaded', () => {
-            const filterStatus = document.getElementById('filter-admin-status');
-            const filterPriority = document.getElementById('filter-admin-priority');
+            const filterStatus = document.getElementById('filter-status');
+            const filterAssignment = document.getElementById('filter-assignment');
 
             if (filterStatus) {
                 filterStatus.addEventListener('change', () => {
-                    renderAdminTasks({
+                    renderStudentTasks({
                         status: filterStatus.value,
-                        priority: filterPriority.value
+                        assignment: filterAssignment.value
                     });
                 });
             }
 
-            if (filterPriority) {
-                filterPriority.addEventListener('change', () => {
-                    renderAdminTasks({
+            if (filterAssignment) {
+                filterAssignment.addEventListener('change', () => {
+                    renderStudentTasks({
                         status: filterStatus.value,
-                        priority: filterPriority.value
+                        assignment: filterAssignment.value
                     });
                 });
             }
