@@ -169,12 +169,53 @@
             let submissions = await PE.Submissions.getByUser(user.id);
             submissions = Array.isArray(submissions) ? submissions : [];
             const reviewed = submissions.filter(s => s.status === 'reviewed');
-            const gradedSubmissions = submissions.filter(s => {
-                const grade = parseFloat(s.numericGrade ?? s.numeric_grade);
-                return !Number.isNaN(grade);
-            });
-            const averageGrade = gradedSubmissions.length > 0
-                ? (gradedSubmissions.reduce((sum, s) => sum + parseFloat(s.numericGrade ?? s.numeric_grade), 0) / gradedSubmissions.length)
+            // Nota media "real": usar numericGrade si existe (normalizado a /10 según rúbrica),
+            // y si no, mapear la calificación cualitativa a una escala /10.
+            let rubricMaxById = {};
+            try {
+                const needsRubrics = reviewed.some(s => (s.rubricId || s.rubric_id));
+                if (needsRubrics) {
+                    const rubrics = await PE.API.get('/rubrics');
+                    (Array.isArray(rubrics) ? rubrics : []).forEach(r => {
+                        if (r && r.id) rubricMaxById[String(r.id)] = parseFloat(r.maxPoints) || 0;
+                    });
+                }
+            } catch (e) {
+                console.warn('[Progress] No se pudieron cargar rúbricas para normalizar la nota media:', e?.message || e);
+            }
+
+            const qualitativeTo10 = (g) => {
+                const v = String(g || '').trim().toLowerCase();
+                if (!v) return null;
+                if (v === 'excelente') return 9.5;
+                if (v === 'muy bien') return 8.5;
+                if (v === 'bien') return 7.5;
+                if (v === 'suficiente') return 6.0;
+                if (v === 'necesita mejorar') return 4.5;
+                return null;
+            };
+
+            const gradeValue10 = (s) => {
+                const numeric = parseFloat(s.numericGrade ?? s.numeric_grade);
+                if (!Number.isNaN(numeric)) {
+                    const rubricId = s.rubricId ?? s.rubric_id;
+                    const maxPoints = rubricId ? (rubricMaxById[String(rubricId)] || 0) : 0;
+                    if (maxPoints > 0) {
+                        return (numeric / maxPoints) * 10;
+                    }
+                    return numeric; // asume ya está en escala /10 si no hay info de rúbrica
+                }
+                const q = qualitativeTo10(s.grade);
+                if (q !== null) return q;
+                return null;
+            };
+
+            const gradedReviewed = reviewed
+                .map(s => ({ submission: s, value10: gradeValue10(s) }))
+                .filter(x => x.value10 !== null && !Number.isNaN(x.value10));
+
+            const averageGrade = gradedReviewed.length > 0
+                ? (gradedReviewed.reduce((sum, x) => sum + x.value10, 0) / gradedReviewed.length)
                 : null;
             const totalWords = submissions.reduce((sum, s) => sum + (s.wordCount || 0), 0);
 
@@ -187,9 +228,9 @@
             document.getElementById('stat-submissions').textContent = submissions.length;
             document.getElementById('stat-reviewed').textContent = reviewed.length;
             document.getElementById('stat-average').textContent = averageGrade !== null ? averageGrade.toFixed(1) : '-';
-            document.getElementById('stat-average-meta').textContent = gradedSubmissions.length > 0
-                ? `${gradedSubmissions.length} calificadas`
-                : 'sin calificaciones';
+            document.getElementById('stat-average-meta').textContent = gradedReviewed.length > 0
+                ? `${gradedReviewed.length} con nota de ${reviewed.length} corregidas`
+                : (reviewed.length > 0 ? 'corregidas sin nota' : 'sin calificaciones');
             document.getElementById('stat-words').textContent = totalWords.toLocaleString('es-ES');
 
             // Barra de progreso
