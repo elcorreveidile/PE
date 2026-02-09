@@ -63,6 +63,25 @@
                             <h1 style="margin-bottom: 0.25rem;">Gestion de tareas</h1>
                             <p class="text-secondary mb-0">Control de actividades y entregas por sesion</p>
                         </div>
+                        <div style="display: flex; gap: var(--spacing-sm);">
+                            <button class="btn btn-primary" onclick="showCreateTaskModal()">
+                                + Nueva tarea
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Pestañas para cambiar entre entregas y tareas -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <div style="display: flex; gap: var(--spacing-md);">
+                                <button class="btn btn-primary" id="tab-entregas" onclick="switchTab('entregas')">
+                                    Entregas de estudiantes
+                                </button>
+                                <button class="btn btn-outline" id="tab-tareas" onclick="switchTab('tareas')">
+                                    Tareas administrativas
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Resumen de tareas -->
@@ -85,7 +104,9 @@
                         </div>
                     </div>
 
-                    <!-- Filtro por sesion -->
+                    <!-- Contenido de Entregas de Estudiantes -->
+                    <div id="entregas-content">
+                        <!-- Filtro por sesion -->
                     <div class="card mb-4">
                         <div class="card-body">
                             <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
@@ -105,6 +126,59 @@
                     <!-- Lista de tareas por sesion -->
                     <div id="tasks-list">
                         <div class="loader"></div>
+                    </div>
+                    </div>
+
+                    <!-- Contenido de Tareas Administrativas -->
+                    <div id="tareas-content" style="display: none;">
+                        <!-- Estadísticas de tareas administrativas -->
+                        <div class="sessions-grid mb-4" style="grid-template-columns: repeat(3, 1fr);">
+                            <div class="card text-center" style="padding: 1.5rem;">
+                                <h3 class="text-primary" style="font-size: 2rem; margin: 0;" id="stat-admin-total">0</h3>
+                                <p class="text-secondary mb-0">Total tareas</p>
+                            </div>
+                            <div class="card text-center" style="padding: 1.5rem;">
+                                <h3 style="font-size: 2rem; margin: 0; color: var(--success-color);" id="stat-admin-completed">0</h3>
+                                <p class="text-secondary mb-0">Completadas</p>
+                            </div>
+                            <div class="card text-center" style="padding: 1.5rem;">
+                                <h3 style="font-size: 2rem; margin: 0; color: var(--warning-color);" id="stat-admin-pending">0</h3>
+                                <p class="text-secondary mb-0">Pendientes</p>
+                            </div>
+                        </div>
+
+                        <!-- Filtro de tareas administrativas -->
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                                    <select id="filter-admin-status" class="form-control form-select" style="width: auto;">
+                                        <option value="">Todos los estados</option>
+                                        <option value="pending">Pendientes</option>
+                                        <option value="in_progress">En progreso</option>
+                                        <option value="completed">Completadas</option>
+                                    </select>
+                                    <select id="filter-admin-priority" class="form-control form-select" style="width: auto;">
+                                        <option value="">Todas las prioridades</option>
+                                        <option value="high">Alta</option>
+                                        <option value="medium">Media</option>
+                                        <option value="low">Baja</option>
+                                    </select>
+                                    <button class="btn btn-outline" onclick="exportTasks()">Exportar tareas</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Lista de tareas administrativas -->
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="admin-tasks-list">
+                                    <div class="text-center text-secondary">
+                                        <p>No hay tareas administrativas.</p>
+                                        <button class="btn btn-primary mt-3" onclick="showCreateTaskModal()">+ Crear primera tarea</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -312,6 +386,256 @@
 
             PE.UI.notify('Datos exportados correctamente', 'success');
         }
+
+        // Funciones para gestión de tareas administrativas
+        let adminTasks = JSON.parse(localStorage.getItem('pe_admin_tasks') || '[]');
+
+        function switchTab(tab) {
+            const entregasContent = document.getElementById('entregas-content');
+            const tareasContent = document.getElementById('tareas-content');
+            const tabEntregas = document.getElementById('tab-entregas');
+            const tabTareas = document.getElementById('tab-tareas');
+
+            if (tab === 'entregas') {
+                entregasContent.style.display = 'block';
+                tareasContent.style.display = 'none';
+                tabEntregas.className = 'btn btn-primary';
+                tabTareas.className = 'btn btn-outline';
+            } else {
+                entregasContent.style.display = 'none';
+                tareasContent.style.display = 'block';
+                tabEntregas.className = 'btn btn-outline';
+                tabTareas.className = 'btn btn-primary';
+                renderAdminTasks();
+            }
+        }
+
+        function renderAdminTasks(filter = {}) {
+            let filtered = [...adminTasks];
+
+            if (filter.status) {
+                filtered = filtered.filter(t => t.status === filter.status);
+            }
+
+            if (filter.priority) {
+                filtered = filtered.filter(t => t.priority === filter.priority);
+            }
+
+            const container = document.getElementById('admin-tasks-list');
+            const completed = adminTasks.filter(t => t.status === 'completed').length;
+            const pending = adminTasks.filter(t => t.status !== 'completed').length;
+
+            document.getElementById('stat-admin-total').textContent = adminTasks.length;
+            document.getElementById('stat-admin-completed').textContent = completed;
+            document.getElementById('stat-admin-pending').textContent = pending;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-secondary">
+                        <p>No hay tareas administrativas ${Object.keys(filter).length > 0 ? 'con los filtros seleccionados' : ''}.</p>
+                        <button class="btn btn-primary mt-3" onclick="showCreateTaskModal()">+ Crear tarea</button>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(task => {
+                const priorityColors = {
+                    high: 'danger',
+                    medium: 'warning',
+                    low: 'secondary'
+                };
+                const priorityLabels = {
+                    high: 'Alta',
+                    medium: 'Media',
+                    low: 'Baja'
+                };
+                const statusColors = {
+                    pending: 'warning',
+                    in_progress: 'primary',
+                    completed: 'success'
+                };
+                const statusLabels = {
+                    pending: 'Pendiente',
+                    in_progress: 'En progreso',
+                    completed: 'Completada'
+                };
+
+                return `
+                    <div class="task-card" style="border-left: 4px solid var(--${priorityColors[task.priority]}-color);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div style="flex: 1;">
+                                <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem;">
+                                    <strong>${PE.Utils.escapeHtml(task.title)}</strong>
+                                    <span class="badge badge-${priorityColors[task.priority]}">${priorityLabels[task.priority]}</span>
+                                    <span class="badge badge-${statusColors[task.status]}">${statusLabels[task.status]}</span>
+                                </div>
+                                <p class="text-secondary mb-0" style="font-size: 0.875rem;">${PE.Utils.escapeHtml(task.description)}</p>
+                                ${task.dueDate ? `<p class="text-secondary mb-0" style="font-size: 0.8rem; margin-top: 0.5rem;">📅 Fecha límite: ${new Date(task.dueDate).toLocaleDateString('es-ES')}</p>` : ''}
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                ${task.status !== 'completed' ?
+                                    `<button class="btn btn-sm btn-outline" onclick="toggleTaskStatus('${task.id}')">
+                                        ${task.status === 'pending' ? '▶' : '✓'}
+                                    </button>` :
+                                    '<span class="text-secondary">✓</span>'
+                                }
+                                <button class="btn btn-sm btn-outline" onclick="deleteTask('${task.id}')">🗑</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showCreateTaskModal() {
+            const sessions = PE.CourseData.sessions;
+            const sessionsOptions = sessions.map(s =>
+                `<option value="${s.id}">Sesión ${s.id}: ${s.title}</option>`
+            ).join('');
+
+            PE.UI.showModal('Crear nueva tarea administrativa', `
+                <form id="create-task-form" onsubmit="createTask(event)">
+                    <div class="form-group">
+                        <label class="form-label">Título *</label>
+                        <input type="text" name="title" class="form-control" required placeholder="Ej: Revisar correcciones de la sesión 5">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Descripción *</label>
+                        <textarea name="description" class="form-control" rows="3" required placeholder="Describe la tarea..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Prioridad *</label>
+                        <select name="priority" class="form-control form-select" required>
+                            <option value="high">Alta</option>
+                            <option value="medium" selected>Media</option>
+                            <option value="low">Baja</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fecha límite (opcional)</label>
+                        <input type="date" name="dueDate" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Sesión relacionada (opcional)</label>
+                        <select name="sessionId" class="form-control form-select">
+                            <option value="">Sin sesión específica</option>
+                            ${sessionsOptions}
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-md);">
+                        <button type="submit" class="btn btn-primary">Crear tarea</button>
+                        <button type="button" class="btn btn-outline" onclick="PE.UI.closeModal()">Cancelar</button>
+                    </div>
+                </form>
+            `);
+        }
+
+        async function createTask(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+
+            const task = {
+                id: 'task_' + Date.now(),
+                title: formData.get('title'),
+                description: formData.get('description'),
+                priority: formData.get('priority'),
+                status: 'pending',
+                dueDate: formData.get('dueDate') || null,
+                sessionId: formData.get('sessionId') || null,
+                createdAt: new Date().toISOString(),
+                createdBy: 'admin'
+            };
+
+            adminTasks.push(task);
+            localStorage.setItem('pe_admin_tasks', JSON.stringify(adminTasks));
+
+            PE.UI.closeModal();
+            PE.UI.notify('Tarea creada correctamente', 'success');
+            renderAdminTasks();
+
+            // Si la API está disponible, enviar a backend
+            try {
+                const API = PE.API;
+                await API.post('/admin/tasks', task);
+            } catch (e) {
+                console.log('Tarea guardada solo en localStorage (API no disponible)');
+            }
+        }
+
+        function toggleTaskStatus(taskId) {
+            const task = adminTasks.find(t => t.id === taskId);
+            if (task) {
+                if (task.status === 'pending') {
+                    task.status = 'in_progress';
+                } else if (task.status === 'in_progress') {
+                    task.status = 'completed';
+                    task.completedAt = new Date().toISOString();
+                } else {
+                    task.status = 'pending';
+                    delete task.completedAt;
+                }
+
+                localStorage.setItem('pe_admin_tasks', JSON.stringify(adminTasks));
+                renderAdminTasks();
+                PE.UI.notify('Estado de tarea actualizado', 'success');
+            }
+        }
+
+        function deleteTask(taskId) {
+            if (confirm('¿Estás seguro de que quieres eliminar esta tarea?')) {
+                adminTasks = adminTasks.filter(t => t.id !== taskId);
+                localStorage.setItem('pe_admin_tasks', JSON.stringify(adminTasks));
+                renderAdminTasks();
+                PE.UI.notify('Tarea eliminada', 'success');
+            }
+        }
+
+        async function exportTasks() {
+            const data = adminTasks.map(task => ({
+                titulo: task.title,
+                descripcion: task.description,
+                prioridad: task.priority,
+                estado: task.status,
+                fecha_limite: task.dueDate,
+                sesion: task.sessionId,
+                creada: task.createdAt
+            }));
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'tareas_administrativas_' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+
+            PE.UI.notify('Tareas exportadas correctamente', 'success');
+        }
+
+        // Event listeners para filtros de tareas administrativas
+        document.addEventListener('DOMContentLoaded', () => {
+            const filterStatus = document.getElementById('filter-admin-status');
+            const filterPriority = document.getElementById('filter-admin-priority');
+
+            if (filterStatus) {
+                filterStatus.addEventListener('change', () => {
+                    renderAdminTasks({
+                        status: filterStatus.value,
+                        priority: filterPriority.value
+                    });
+                });
+            }
+
+            if (filterPriority) {
+                filterPriority.addEventListener('change', () => {
+                    renderAdminTasks({
+                        status: filterStatus.value,
+                        priority: filterPriority.value
+                    });
+                });
+            }
+        });
     </script>
 </body>
 </html>
