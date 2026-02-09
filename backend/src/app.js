@@ -127,6 +127,52 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// Endpoint TEMPORAL para migración de student_tasks
+app.get('/api/migrate-student-tasks', async (req, res) => {
+    try {
+        const fs = require('fs');
+        const path = require('path');
+
+        // Leer el archivo SQL de migración
+        const sqlFile = path.join(__dirname, 'src/database/add-student-tasks-table.sql');
+        const sql = fs.readFileSync(sqlFile, 'utf8');
+
+        const { query } = require('./src/database/db');
+
+        // Separar y ejecutar cada statement
+        const statements = sql
+            .split(';')
+            .map(s => s.trim())
+            .filter(s => s.length > 0 && !s.startsWith('--'));
+
+        let executed = 0;
+        for (const statement of statements) {
+            try {
+                await query(statement);
+                executed++;
+            } catch (err) {
+                // Ignorar errores de "already exists"
+                if (!err.message.includes('already exists') && !err.message.includes('duplicate column')) {
+                    console.warn('Advertencia:', err.message);
+                }
+            }
+        }
+
+        res.json({
+            success: true,
+            message: 'Migración completada',
+            executed,
+            statements: statements.length
+        });
+    } catch (error) {
+        console.error('Error en migración:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // Información del curso (pública)
 app.get('/api/course', (req, res) => {
     res.json({
