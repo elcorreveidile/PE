@@ -1,21 +1,41 @@
 /**
- * Rutas de Borradores
+ * Rutas de Borradores - drafts (PostgreSQL)
  * API para gestionar borradores de entregas
  */
 
 const express = require('express');
-const router = express.Router();
-const { body, param, query } = require('express-validator');
+const { query } = require('../database/db');
 const { authenticateToken } = require('../middleware/auth');
 
-// =============================================================================
-// GET /api/drafts - Obtener todos los borradores (filtrados por user_id si se proporciona)
-// =============================================================================
+const router = express.Router();
+
+function countWords(text) {
+    return String(text || '').trim().split(/\s+/).filter(w => w.length > 0).length;
+}
+
+/**
+ * GET /api/drafts
+ * Obtener borradores (por defecto: del usuario actual)
+ * Query:
+ * - user_id (opcional): id del usuario. Solo admin o el propio usuario.
+ */
 router.get('/', authenticateToken, async (req, res) => {
     try {
-        const { user_id } = req.query;
+        const userIdParam = req.query.user_id;
 
-        let query = `
+        let targetUserId = req.user.id;
+        if (userIdParam !== undefined) {
+            const requested = parseInt(userIdParam, 10);
+            if (Number.isNaN(requested)) {
+                return res.status(400).json({ success: false, error: 'user_id inválido' });
+            }
+            if (req.user.role !== 'admin' && req.user.id !== requested) {
+                return res.status(403).json({ success: false, error: 'No tienes permiso para ver estos borradores' });
+            }
+            targetUserId = requested;
+        }
+
+        const result = await query(`
             SELECT
                 d.id,
                 d.user_id,
@@ -31,57 +51,33 @@ router.get('/', authenticateToken, async (req, res) => {
                 d.updated_at
             FROM drafts d
             LEFT JOIN users u ON d.user_id = u.id
-            WHERE 1=1
-        `;
+            WHERE d.user_id = $1
+            ORDER BY d.updated_at DESC
+        `, [targetUserId]);
 
-        const params = [];
-
-        // Si se proporciona user_id, filtrar por ese usuario
-        // Si no, solo mostrar borradores del usuario autenticado
-        if (user_id) {
-            // Solo los admins pueden ver borradores de otros usuarios
-            if (req.user.role !== 'admin' && req.user.id !== user_id) {
-                return res.status(403).json({
-                    success: false,
-                    error: 'No tienes permiso para ver estos borradores'
-                });
-            }
-            query += ` AND d.user_id = ?`;
-            params.push(user_id);
-        } else {
-            // Por defecto, mostrar solo los borradores del usuario autenticado
-            query += ` AND d.user_id = ?`;
-            params.push(req.user.id);
-        }
-
-        query += ` ORDER BY d.updated_at DESC`;
-
-        const db = req.app.get('db');
-        const drafts = await db.all(query, params);
-
-        res.json({
+        return res.json({
             success: true,
-            drafts: drafts,
-            count: drafts.length
+            drafts: result.rows,
+            count: result.rows.length
         });
     } catch (error) {
         console.error('[Drafts] Error al obtener borradores:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Error al obtener borradores'
-        });
+        return res.status(500).json({ success: false, error: 'Error al obtener borradores' });
     }
 });
 
-// =============================================================================
-// GET /api/drafts/:id - Obtener un borrador por ID
-// =============================================================================
+/**
+ * GET /api/drafts/:id
+ * Obtener un borrador por ID (dueño o admin)
+ */
 router.get('/:id', authenticateToken, async (req, res) => {
     try {
-        const { id } = req.params;
+        const draftId = parseInt(req.params.id, 10);
+        if (Number.isNaN(draftId)) {
+            return res.status(400).json({ success: false, error: 'ID de borrador inválido' });
+        }
 
-        const db = req.app.get('db');
-        const draft = await db.get(`
+        const result = await query(`
             SELECT
                 d.id,
                 d.user_id,
@@ -97,186 +93,166 @@ router.get('/:id', authenticateToken, async (req, res) => {
                 d.updated_at
             FROM drafts d
             LEFT JOIN users u ON d.user_id = u.id
-            WHERE d.id = ?
-        `, [id]);
+            WHERE d.id = $1
+        `, [draftId]);
 
-        if (!draft) {
-            return res.status(404).json({
-                success: false,
-                error: 'Borrador no encontrado'
-            });
+        if (result.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Borrador no encontrado' });
         }
 
-        // Verificar permisos: solo el dueño o admin puede ver
+        const draft = result.rows[0];
         if (req.user.role !== 'admin' && req.user.id !== draft.user_id) {
-            return res.status(403).json({
-                success: false,
-                error: 'No tienes permiso para ver este borrador'
-            });
+            return res.status(403).json({ success: false, error: 'No tienes permiso para ver este borrador' });
         }
 
-        res.json({
-            success: true,
-            draft: draft
-        });
+        return res.json({ success: true, draft });
     } catch (error) {
         console.error('[Drafts] Error al obtener borrador:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Error al obtener borrador'
-        });
+        return res.status(500).json({ success: false, error: 'Error al obtener borrador' });
     }
 });
 
-// =============================================================================
-// POST /api/drafts - Crear nuevo borrador
-// =============================================================================
+/**
+ * POST /api/drafts
+ * Crear nuevo borrador
+ * Body:
+ * - session_id (obligatorio)
+ * - content (obligatorio)
+ * - session_title, activity_id, activity_title (opcionales)
+ */
 router.post('/', authenticateToken, async (req, res) => {
     try {
-        const { session_id, session_title, activity_id, activity_title, content } = req.body;
+        const { session_id, session_title, activity_id, activity_title, content } = req.body || {};
 
-        // Validaciones
-        if (!session_id || !content) {
-            return res.status(400).json({
-                success: false,
-                error: 'session_id y content son obligatorios'
-            });
+        const sessionId = parseInt(session_id, 10);
+        if (Number.isNaN(sessionId)) {
+            return res.status(400).json({ success: false, error: 'session_id es obligatorio e inválido' });
+        }
+        if (!content || String(content).trim().length < 1) {
+            return res.status(400).json({ success: false, error: 'content es obligatorio' });
         }
 
-        const word_count = content ? content.split(/\s+/).filter(w => w.length > 0).length : 0;
+        const wc = countWords(content);
 
-        const db = req.app.get('db');
-        const result = await db.run(`
+        const insert = await query(`
             INSERT INTO drafts (
                 user_id, session_id, session_title, activity_id, activity_title,
                 content, word_count, status, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, 'draft', datetime('now'), datetime('now'))
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            RETURNING
+                id,
+                user_id,
+                session_id,
+                session_title,
+                activity_id,
+                activity_title,
+                content,
+                word_count,
+                status,
+                created_at,
+                updated_at
         `, [
             req.user.id,
-            session_id,
+            sessionId,
             session_title || '',
             activity_id || null,
             activity_title || '',
             content,
-            word_count
+            wc
         ]);
 
-        const draft = await db.get(`SELECT * FROM drafts WHERE id = ?`, [result.lastID]);
-
-        res.status(201).json({
-            success: true,
-            message: 'Borrador creado exitosamente',
-            draft: draft
-        });
+        const draft = insert.rows[0];
+        return res.status(201).json({ success: true, message: 'Borrador creado exitosamente', draft });
     } catch (error) {
         console.error('[Drafts] Error al crear borrador:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Error al crear borrador'
-        });
+        return res.status(500).json({ success: false, error: 'Error al crear borrador' });
     }
 });
 
-// =============================================================================
-// PUT /api/drafts/:id - Actualizar borrador
-// =============================================================================
+/**
+ * PUT /api/drafts/:id
+ * Actualizar borrador (dueño o admin)
+ */
 router.put('/:id', authenticateToken, async (req, res) => {
     try {
-        const { id } = req.params;
-        const { content } = req.body;
-
-        if (!content) {
-            return res.status(400).json({
-                success: false,
-                error: 'content es obligatorio'
-            });
+        const draftId = parseInt(req.params.id, 10);
+        if (Number.isNaN(draftId)) {
+            return res.status(400).json({ success: false, error: 'ID de borrador inválido' });
         }
 
-        const db = req.app.get('db');
-
-        // Verificar que el borrador existe y pertenece al usuario
-        const draft = await db.get(`SELECT * FROM drafts WHERE id = ?`, [id]);
-
-        if (!draft) {
-            return res.status(404).json({
-                success: false,
-                error: 'Borrador no encontrado'
-            });
+        const { content } = req.body || {};
+        if (!content || String(content).trim().length < 1) {
+            return res.status(400).json({ success: false, error: 'content es obligatorio' });
         }
 
-        if (req.user.role !== 'admin' && req.user.id !== draft.user_id) {
-            return res.status(403).json({
-                success: false,
-                error: 'No tienes permiso para editar este borrador'
-            });
+        const existing = await query('SELECT id, user_id FROM drafts WHERE id = $1', [draftId]);
+        if (existing.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Borrador no encontrado' });
         }
 
-        const word_count = content.split(/\s+/).filter(w => w.length > 0).length;
+        const ownerId = existing.rows[0].user_id;
+        if (req.user.role !== 'admin' && req.user.id !== ownerId) {
+            return res.status(403).json({ success: false, error: 'No tienes permiso para editar este borrador' });
+        }
 
-        // Actualizar borrador
-        await db.run(`
+        const wc = countWords(content);
+
+        const updated = await query(`
             UPDATE drafts
-            SET content = ?,
-                word_count = ?,
-                updated_at = datetime('now')
-            WHERE id = ?
-        `, [content, word_count, id]);
+            SET content = $1,
+                word_count = $2,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $3
+            RETURNING
+                id,
+                user_id,
+                session_id,
+                session_title,
+                activity_id,
+                activity_title,
+                content,
+                word_count,
+                status,
+                created_at,
+                updated_at
+        `, [content, wc, draftId]);
 
-        const updated = await db.get(`SELECT * FROM drafts WHERE id = ?`, [id]);
-
-        res.json({
-            success: true,
-            message: 'Borrador actualizado exitosamente',
-            draft: updated
-        });
+        return res.json({ success: true, message: 'Borrador actualizado exitosamente', draft: updated.rows[0] });
     } catch (error) {
         console.error('[Drafts] Error al actualizar borrador:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Error al actualizar borrador'
-        });
+        return res.status(500).json({ success: false, error: 'Error al actualizar borrador' });
     }
 });
 
-// =============================================================================
-// DELETE /api/drafts/:id - Eliminar borrador
-// =============================================================================
+/**
+ * DELETE /api/drafts/:id
+ * Eliminar borrador (dueño o admin)
+ */
 router.delete('/:id', authenticateToken, async (req, res) => {
     try {
-        const { id } = req.params;
-
-        const db = req.app.get('db');
-
-        // Verificar que el borrador existe y pertenece al usuario
-        const draft = await db.get(`SELECT * FROM drafts WHERE id = ?`, [id]);
-
-        if (!draft) {
-            return res.status(404).json({
-                success: false,
-                error: 'Borrador no encontrado'
-            });
+        const draftId = parseInt(req.params.id, 10);
+        if (Number.isNaN(draftId)) {
+            return res.status(400).json({ success: false, error: 'ID de borrador inválido' });
         }
 
-        if (req.user.role !== 'admin' && req.user.id !== draft.user_id) {
-            return res.status(403).json({
-                success: false,
-                error: 'No tienes permiso para eliminar este borrador'
-            });
+        const existing = await query('SELECT id, user_id FROM drafts WHERE id = $1', [draftId]);
+        if (existing.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Borrador no encontrado' });
         }
 
-        await db.run(`DELETE FROM drafts WHERE id = ?`, [id]);
+        const ownerId = existing.rows[0].user_id;
+        if (req.user.role !== 'admin' && req.user.id !== ownerId) {
+            return res.status(403).json({ success: false, error: 'No tienes permiso para eliminar este borrador' });
+        }
 
-        res.json({
-            success: true,
-            message: 'Borrador eliminado exitosamente'
-        });
+        await query('DELETE FROM drafts WHERE id = $1', [draftId]);
+        return res.json({ success: true, message: 'Borrador eliminado exitosamente' });
     } catch (error) {
         console.error('[Drafts] Error al eliminar borrador:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Error al eliminar borrador'
-        });
+        return res.status(500).json({ success: false, error: 'Error al eliminar borrador' });
     }
 });
 
 module.exports = router;
+
