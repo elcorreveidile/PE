@@ -42,13 +42,16 @@ CARTAS_FORMALES = {
         "nombre": "[Nombre y apellidos]"
     },
     "texto-modelo-sesion-21-peticion-persuasiva.pdf": {
+        "fecha": "Granada, 20 de febrero de 2026",
+        "asunto": "Solicitud de ampliacion de plazo de entrega",
         "destinatario": "Estimado profesor:",
         "cuerpo": [
             "Le escribo para solicitar una pequena ampliacion del plazo de entrega del proyecto final. Durante esta semana he tenido que atender un compromiso laboral imprevisto que ha reducido el tiempo disponible.",
             "Agradeceria poder entregar el trabajo el lunes por la manana. Con esa extension podre revisar la cohesion del texto y asegurar la calidad del resultado. Me comprometo a enviarle un avance el viernes.",
             "Gracias por su comprension y por la flexibilidad. Quedo atento a su respuesta."
         ],
-        "cierre": "[Nombre y apellidos]"
+        "cierre": "Atentamente,",
+        "nombre": "[Nombre y apellidos]"
     },
 }
 
