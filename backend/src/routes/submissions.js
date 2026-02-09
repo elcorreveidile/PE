@@ -79,79 +79,107 @@ router.get('/', authenticateToken, [
     try {
         const { status, session_id, user_id, task_id, include_archived, limit = 50, offset = 0 } = req.query;
 
-        let whereClause = [];
-        let params = [];
-        let paramIndex = 1;
+        const wantArchivedFilter = req.user.role === 'admin' && !include_archived;
 
-        // Si no es admin, solo puede ver sus propias entregas
-        if (req.user.role !== 'admin') {
-            whereClause.push(`s.user_id = $${paramIndex++}`);
-            params.push(req.user.id);
-        } else if (user_id) {
-            whereClause.push(`s.user_id = $${paramIndex++}`);
-            params.push(user_id);
-        }
+        const buildFilters = ({ applyArchivedFilter }) => {
+            let whereClause = [];
+            let params = [];
+            let paramIndex = 1;
 
-        // Para el profesor: ocultar por defecto las entregas archivadas (soft-delete) sin afectar al estudiante.
-        if (req.user.role === 'admin' && !include_archived) {
-            whereClause.push(`COALESCE(s.archived_by_admin, false) = false`);
-        }
-
-        if (status && status !== 'all') {
-            whereClause.push(`s.status = $${paramIndex++}`);
-            params.push(status);
-        }
-
-        if (session_id) {
-            whereClause.push(`s.session_id = $${paramIndex++}`);
-            params.push(session_id);
-        }
-
-        if (task_id) {
-            whereClause.push(`s.task_id = $${paramIndex++}`);
-            params.push(task_id);
-        }
-
-        const whereSQL = whereClause.length > 0 ? 'WHERE ' + whereClause.join(' AND ') : '';
-
-        // Contar total
-        const countResult = await query(
-            `SELECT COUNT(*) as total FROM submissions s ${whereSQL}`,
-            params
-        );
-        const total = parseInt(countResult.rows[0].total);
-
-        // Obtener entregas con informacion de usuario y feedback
-        const limitParam = paramIndex++;
-        const offsetParam = paramIndex;
-        params.push(parseInt(limit), parseInt(offset));
-
-        const result = await query(`
-            SELECT
-                s.*,
-                u.name as user_name,
-                u.email as user_email,
-                f.feedback_text,
-                f.grade,
-                f.numeric_grade,
-                f.created_at as feedback_date
-            FROM submissions s
-            LEFT JOIN users u ON s.user_id = u.id
-            LEFT JOIN feedback f ON s.id = f.submission_id
-            ${whereSQL}
-            ORDER BY s.created_at DESC
-            LIMIT $${limitParam} OFFSET $${offsetParam}
-        `, params);
-
-        res.json({
-            submissions: result.rows,
-            pagination: {
-                total,
-                limit: parseInt(limit),
-                offset: parseInt(offset),
-                hasMore: (parseInt(offset) + result.rows.length) < total
+            // Si no es admin, solo puede ver sus propias entregas
+            if (req.user.role !== 'admin') {
+                whereClause.push(`s.user_id = $${paramIndex++}`);
+                params.push(req.user.id);
+            } else if (user_id) {
+                whereClause.push(`s.user_id = $${paramIndex++}`);
+                params.push(user_id);
             }
-        });
+
+            // Para el profesor: ocultar por defecto las entregas archivadas (soft-delete) sin afectar al estudiante.
+            if (applyArchivedFilter) {
+                whereClause.push(`COALESCE(s.archived_by_admin, false) = false`);
+            }
+
+            if (status && status !== 'all') {
+                whereClause.push(`s.status = $${paramIndex++}`);
+                params.push(status);
+            }
+
+            if (session_id) {
+                whereClause.push(`s.session_id = $${paramIndex++}`);
+                params.push(session_id);
+            }
+
+            if (task_id) {
+                whereClause.push(`s.task_id = $${paramIndex++}`);
+                params.push(task_id);
+            }
+
+            const whereSQL = whereClause.length > 0 ? 'WHERE ' + whereClause.join(' AND ') : '';
+            return { whereSQL, params, paramIndex };
+        };
+
+        // Intentar con filtro de archivadas; si la BD aún no tiene la columna, reintentar sin el filtro.
+        let attemptedWithoutArchived = false;
+        while (true) {
+            const { whereSQL, params, paramIndex } = buildFilters({
+                applyArchivedFilter: wantArchivedFilter && !attemptedWithoutArchived
+            });
+
+            try {
+                // Contar total
+                const countResult = await query(
+                    `SELECT COUNT(*) as total FROM submissions s ${whereSQL}`,
+                    params
+                );
+                const total = parseInt(countResult.rows[0].total);
+
+                // Obtener entregas con informacion de usuario y feedback
+                const limitParam = paramIndex;
+                const offsetParam = paramIndex + 1;
+                const pagedParams = [...params, parseInt(limit), parseInt(offset)];
+
+                const result = await query(`
+                    SELECT
+                        s.*,
+                        u.name as user_name,
+                        u.email as user_email,
+                        f.feedback_text,
+                        f.grade,
+                        f.numeric_grade,
+                        f.created_at as feedback_date
+                    FROM submissions s
+                    LEFT JOIN users u ON s.user_id = u.id
+                    LEFT JOIN feedback f ON s.id = f.submission_id
+                    ${whereSQL}
+                    ORDER BY s.created_at DESC
+                    LIMIT $${limitParam} OFFSET $${offsetParam}
+                `, pagedParams);
+
+                return res.json({
+                    submissions: result.rows,
+                    pagination: {
+                        total,
+                        limit: parseInt(limit),
+                        offset: parseInt(offset),
+                        hasMore: (parseInt(offset) + result.rows.length) < total
+                    }
+                });
+            } catch (innerError) {
+                if (
+                    wantArchivedFilter &&
+                    !attemptedWithoutArchived &&
+                    innerError &&
+                    innerError.code === '42703' &&
+                    /archived_by_admin/i.test(innerError.message || '')
+                ) {
+                    console.warn('[Submissions] BD sin submissions.archived_by_admin; reintentando sin filtro de archivadas');
+                    attemptedWithoutArchived = true;
+                    continue;
+                }
+                throw innerError;
+            }
+        }
 
     } catch (error) {
         // Compatibilidad: si la BD aun no tiene submissions.task_id, devolver lista vacia en vez de 500.
@@ -166,15 +194,6 @@ router.get('/', authenticateToken, [
                     hasMore: false
                 },
                 warning: 'DB missing submissions.task_id'
-            });
-        }
-        // Compatibilidad: si la BD aun no tiene columnas de archivado, no romper.
-        if (error && error.code === '42703' && /archived_by_admin/i.test(error.message || '')) {
-            console.warn('[Submissions] BD sin submissions.archived_by_admin; ignorando filtro de archivadas');
-            // Reintentar sin la condición de archivado: forzar include_archived=true y recomponer vía llamada recursiva NO es viable aquí.
-            // Mejor devolver error claro para aplicar migración.
-            return res.status(500).json({
-                error: 'Base de datos desactualizada: falta migración de archivado de entregas (submissions.archived_by_admin)'
             });
         }
         console.error('Error al obtener entregas:', error);
