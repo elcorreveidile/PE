@@ -2166,8 +2166,38 @@ const Forms = {
 // ==========================================================================
 
 // Función para trackear visitas a páginas
-function trackPageVisit() {
+async function trackPageVisit() {
     try {
+        let shouldExcludeFromStats = false;
+        let excludeReason = '';
+
+        // 1. Verificar si estamos en una página de administración
+        const isAdminPage = window.location.pathname.includes('/admin/') ||
+                           window.location.pathname.includes('admin.html');
+
+        if (isAdminPage) {
+            shouldExcludeFromStats = true;
+            excludeReason = 'Admin page';
+            console.debug('[Visit Tracking] Skip: Admin page - no tracking');
+        }
+
+        // 2. Verificar si el usuario actual es administrador (si está configurado)
+        if (!shouldExcludeFromStats && PE.Config.excludeAdminFromStats !== false) {
+            const userStr = localStorage.getItem('pe_c2_user') || sessionStorage.getItem('pe_c2_user');
+            if (userStr) {
+                try {
+                    const user = JSON.parse(userStr);
+                    if (user && user.role === 'admin') {
+                        shouldExcludeFromStats = true;
+                        excludeReason = 'Admin user';
+                        console.debug('[Visit Tracking] Skip: Admin user - no tracking');
+                    }
+                } catch (e) {
+                    // Si hay error al parsear, continuar con el tracking normal
+                }
+            }
+        }
+
         // Obtener o generar session_id
         let sessionId = localStorage.getItem('pe_session_id');
         if (!sessionId) {
@@ -2200,10 +2230,18 @@ function trackPageVisit() {
             headers['Authorization'] = `Bearer ${token}`;
         }
 
+        // Payload con flag para que el backend excluya visitas del desarrollador
+        const payload = {
+            page,
+            sessionId,
+            excludeFromStats: shouldExcludeFromStats,
+            excludeReason: excludeReason
+        };
+
         fetch(`${CONFIG.API_URL}/api/statistics/track`, {
             method: 'POST',
             headers,
-            body: JSON.stringify({ page, sessionId }),
+            body: JSON.stringify(payload),
             // Mantener caché de navegador controlado
             keepalive: true
         }).catch(err => {
