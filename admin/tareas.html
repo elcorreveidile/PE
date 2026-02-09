@@ -170,7 +170,9 @@
                                     <select id="filter-task-status" class="form-control form-select" style="width: auto;">
                                         <option value="">Todos los estados</option>
                                         <option value="active">Activas</option>
+                                        <option value="inactive">Inactivas</option>
                                         <option value="expired">Caducadas</option>
+                                        <option value="completed">Completadas</option>
                                         <option value="draft">Borradores</option>
                                     </select>
                                     <select id="filter-assignment" class="form-control form-select" style="width: auto;">
@@ -179,6 +181,21 @@
                                         <option value="specific">Estudiantes específicos</option>
                                     </select>
                                     <button class="btn btn-outline" onclick="exportStudentTasks()">Exportar tareas</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Acciones rápidas -->
+                        <div class="card mb-4">
+                            <div class="card-body" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                                <div>
+                                    <h4 style="margin: 0 0 0.25rem;">Acciones rápidas</h4>
+                                    <p class="text-secondary mb-0">Archivado y limpieza para evitar duplicados o tareas ya cerradas.</p>
+                                </div>
+                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                    <button class="btn btn-outline" onclick="archiveCompletedTasks()">📦 Archivar completadas</button>
+                                    <button class="btn btn-outline" onclick="archiveExpiredTasks()">🕒 Archivar caducadas</button>
+                                    <button class="btn btn-danger" onclick="deleteDuplicateTasks()">🧹 Eliminar duplicadas (sin entregas)</button>
                                 </div>
                             </div>
                         </div>
@@ -557,6 +574,30 @@
             document.getElementById('task-stat-completed').textContent = completedSubmissions;
         }
 
+        function getTaskSubmissionsCount(task) {
+            return task?.submissions?.length || 0;
+        }
+
+        function getTaskTotalStudents(task) {
+            return task?.assignmentType === 'all'
+                ? allUsers.filter(u => (u.role || 'student') !== 'admin').length
+                : (task?.assignedStudents?.length || 0);
+        }
+
+        function isTaskExpired(task) {
+            try {
+                return new Date(task.dueDate) < new Date();
+            } catch {
+                return false;
+            }
+        }
+
+        function isTaskCompleted(task) {
+            const total = getTaskTotalStudents(task);
+            if (!total) return false;
+            return getTaskSubmissionsCount(task) >= total;
+        }
+
         function renderStudentTasks(filter = {}) {
             let filtered = [...allStudentTasks];
 
@@ -564,8 +605,12 @@
                 const now = new Date();
                 if (filter.status === 'active') {
                     filtered = filtered.filter(t => t.status === 'active' && new Date(t.dueDate) >= now);
+                } else if (filter.status === 'inactive') {
+                    filtered = filtered.filter(t => t.status === 'inactive');
                 } else if (filter.status === 'expired') {
-                    filtered = filtered.filter(t => new Date(t.dueDate) < now);
+                    filtered = filtered.filter(t => isTaskExpired(t));
+                } else if (filter.status === 'completed') {
+                    filtered = filtered.filter(t => isTaskCompleted(t));
                 } else if (filter.status === 'draft') {
                     filtered = filtered.filter(t => t.status === 'draft');
                 }
@@ -589,7 +634,8 @@
             }
 
             container.innerHTML = filtered.map(task => {
-                const isExpired = new Date(task.dueDate) < new Date();
+                const expired = isTaskExpired(task);
+                const completed = isTaskCompleted(task);
                 const rubric = allRubrics.find(r => r.id === task.rubricId);
 
                 // Formatear fecha de forma segura
@@ -618,21 +664,18 @@
                 }
 
                 // Obtener entregas
-                const submissionsCount = task.submissions?.length || 0;
-                const totalStudents = task.assignmentType === 'all'
-                    ? allUsers.filter(u => (u.role || 'student') !== 'admin').length
-                    : (task.assignedStudents?.length || 0);
+                const submissionsCount = getTaskSubmissionsCount(task);
+                const totalStudents = getTaskTotalStudents(task);
 
                 return `
-                    <div class="task-card" style="border-left: 4px solid ${isExpired ? 'var(--danger-color)' : 'var(--primary-color)'};">
+                    <div class="task-card" style="border-left: 4px solid ${expired ? 'var(--danger-color)' : 'var(--primary-color)'};">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                             <div style="flex: 1;">
                                 <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap;">
                                     <strong>${PE.Utils.escapeHtml(task.title)}</strong>
-                                    ${isExpired ?
-                                        '<span class="badge badge-danger">Caducada</span>' :
-                                        '<span class="badge badge-success">Activa</span>'
-                                    }
+                                    ${task.status === 'inactive' ? '<span class="badge badge-warning">Archivada</span>' : ''}
+                                    ${completed ? '<span class="badge badge-success">Completada</span>' : ''}
+                                    ${expired ? '<span class="badge badge-danger">Caducada</span>' : (!expired && task.status === 'active' ? '<span class="badge badge-success">Activa</span>' : '')}
                                     ${rubric ? `<span class="badge badge-primary" style="background: var(--accent-color);">📊 ${PE.Utils.escapeHtml(rubric.name)}</span>` : ''}
                                 </div>
                                 <p class="text-secondary mb-2" style="font-size: 0.875rem;">${PE.Utils.escapeHtml(task.description)}</p>
@@ -654,12 +697,9 @@
                             <div style="display: flex; gap: 0.5rem;">
                                 <button class="btn btn-sm btn-outline" onclick="viewStudentTask('${task.id}')">👁️ Ver</button>
                                 <button class="btn btn-sm btn-outline" onclick="editStudentTask('${task.id}')">✏️ Editar</button>
-                                ${task.status !== 'inactive' ?
-                                    `<button class="btn btn-sm btn-${task.status === 'active' ? 'warning' : 'success'}" onclick="toggleTaskStatus('${task.id}')">
-                                        ${task.status === 'active' ? '⏸️ Pausar' : '▶️ Activar'}
-                                    </button>` :
-                                    `<button class="btn btn-sm btn-success" onclick="toggleTaskStatus('${task.id}')">▶️ Activar</button>`
-                                }
+                                <button class="btn btn-sm btn-${task.status === 'active' ? 'warning' : 'success'}" onclick="toggleTaskStatus('${task.id}')">
+                                    ${task.status === 'active' ? '📦 Archivar' : '▶️ Activar'}
+                                </button>
                                 <button class="btn btn-sm btn-danger" onclick="deleteStudentTask('${task.id}')">🗑️</button>
                             </div>
                         </div>
@@ -910,7 +950,7 @@
         }
 
         async function deleteStudentTask(taskId) {
-            if (!confirm('¿Estás seguro de que deseas eliminar esta tarea? Las entregas asociadas también se eliminarán.')) return;
+            if (!confirm('¿Estás seguro de que deseas eliminar esta tarea? Las entregas ya enviadas se conservarán, pero la tarea desaparecerá.')) return;
 
             try {
                 const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
@@ -925,6 +965,134 @@
                 }
             } catch (error) {
                 PE.UI.notify('Error al eliminar tarea', 'error');
+            }
+        }
+
+        function makeDuplicateKey(task) {
+            const title = (task?.title || '').trim().toLowerCase();
+            const desc = (task?.description || '').trim().toLowerCase();
+            const due = (task?.dueDate || '').trim();
+            const type = (task?.assignmentType || '').trim();
+            const assigned = Array.isArray(task?.assignedStudents) ? [...task.assignedStudents].map(String).sort().join(',') : '';
+            const sessionId = task?.sessionId ? String(task.sessionId) : '';
+            const rubricId = task?.rubricId ? String(task.rubricId) : '';
+            return [title, desc, due, type, assigned, sessionId, rubricId].join('|');
+        }
+
+        async function deleteDuplicateTasks() {
+            // Detectar duplicadas por contenido, y eliminar solo las que NO tienen entregas.
+            const groups = new Map();
+            for (const task of allStudentTasks) {
+                const key = makeDuplicateKey(task);
+                if (!groups.has(key)) groups.set(key, []);
+                groups.get(key).push(task);
+            }
+
+            const dupGroups = [...groups.values()].filter(list => list.length > 1);
+            if (dupGroups.length === 0) {
+                PE.UI.notify('No se detectaron tareas duplicadas', 'info');
+                return;
+            }
+
+            // Mantener la mas reciente (por createdAt/updatedAt si existe, si no por id), borrar el resto si 0 entregas.
+            const candidatesToDelete = [];
+            for (const list of dupGroups) {
+                const sorted = [...list].sort((a, b) => {
+                    const ta = new Date(a.updatedAt || a.createdAt || 0).getTime();
+                    const tb = new Date(b.updatedAt || b.createdAt || 0).getTime();
+                    if (ta !== tb) return tb - ta;
+                    return String(b.id).localeCompare(String(a.id));
+                });
+                const keep = sorted[0];
+                for (const t of sorted.slice(1)) {
+                    if (getTaskSubmissionsCount(t) === 0) candidatesToDelete.push(t);
+                }
+                // Si la tarea "keep" no tiene entregas pero otra si, no intentamos resolver automaticamente.
+                void keep;
+            }
+
+            if (candidatesToDelete.length === 0) {
+                PE.UI.notify('Hay duplicadas, pero ninguna es eliminable (tienen entregas)', 'warning');
+                return;
+            }
+
+            if (!confirm(`Se eliminarán ${candidatesToDelete.length} tareas duplicadas sin entregas. ¿Continuar?`)) return;
+
+            try {
+                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+                for (const t of candidatesToDelete) {
+                    await fetch(`${window.PE_CONFIG.API_URL}/api/student-tasks/${t.id}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                }
+                PE.UI.notify('Duplicadas eliminadas', 'success');
+                await loadStudentTasks();
+            } catch (e) {
+                console.error('Error eliminando duplicadas:', e);
+                PE.UI.notify('Error eliminando duplicadas', 'error');
+            }
+        }
+
+        async function archiveTasks(taskIds) {
+            if (!taskIds || taskIds.length === 0) return 0;
+            const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+            let ok = 0;
+            for (const taskId of taskIds) {
+                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/student-tasks/${taskId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ status: 'inactive' })
+                });
+                if (response.ok) ok++;
+            }
+            return ok;
+        }
+
+        async function archiveCompletedTasks() {
+            const ids = allStudentTasks
+                .filter(t => t.status === 'active' && isTaskCompleted(t))
+                .map(t => t.id);
+
+            if (ids.length === 0) {
+                PE.UI.notify('No hay tareas completadas activas para archivar', 'info');
+                return;
+            }
+
+            if (!confirm(`Se archivarán ${ids.length} tareas completadas (pasarán a inactivas). ¿Continuar?`)) return;
+
+            try {
+                const ok = await archiveTasks(ids);
+                PE.UI.notify(`Archivadas: ${ok}/${ids.length}`, 'success');
+                await loadStudentTasks();
+            } catch (e) {
+                console.error('Error archivando completadas:', e);
+                PE.UI.notify('Error al archivar tareas completadas', 'error');
+            }
+        }
+
+        async function archiveExpiredTasks() {
+            const ids = allStudentTasks
+                .filter(t => t.status === 'active' && isTaskExpired(t))
+                .map(t => t.id);
+
+            if (ids.length === 0) {
+                PE.UI.notify('No hay tareas caducadas activas para archivar', 'info');
+                return;
+            }
+
+            if (!confirm(`Se archivarán ${ids.length} tareas caducadas (pasarán a inactivas). ¿Continuar?`)) return;
+
+            try {
+                const ok = await archiveTasks(ids);
+                PE.UI.notify(`Archivadas: ${ok}/${ids.length}`, 'success');
+                await loadStudentTasks();
+            } catch (e) {
+                console.error('Error archivando caducadas:', e);
+                PE.UI.notify('Error al archivar tareas caducadas', 'error');
             }
         }
 
