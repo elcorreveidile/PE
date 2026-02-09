@@ -1808,6 +1808,14 @@ const UI = {
         return overlay;
     },
 
+    // Cerrar el modal activo (compat: usado desde paginas HTML via PE.UI.closeModal()).
+    // Si hay varios overlays, cierra el mas reciente.
+    closeModal() {
+        const overlays = document.querySelectorAll('.modal-overlay');
+        if (!overlays || overlays.length === 0) return;
+        overlays[overlays.length - 1].remove();
+    },
+
     // Confirmar acción
     confirm(message, onConfirm, onCancel) {
         return this.showModal('Confirmar', `<p>${message}</p>`, [
