@@ -749,24 +749,31 @@
 
             const formData = new FormData(form);
 
+            // Convertir sessionId a entero o null
+            let sessionId = formData.get('sessionId');
+            sessionId = sessionId && sessionId !== '' ? parseInt(sessionId, 10) : null;
+
+            // Convertir assignedStudents a enteros
+            const assignedStudents = formData.getAll('assignedStudents')
+                .filter(id => id && id !== '')
+                .map(id => parseInt(id, 10));
+
             const taskData = {
                 title: formData.get('title'),
                 description: formData.get('description'),
                 dueDate: formData.get('dueDate'),
                 assignmentType: formData.get('assignmentType'),
-                assignedStudents: formData.getAll('assignedStudents'),
-                sessionId: formData.get('sessionId') || null,
+                assignedStudents: assignedStudents,
+                sessionId: sessionId,
                 rubricId: formData.get('rubricId') || null,
-                status: 'active',
-                submissions: [],
-                createdAt: new Date().toISOString()
+                status: 'active'
             };
 
             console.log('[DEBUG] Datos a enviar:', taskData);
 
             if (!taskData.title || !taskData.description || !taskData.dueDate) {
                 PE.UI.notify('Por favor, completa todos los campos requeridos', 'error');
-                return false; // No cerrar modal
+                return false;
             }
 
             try {
@@ -793,7 +800,7 @@
                 if (response.ok) {
                     PE.UI.notify(taskId ? 'Tarea actualizada correctamente' : 'Tarea creada correctamente', 'success');
                     await loadStudentTasks();
-                    return true; // Cerrar modal
+                    return true;
                 } else {
                     const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
                     console.error('[DEBUG] Error response:', errorData);
@@ -802,7 +809,7 @@
             } catch (error) {
                 console.error('[DEBUG] Error completo:', error);
                 PE.UI.notify('Error: ' + error.message, 'error');
-                return false; // No cerrar modal
+                return false;
             }
         }
 
