@@ -62,6 +62,12 @@ router.get('/', authenticateToken, async (req, res) => {
         });
     } catch (error) {
         console.error('[Drafts] Error al obtener borradores:', error);
+        if (error && error.code === '42P01' && /drafts/i.test(error.message || '')) {
+            return res.status(500).json({
+                success: false,
+                error: 'Base de datos desactualizada: falta la tabla drafts. Aplica la migración add-drafts-table.sql.'
+            });
+        }
         return res.status(500).json({ success: false, error: 'Error al obtener borradores' });
     }
 });
@@ -108,6 +114,12 @@ router.get('/:id', authenticateToken, async (req, res) => {
         return res.json({ success: true, draft });
     } catch (error) {
         console.error('[Drafts] Error al obtener borrador:', error);
+        if (error && error.code === '42P01' && /drafts/i.test(error.message || '')) {
+            return res.status(500).json({
+                success: false,
+                error: 'Base de datos desactualizada: falta la tabla drafts. Aplica la migración add-drafts-table.sql.'
+            });
+        }
         return res.status(500).json({ success: false, error: 'Error al obtener borrador' });
     }
 });
@@ -166,6 +178,12 @@ router.post('/', authenticateToken, async (req, res) => {
         return res.status(201).json({ success: true, message: 'Borrador creado exitosamente', draft });
     } catch (error) {
         console.error('[Drafts] Error al crear borrador:', error);
+        if (error && error.code === '42P01' && /drafts/i.test(error.message || '')) {
+            return res.status(500).json({
+                success: false,
+                error: 'Base de datos desactualizada: falta la tabla drafts. Aplica la migración add-drafts-table.sql.'
+            });
+        }
         return res.status(500).json({ success: false, error: 'Error al crear borrador' });
     }
 });
@@ -221,6 +239,12 @@ router.put('/:id', authenticateToken, async (req, res) => {
         return res.json({ success: true, message: 'Borrador actualizado exitosamente', draft: updated.rows[0] });
     } catch (error) {
         console.error('[Drafts] Error al actualizar borrador:', error);
+        if (error && error.code === '42P01' && /drafts/i.test(error.message || '')) {
+            return res.status(500).json({
+                success: false,
+                error: 'Base de datos desactualizada: falta la tabla drafts. Aplica la migración add-drafts-table.sql.'
+            });
+        }
         return res.status(500).json({ success: false, error: 'Error al actualizar borrador' });
     }
 });
@@ -250,9 +274,14 @@ router.delete('/:id', authenticateToken, async (req, res) => {
         return res.json({ success: true, message: 'Borrador eliminado exitosamente' });
     } catch (error) {
         console.error('[Drafts] Error al eliminar borrador:', error);
+        if (error && error.code === '42P01' && /drafts/i.test(error.message || '')) {
+            return res.status(500).json({
+                success: false,
+                error: 'Base de datos desactualizada: falta la tabla drafts. Aplica la migración add-drafts-table.sql.'
+            });
+        }
         return res.status(500).json({ success: false, error: 'Error al eliminar borrador' });
     }
 });
 
 module.exports = router;
-
