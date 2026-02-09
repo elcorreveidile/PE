@@ -133,11 +133,28 @@ app.get('/api/migrate-student-tasks', async (req, res) => {
         const fs = require('fs');
         const path = require('path');
 
-        // Leer el archivo SQL de migración
-        const sqlFile = path.join(__dirname, 'src/database/add-student-tasks-table.sql');
+        // Intentar varias rutas posibles (desarrollo y producción)
+        const possiblePaths = [
+            path.join(__dirname, 'database/add-student-tasks-table.sql'),
+            path.join(__dirname, 'src/database/add-student-tasks-table.sql'),
+            path.join(__dirname, '../database/add-student-tasks-table.sql'),
+        ];
+
+        let sqlFile = null;
+        for (const p of possiblePaths) {
+            if (fs.existsSync(p)) {
+                sqlFile = p;
+                break;
+            }
+        }
+
+        if (!sqlFile) {
+            throw new Error('No se encontró el archivo SQL. Rutas probadas: ' + possiblePaths.join(', '));
+        }
+
         const sql = fs.readFileSync(sqlFile, 'utf8');
 
-        const { query } = require('./src/database/db');
+        const { query } = require('./database/db');
 
         // Separar y ejecutar cada statement
         const statements = sql
