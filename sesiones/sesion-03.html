@@ -164,28 +164,63 @@
                         </div>
                     </section>
 
-                    <!-- Análisis del profesor (protegido con contraseña) -->
+                    <!-- Análisis del profesor (enlace temporal solo para admin) -->
                     <section class="activity mb-4" id="analisis-profesor">
                         <div class="activity-header">
                             <span class="activity-type">Análisis del profesor</span>
                             <h3 class="activity-title">Análisis del texto modelo</h3>
                         </div>
                         <div class="activity-body">
-                            <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                            <!-- Contenido para estudiantes -->
+                            <div id="estudiante-content" class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                                 <div class="card-body">
-                                    <p style="margin: 0 0 1rem 0;"><strong>🔒 Este material está protegido con contraseña.</strong> El profesor te proporcionará la contraseña durante la clase cuando corresponda.</p>
-                                    <div id="password-section">
-                                        <div class="form-group" style="max-width: 400px;">
-                                            <input type="password" id="analisis-password" class="form-control" placeholder="Introduce la contraseña..." style="margin-bottom: 0.5rem;">
-                                            <div id="password-error" style="color: #ffeb3b; font-size: 0.875rem; display: none;">❌ Contraseña incorrecta. Inténtalo de nuevo.</div>
-                                        </div>
-                                        <button type="button" class="btn btn-accent" onclick="verificarAnalisis()">Acceder al análisis</button>
+                                    <p style="margin: 0 0 1rem 0;"><strong>🔒 Análisis del texto modelo</strong></p>
+                                    <p style="margin: 0 0 1rem 0;">El profesor compartirá el enlace de acceso durante la clase cuando corresponda.</p>
+                                    <div class="form-group">
+                                        <input type="text" id="enlace-estudiante" class="form-control" placeholder="El profesor te proporcionará un enlace aquí..." readonly style="background: rgba(255,255,255,0.9); color: #333;">
                                     </div>
-                                    <div id="analisis-content" style="display: none;">
-                                        <p style="margin: 0 0 1rem 0;">✅ Contraseña correcta. Puedes descargar el análisis del texto modelo:</p>
-                                        <a class="btn btn-outline-white" href="../recursos/materiales/analisis-sesion-03-perfil-personal-protected.pdf" download>
-                                            📥 Descargar análisis del texto modelo (PDF)
-                                        </a>
+                                    <small style="opacity: 0.9;">Si tienes un enlace temporal del profesor, introdúcelo arriba para acceder al análisis.</small>
+                                </div>
+                            </div>
+
+                            <!-- Contenido para admin -->
+                            <div id="admin-content" style="display: none;">
+                                <div class="card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                                    <div class="card-body">
+                                        <h4 style="margin: 0 0 1rem 0;">🎓 Panel del profesor</h4>
+                                        <p style="margin: 0 0 1rem 0;">Genera un enlace temporal para que los estudiantes puedan acceder al análisis.</p>
+
+                                        <div class="form-group" style="max-width: 400px;">
+                                            <label class="form-label" style="color: white;">Tiempo de expiración:</label>
+                                            <select id="expiry-time" class="form-control">
+                                                <option value="30m">30 minutos</option>
+                                                <option value="1h">1 hora</option>
+                                                <option value="2h" selected>2 horas</option>
+                                                <option value="4h">4 horas</option>
+                                                <option value="24h">24 horas</option>
+                                            </select>
+                                        </div>
+
+                                        <button type="button" class="btn btn-accent" onclick="generarEnlaceTemporal()">
+                                            📋 Generar enlace temporal
+                                        </button>
+
+                                        <div id="enlace-generado" style="display: none; margin-top: 1.5rem;">
+                                            <hr style="border-color: rgba(255,255,255,0.3); margin: 1rem 0;">
+                                            <p style="margin: 0 0 0.5rem 0;"><strong>✅ Enlace generado:</strong></p>
+                                            <div class="form-group">
+                                                <input type="text" id="temporal-link" class="form-control" readonly style="background: rgba(255,255,255,0.9); color: #333; font-size: 0.875rem;">
+                                            </div>
+                                            <button type="button" class="btn btn-outline-white btn-sm" onclick="copiarEnlace()">
+                                                    📋 Copiar enlace
+                                            </button>
+                                            <a id="download-link" href="#" target="_blank" class="btn btn-outline-white btn-sm" style="margin-left: 0.5rem;">
+                                                📥 Abrir enlace
+                                            </a>
+                                            <small style="display: block; margin-top: 0.5rem; opacity: 0.9;">
+                                                ⚠️ Comparte este enlace con tus estudiantes. Expirará automáticamente.
+                                            </small>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -301,49 +336,115 @@
         });
     </script>
 
-    <!-- Script para verificación de contraseña del análisis -->
+    <!-- Script para gestión de enlaces temporales -->
     <script>
-        // Contraseña para acceder al análisis del profesor
-        // CAMBIA ESTA CONTRASEÑA POR LA QUE QUIERAS USAR EN CLASE
-        const ANALISIS_PASSWORD = 'perfil2026';
+        // Nombre del archivo del análisis
+        const ANALISIS_FILENAME = 'analisis-sesion-03-perfil-personal.pdf';
 
-        function verificarAnalisis() {
-            const passwordInput = document.getElementById('analisis-password');
-            const passwordSection = document.getElementById('password-section');
-            const analisisContent = document.getElementById('analisis-content');
-            const passwordError = document.getElementById('password-error');
+        // Mostrar contenido según el rol del usuario
+        document.addEventListener('DOMContentLoaded', async function() {
+            await mostrarContenidoSegunRol();
+        });
 
-            const enteredPassword = passwordInput.value.trim();
+        async function mostrarContenidoSegunRol() {
+            try {
+                // Verificar si hay usuario y si es admin
+                const user = window.PE?.Auth?.getCurrentUser?.();
 
-            if (enteredPassword === ANALISIS_PASSWORD) {
-                // Contraseña correcta
-                passwordSection.style.display = 'none';
-                analisisContent.style.display = 'block';
-                passwordError.style.display = 'none';
-            } else {
-                // Contraseña incorrecta
-                passwordError.style.display = 'block';
-                passwordInput.value = '';
-                passwordInput.focus();
+                if (user && user.role === 'admin') {
+                    // Mostrar panel de admin
+                    document.getElementById('estudiante-content').style.display = 'none';
+                    document.getElementById('admin-content').style.display = 'block';
+                } else {
+                    // Mostrar contenido de estudiante
+                    document.getElementById('estudiante-content').style.display = 'block';
+                    document.getElementById('admin-content').style.display = 'none';
+                }
 
-                // Ocultar el error después de 3 segundos
-                setTimeout(() => {
-                    passwordError.style.display = 'none';
-                }, 3000);
+                // Verificar si hay un enlace temporal en la URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const recursoToken = urlParams.get('recurso');
+                if (recursoToken) {
+                    procesarEnlaceTemporal(recursoToken);
+                }
+
+            } catch (error) {
+                console.error('Error verificando rol:', error);
+                // Si hay error, mostrar contenido de estudiante por defecto
+                document.getElementById('estudiante-content').style.display = 'block';
+                document.getElementById('admin-content').style.display = 'none';
             }
         }
 
-        // Permitir presionar Enter para verificar
-        document.addEventListener('DOMContentLoaded', function() {
-            const passwordInput = document.getElementById('analisis-password');
-            if (passwordInput) {
-                passwordInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        verificarAnalisis();
-                    }
+        // Generar enlace temporal (solo admin)
+        async function generarEnlaceTemporal() {
+            try {
+                const expiryTime = document.getElementById('expiry-time').value;
+                const user = window.PE?.Auth?.getCurrentUser?.();
+
+                if (!user || user.role !== 'admin') {
+                    alert('Solo el profesor puede generar enlaces temporales');
+                    return;
+                }
+
+                const response = await window.PE?.API?.post('/recursos/temporal-link', {
+                    filename: ANALISIS_FILENAME,
+                    expiry: expiryTime
                 });
+
+                if (response && response.downloadLink) {
+                    document.getElementById('enlace-generado').style.display = 'block';
+                    document.getElementById('temporal-link').value = response.downloadLink;
+                    document.getElementById('download-link').href = response.downloadLink;
+                } else {
+                    alert('Error al generar enlace temporal');
+                }
+
+            } catch (error) {
+                console.error('Error generando enlace:', error);
+                alert('Error al generar enlace temporal: ' + error.message);
             }
-        });
+        }
+
+        // Copiar enlace al portapapeles
+        function copiarEnlace() {
+            const linkInput = document.getElementById('temporal-link');
+            linkInput.select();
+            document.execCommand('copy');
+
+            // Feedback visual
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = '✅ Copiado';
+            setTimeout(() => {
+                btn.textContent = originalText;
+            }, 2000);
+        }
+
+        // Procesar enlace temporal desde URL
+        async function procesarEnlaceTemporal(token) {
+            try {
+                // Construir URL del recurso
+                const baseUrl = window.PE?.CONFIG?.API_URL || window.location.origin;
+                const downloadUrl = `${baseUrl}/api/recursos/download/${ANALISIS_FILENAME}?token=${token}`;
+
+                // Mostrar en el campo del estudiante
+                document.getElementById('enlace-estudiante').value = downloadUrl;
+
+                // Crear botón de descarga
+                const btn = document.createElement('button');
+                btn.className = 'btn btn-accent btn-sm';
+                btn.style.marginTop = '0.5rem';
+                btn.textContent = '📥 Descargar análisis';
+                btn.onclick = () => window.open(downloadUrl, '_blank');
+
+                const container = document.getElementById('estudiante-content').querySelector('.card-body');
+                container.appendChild(btn);
+
+            } catch (error) {
+                console.error('Error procesando enlace:', error);
+            }
+        }
     </script>
 </body>
 </html>
