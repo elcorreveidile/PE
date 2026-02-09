@@ -174,11 +174,11 @@ app.get('/api/migrate-student-tasks', async (req, res) => {
         const fs = require('fs');
         const path = require('path');
 
-        // Intentar varias rutas posibles (desarrollo y producción)
+        // Usar la versión simplificada del SQL
         const possiblePaths = [
-            path.join(__dirname, 'database/add-student-tasks-table.sql'),
-            path.join(__dirname, 'src/database/add-student-tasks-table.sql'),
-            path.join(__dirname, '../database/add-student-tasks-table.sql'),
+            path.join(__dirname, 'database/add-student-tasks-simple.sql'),
+            path.join(__dirname, 'src/database/add-student-tasks-simple.sql'),
+            path.join(__dirname, '../database/add-student-tasks-simple.sql'),
         ];
 
         let sqlFile = null;
@@ -190,37 +190,18 @@ app.get('/api/migrate-student-tasks', async (req, res) => {
         }
 
         if (!sqlFile) {
-            throw new Error('No se encontró el archivo SQL. Rutas probadas: ' + possiblePaths.join(', '));
+            throw new Error('No se encontró el archivo SQL simplificado');
         }
 
         const sql = fs.readFileSync(sqlFile, 'utf8');
-
         const { query } = require('./database/db');
 
-        // Separar y ejecutar cada statement
-        const statements = sql
-            .split(';')
-            .map(s => s.trim())
-            .filter(s => s.length > 0 && !s.startsWith('--'));
-
-        let executed = 0;
-        for (const statement of statements) {
-            try {
-                await query(statement);
-                executed++;
-            } catch (err) {
-                // Ignorar errores de "already exists"
-                if (!err.message.includes('already exists') && !err.message.includes('duplicate column')) {
-                    console.warn('Advertencia:', err.message);
-                }
-            }
-        }
+        // Ejecutar el SQL completo de una vez
+        await query(sql);
 
         res.json({
             success: true,
-            message: 'Migración completada',
-            executed,
-            statements: statements.length
+            message: 'Migración completada correctamente'
         });
     } catch (error) {
         console.error('Error en migración:', error);
