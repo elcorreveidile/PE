@@ -351,12 +351,18 @@
                 // Verificar si hay usuario y si es admin
                 const user = window.PE?.Auth?.getCurrentUser?.();
 
+                console.log('[Análisis] Usuario actual:', user);
+                console.log('[Análisis] Rol:', user?.role);
+                console.log('[Análisis] Es admin:', user?.role === 'admin');
+
                 if (user && user.role === 'admin') {
                     // Mostrar panel de admin
+                    console.log('[Análisis] Mostrando panel de admin');
                     document.getElementById('estudiante-content').style.display = 'none';
                     document.getElementById('admin-content').style.display = 'block';
                 } else {
                     // Mostrar contenido de estudiante
+                    console.log('[Análisis] Mostrando contenido de estudiante');
                     document.getElementById('estudiante-content').style.display = 'block';
                     document.getElementById('admin-content').style.display = 'none';
                 }
