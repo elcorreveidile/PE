@@ -688,7 +688,7 @@
             };
 
             PE.UI.showModal(isEdit ? '✏️ Editar tarea para estudiantes' : '📝 Nueva tarea para estudiantes', `
-                <form id="create-student-task-form" onsubmit="saveStudentTask(event, '${taskId || ''}')">
+                <form id="create-student-task-form">
                     <div class="form-group">
                         <label class="form-label">Título de la tarea *</label>
                         <input type="text" name="title" class="form-control" required placeholder="Ej: Ensayo argumentativo sobre cambio climático" value="${PE.Utils.escapeHtml(taskData.title)}">
@@ -732,24 +732,21 @@
                             La rúbrica seleccionada se usará para corregir las entregas de esta tarea.
                         </p>
                     </div>
-                    <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-md);">
-                        <button type="submit" class="btn btn-primary">${isEdit ? '💾 Guardar cambios' : '✅ Crear tarea'}</button>
-                        <button type="button" class="btn btn-outline" onclick="PE.UI.closeModal()">Cancelar</button>
-                    </div>
                 </form>
-            `);
+            `, [
+                { text: 'Cancelar' },
+                {
+                    text: isEdit ? '💾 Guardar cambios' : '✅ Crear tarea',
+                    class: 'btn-primary',
+                    callback: () => saveStudentTaskFromModal(taskId)
+                }
+            ]);
         }
 
-        function toggleStudentSelector(value) {
-            const group = document.getElementById('student-selector-group');
-            if (group) {
-                group.style.display = value === 'specific' ? 'block' : 'none';
-            }
-        }
+        async function saveStudentTaskFromModal(taskId) {
+            const form = document.getElementById('create-student-task-form');
+            if (!form) return;
 
-        async function saveStudentTask(event, taskId) {
-            event.preventDefault();
-            const form = event.target;
             const formData = new FormData(form);
 
             const taskData = {
@@ -764,6 +761,11 @@
                 submissions: [],
                 createdAt: new Date().toISOString()
             };
+
+            if (!taskData.title || !taskData.description || !taskData.dueDate) {
+                PE.UI.notify('Por favor, completa todos los campos requeridos', 'error');
+                return false; // No cerrar modal
+            }
 
             try {
                 const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
@@ -782,14 +784,22 @@
                 });
 
                 if (response.ok) {
-                    PE.UI.closeModal();
                     PE.UI.notify(taskId ? 'Tarea actualizada correctamente' : 'Tarea creada correctamente', 'success');
                     await loadStudentTasks();
+                    return true; // Cerrar modal
                 } else {
                     throw new Error('Error al guardar la tarea');
                 }
             } catch (error) {
                 PE.UI.notify('Error al guardar la tarea', 'error');
+                return false; // No cerrar modal
+            }
+        }
+
+        function toggleStudentSelector(value) {
+            const group = document.getElementById('student-selector-group');
+            if (group) {
+                group.style.display = value === 'specific' ? 'block' : 'none';
             }
         }
 
