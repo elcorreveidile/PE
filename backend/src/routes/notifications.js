@@ -10,6 +10,49 @@ const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const router = express.Router();
 
 /**
+ * Función helper para crear notificaciones individuales
+ * @param {number} userId - ID del usuario
+ * @param {string} type - Tipo de notificación (task, feedback, broadcast, etc.)
+ * @param {string} title - Título de la notificación
+ * @param {string} message - Mensaje de la notificación
+ * @returns {Promise<Object>} Resultado de la inserción
+ */
+async function createNotification(userId, type, title, message) {
+    try {
+        const result = await query(`
+            INSERT INTO notifications (user_id, type, title, message)
+            VALUES ($1, $2, $3, $4)
+            RETURNING *
+        `, [userId, type, title, message]);
+        return result.rows[0];
+    } catch (error) {
+        console.error('[Notifications] Error creating notification:', error);
+        throw error;
+    }
+}
+
+/**
+ * Crear notificaciones para múltiples usuarios
+ * @param {Array<number>} userIds - IDs de los usuarios
+ * @param {string} type - Tipo de notificación
+ * @param {string} title - Título de la notificación
+ * @param {string} message - Mensaje de la notificación
+ * @returns {Promise<number>} Número de notificaciones creadas
+ */
+async function createBulkNotifications(userIds, type, title, message) {
+    let createdCount = 0;
+    for (const userId of userIds) {
+        try {
+            await createNotification(userId, type, title, message);
+            createdCount++;
+        } catch (error) {
+            console.error(`[Notifications] Error creating notification for user ${userId}:`, error);
+        }
+    }
+    return createdCount;
+}
+
+/**
  * GET /api/notifications
  * Obtener notificaciones del usuario actual
  */
@@ -394,4 +437,7 @@ router.delete('/broadcast/:id', authenticateToken, requireAdmin, async (req, res
     }
 });
 
+// Exportar funciones helper para usar en otros módulos
 module.exports = router;
+module.exports.createNotification = createNotification;
+module.exports.createBulkNotifications = createBulkNotifications;

@@ -9,6 +9,9 @@ const { Resend } = require('resend');
 const { query } = require('../database/db');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 
+// Importar funciones de notificación
+const { createBulkNotifications } = require('./notifications');
+
 const router = express.Router();
 
 const FRONTEND_URL = (process.env.FRONTEND_URL || 'https://www.cognoscencia.com').replace(/\/$/, '');
@@ -313,30 +316,40 @@ router.post('/', authenticateToken, requireAdmin, [
 });
 
 /**
- * Función auxiliar para enviar emails en background
+ * Función auxiliar para enviar emails y notificaciones en background
  * No bloquea la respuesta HTTP
  */
 async function sendTaskEmailsInBackground({ taskId, title, description, dueDate, assignmentType, assignedStudents, teacherId }) {
     try {
+        // Obtener IDs de estudiantes para notificaciones (independientemente de si tienen email)
+        let studentIds = [];
+
         // Si es asignación a todos, obtener todos los estudiantes
         let studentsToSend = [];
+        let allStudentsForNotifications = [];
 
         if (assignmentType === 'all') {
             const allStudentsResult = await query(`
                 SELECT id, email, name
                 FROM users
                 WHERE role = 'student'
-                AND email IS NOT NULL
-                AND email != ''
                 ORDER BY name
             `);
-            studentsToSend = allStudentsResult.rows;
+            allStudentsForNotifications = allStudentsResult.rows;
+
+            // Filtrar solo los que tienen email para envío de correo
+            studentsToSend = allStudentsForNotifications.filter(s => s.email && s.email !== '');
+
+            // Todos los estudiantes reciben notificación en el dashboard
+            studentIds = allStudentsForNotifications.map(s => s.id);
         } else {
             // Asignación específica
             if (assignedStudents.length === 0) {
-                console.log('[StudentTasks] No hay estudiantes asignados, omitiendo emails');
+                console.log('[StudentTasks] No hay estudiantes asignados, omitiendo emails y notificaciones');
                 return;
             }
+
+            studentIds = assignedStudents;
 
             // Obtener información de los estudiantes específicos
             const placeholders = assignedStudents.map((_, i) => `$${i + 1}`).join(',');
@@ -344,14 +357,43 @@ async function sendTaskEmailsInBackground({ taskId, title, description, dueDate,
                 SELECT id, email, name
                 FROM users
                 WHERE id IN (${placeholders})
-                AND email IS NOT NULL
-                AND email != ''
+                ORDER BY name
             `, assignedStudents);
-            studentsToSend = studentsResult.rows;
+
+            allStudentsForNotifications = studentsResult.rows;
+            studentsToSend = allStudentsForNotifications.filter(s => s.email && s.email !== '');
         }
 
+        // 1. Crear notificaciones en el dashboard para todos los estudiantes asignados
+        if (studentIds.length > 0) {
+            try {
+                const formattedDueDate = dueDate ? new Date(dueDate).toLocaleDateString('es-ES', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }) : '';
+
+                const notificationTitle = `📝 Nueva tarea asignada`;
+                const notificationMessage = `Te han asignado una nueva tarea: "${title}"${formattedDueDate ? `. Fecha límite: ${formattedDueDate}` : ''}. Revisa tus tareas en el panel de estudiante.`;
+
+                const notifCount = await createBulkNotifications(
+                    studentIds,
+                    'task',
+                    notificationTitle,
+                    notificationMessage
+                );
+                console.log(`[StudentTasks] ✅ ${notifCount} notificaciones creadas en el dashboard`);
+            } catch (notifError) {
+                console.error('[StudentTasks] Error creando notificaciones:', notifError);
+            }
+        }
+
+        // 2. Enviar emails (solo a estudiantes con email)
         if (studentsToSend.length === 0) {
-            console.log('[StudentTasks] No se encontraron estudiantes con email válido');
+            console.log('[StudentTasks] No se encontraron estudiantes con email válido para correo');
             return;
         }
 
