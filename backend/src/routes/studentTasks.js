@@ -5,10 +5,81 @@
 
 const express = require('express');
 const { body, validationResult } = require('express-validator');
+const { Resend } = require('resend');
 const { query } = require('../database/db');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
+
+const FRONTEND_URL = (process.env.FRONTEND_URL || 'https://www.cognoscencia.com').replace(/\/$/, '');
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'noreply@cognoscencia.com';
+
+// Inicializar Resend si hay API key
+let resend;
+if (RESEND_API_KEY) {
+    resend = new Resend(RESEND_API_KEY);
+}
+
+/**
+ * Enviar email de notificación de nueva tarea asignada
+ */
+async function sendTaskAssignmentEmail({ studentEmail, studentName, taskTitle, taskDescription, dueDate, teacherName, taskId }) {
+    if (!resend) {
+        console.warn('Resend no configurado (RESEND_API_KEY no definida)');
+        return false;
+    }
+
+    try {
+        const formattedDueDate = dueDate ? new Date(dueDate).toLocaleDateString('es-ES', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        }) : 'Sin fecha límite';
+
+        const taskUrl = `${FRONTEND_URL}/usuario/mis-entregas.html`;
+
+        await resend.emails.send({
+            from: RESEND_FROM_EMAIL,
+            to: studentEmail,
+            subject: `📝 Nueva tarea asignada: ${taskTitle}`,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #c53030;">Nueva tarea asignada</h2>
+                    <p>Hola ${studentName || 'estudiante'},</p>
+                    <p>${teacherName || 'Tu profesor'} te ha asignado una nueva tarea:</p>
+
+                    <div style="background: #f7fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <h3 style="margin-top: 0; color: #2d3748;">${taskTitle}</h3>
+                        <p style="color: #4a5568; line-height: 1.6;">${taskDescription}</p>
+                        ${dueDate ? `<p><strong>📅 Fecha límite:</strong> ${formattedDueDate}</p>` : ''}
+                    </div>
+
+                    <p style="text-align: center; margin: 30px 0;">
+                        <a href="${taskUrl}" style="background: #c53030; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
+                            Ver y entregar tarea
+                        </a>
+                    </p>
+
+                    <p style="color: #718096; font-size: 14px;">Si tienes preguntas, contacta a tu profesor.</p>
+                    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+                    <p style="color: #a0aec0; font-size: 12px; margin: 0;">
+                        Producción Escrita C2 - CLM Universidad de Granada<br>
+                        ${FRONTEND_URL}
+                    </p>
+                </div>
+            `
+        });
+        console.log(`✅ Email enviado a ${studentEmail} para tarea "${taskTitle}"`);
+        return true;
+    } catch (error) {
+        console.error('❌ Error enviando email de tarea con Resend:', error);
+        return false;
+    }
+}
 
 /**
  * GET /api/student-tasks
@@ -136,9 +207,20 @@ router.get('/:id', authenticateToken, async (req, res) => {
         }
 
         const task = result.rows[0];
-        task.assignedStudents = typeof task.assignedStudents === 'string'
-            ? JSON.parse(task.assignedStudents || '[]')
-            : (task.assignedStudents || []);
+
+        // Manejar assignedStudents de forma segura
+        try {
+            if (typeof task.assignedStudents === 'string') {
+                task.assignedStudents = JSON.parse(task.assignedStudents || '[]');
+            } else if (Array.isArray(task.assignedStudents)) {
+                task.assignedStudents = task.assignedStudents;
+            } else {
+                task.assignedStudents = [];
+            }
+        } catch (parseError) {
+            console.error('Error parsing assignedStudents:', parseError);
+            task.assignedStudents = [];
+        }
 
         // Obtener submissions de esta tarea
         const submissionsResult = await query(`
@@ -202,6 +284,12 @@ router.post('/', authenticateToken, requireAdmin, [
 
         const taskId = result.rows[0].id;
 
+        // Enviar emails a los estudiantes asignados (en background, no bloquear la respuesta)
+        sendTaskEmailsInBackground({ taskId, title, description, dueDate, assignmentType, assignedStudents, teacherId: req.user.id })
+            .catch(emailError => {
+                console.error('[StudentTasks] Error enviando emails en background:', emailError);
+            });
+
         res.status(201).json({
             message: 'Tarea creada correctamente',
             task: {
@@ -223,6 +311,77 @@ router.post('/', authenticateToken, requireAdmin, [
         res.status(500).json({ error: 'Error al crear tarea' });
     }
 });
+
+/**
+ * Función auxiliar para enviar emails en background
+ * No bloquea la respuesta HTTP
+ */
+async function sendTaskEmailsInBackground({ taskId, title, description, dueDate, assignmentType, assignedStudents, teacherId }) {
+    try {
+        // Si es asignación a todos, obtener todos los estudiantes
+        let studentsToSend = [];
+
+        if (assignmentType === 'all') {
+            const allStudentsResult = await query(`
+                SELECT id, email, name
+                FROM users
+                WHERE role = 'student'
+                AND email IS NOT NULL
+                AND email != ''
+                ORDER BY name
+            `);
+            studentsToSend = allStudentsResult.rows;
+        } else {
+            // Asignación específica
+            if (assignedStudents.length === 0) {
+                console.log('[StudentTasks] No hay estudiantes asignados, omitiendo emails');
+                return;
+            }
+
+            // Obtener información de los estudiantes específicos
+            const placeholders = assignedStudents.map((_, i) => `$${i + 1}`).join(',');
+            const studentsResult = await query(`
+                SELECT id, email, name
+                FROM users
+                WHERE id IN (${placeholders})
+                AND email IS NOT NULL
+                AND email != ''
+            `, assignedStudents);
+            studentsToSend = studentsResult.rows;
+        }
+
+        if (studentsToSend.length === 0) {
+            console.log('[StudentTasks] No se encontraron estudiantes con email válido');
+            return;
+        }
+
+        // Obtener nombre del profesor
+        const teacherResult = await query('SELECT name, email FROM users WHERE id = $1', [teacherId]);
+        const teacherName = teacherResult.rows[0]?.name || 'Tu profesor';
+
+        // Enviar emails en paralelo
+        const emailPromises = studentsToSend.map(student =>
+            sendTaskAssignmentEmail({
+                studentEmail: student.email,
+                studentName: student.name,
+                taskTitle: title,
+                taskDescription: description,
+                dueDate: dueDate,
+                teacherName: teacherName,
+                taskId: taskId
+            })
+        );
+
+        const results = await Promise.allSettled(emailPromises);
+        const successful = results.filter(r => r.status === 'fulfilled' && r.value).length;
+        const failed = results.length - successful;
+
+        console.log(`[StudentTasks] Emails enviados: ${successful} exitosos, ${failed} fallidos de un total de ${results.length}`);
+    } catch (error) {
+        console.error('[StudentTasks] Error en sendTaskEmailsInBackground:', error);
+        throw error;
+    }
+}
 
 /**
  * PUT /api/student-tasks/:id
