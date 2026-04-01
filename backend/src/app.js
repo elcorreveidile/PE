@@ -16,6 +16,7 @@ const path = require('path');
 const authRoutes = require('./routes/auth');
 const usersRoutes = require('./routes/users');
 const submissionsRoutes = require('./routes/submissions');
+const subscriptionsRoutes = require('./routes/subscriptions');
 
 // Crear aplicación Express
 const app = express();
@@ -116,6 +117,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/submissions', submissionsRoutes);
+app.use('/api/subscriptions', subscriptionsRoutes);
 
 // Ruta de health check
 app.get('/api/health', (req, res) => {

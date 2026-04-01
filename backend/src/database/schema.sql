@@ -89,6 +89,70 @@ CREATE TABLE IF NOT EXISTS messages (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Tabla de planes de suscripción
+CREATE TABLE IF NOT EXISTS subscription_plans (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    display_name VARCHAR(100) NOT NULL,
+    price_cents INTEGER NOT NULL,
+    currency VARCHAR(3) DEFAULT 'EUR',
+    billing_period VARCHAR(20) NOT NULL CHECK (billing_period IN ('monthly', 'one_time')),
+    features JSONB DEFAULT '[]',
+    includes_certificate BOOLEAN DEFAULT false,
+    post_course_access_days INTEGER DEFAULT 0,
+    priority_feedback BOOLEAN DEFAULT false,
+    active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabla de suscripciones de usuarios
+CREATE TABLE IF NOT EXISTS subscriptions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    plan_id INTEGER NOT NULL REFERENCES subscription_plans(id),
+    status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'cancelled', 'expired', 'past_due')),
+    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP,
+    cancelled_at TIMESTAMP,
+    payment_method VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabla de pagos
+CREATE TABLE IF NOT EXISTS payments (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    subscription_id INTEGER REFERENCES subscriptions(id) ON DELETE SET NULL,
+    amount_cents INTEGER NOT NULL,
+    currency VARCHAR(3) DEFAULT 'EUR',
+    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'failed', 'refunded')),
+    payment_method VARCHAR(50),
+    transaction_id VARCHAR(255),
+    description VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insertar planes por defecto
+INSERT INTO subscription_plans (name, display_name, price_cents, billing_period, features, includes_certificate, post_course_access_days, priority_feedback)
+VALUES
+    ('free', 'Acceso Libre', 0, 'one_time',
+     '["Descripción de las 27 sesiones", "Índice de los 11 temas", "Calendario académico", "Recursos lingüísticos básicos"]',
+     false, 0, false),
+    ('monthly', 'Plan Mensual', 3900, 'monthly',
+     '["27 sesiones completas", "11 unidades temáticas", "4 talleres creativos", "Actividades interactivas", "Entrega de textos", "Feedback del profesor", "27 textos modelo PDF", "4 plantillas", "Panel de progreso"]',
+     false, 0, false),
+    ('complete', 'Curso Completo', 11900, 'one_time',
+     '["Todo lo del Plan Mensual", "Feedback prioritario", "Certificado de finalización", "Acceso post-curso 6 meses"]',
+     true, 180, true)
+ON CONFLICT (name) DO NOTHING;
+
+-- Índices para suscripciones y pagos
+CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status);
+CREATE INDEX IF NOT EXISTS idx_payments_user ON payments(user_id);
+CREATE INDEX IF NOT EXISTS idx_payments_subscription ON payments(subscription_id);
+
 -- Índices para mejorar rendimiento
 CREATE INDEX IF NOT EXISTS idx_submissions_user ON submissions(user_id);
 CREATE INDEX IF NOT EXISTS idx_submissions_session ON submissions(session_id);

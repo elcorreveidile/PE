@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Planes de inscripcion para el curso de Produccion Escrita C2. Elige acceso mensual o curso completo.">
+    <title>Planes y Precios | Produccion Escrita C2</title>
+
+    <!-- Fuentes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Estilos -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+
+    <style>
+        /* ========== Pricing Page Styles ========== */
+        .pricing-hero {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: var(--spacing-3xl) 0 var(--spacing-2xl);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pricing-hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.5;
+        }
+
+        .pricing-hero h1 {
+            color: white;
+            position: relative;
+            z-index: 1;
+        }
+
+        .pricing-hero p {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 1.25rem;
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Toggle mensual/anual */
+        .pricing-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-xl);
+            position: relative;
+            z-index: 1;
+        }
+
+        .pricing-toggle span {
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.7);
+            transition: color var(--transition-fast);
+        }
+
+        .pricing-toggle span.active {
+            color: white;
+        }
+
+        .toggle-switch {
+            width: 56px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            cursor: pointer;
+            position: relative;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            transition: background var(--transition-fast);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            transition: transform var(--transition-fast);
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(26px);
+        }
+
+        .toggle-switch.active {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        .save-badge {
+            background: var(--accent-color);
+            color: var(--primary-dark);
+            padding: 2px 10px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Pricing Cards Grid */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--spacing-lg);
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 var(--spacing-lg);
+            position: relative;
+            top: -40px;
+        }
+
+        .pricing-card {
+            background: white;
+            border-radius: var(--border-radius-xl);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            transition: all var(--transition-base);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pricing-card:hover {
+            box-shadow: var(--shadow-xl);
+            transform: translateY(-8px);
+        }
+
+        .pricing-card.featured {
+            border: 3px solid var(--accent-color);
+            z-index: 2;
+        }
+
+        .pricing-card.featured .pricing-card-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: white;
+        }
+
+        .pricing-card.featured .pricing-card-header h3,
+        .pricing-card.featured .pricing-card-header .pricing-subtitle {
+            color: white;
+        }
+
+        .pricing-card.featured .pricing-amount {
+            color: white;
+        }
+
+        .pricing-card.featured .pricing-period {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .pricing-popular {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--accent-color);
+            color: var(--primary-dark);
+            text-align: center;
+            padding: var(--spacing-xs) 0;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .pricing-card-header {
+            padding: var(--spacing-xl) var(--spacing-xl) var(--spacing-lg);
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .pricing-card.featured .pricing-card-header {
+            padding-top: calc(var(--spacing-xl) + 28px);
+            border-bottom: none;
+        }
+
+        .pricing-card-header h3 {
+            font-size: 1.5rem;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .pricing-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9375rem;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .pricing-amount-wrapper {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .pricing-currency {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .pricing-card.featured .pricing-currency {
+            color: white;
+        }
+
+        .pricing-amount {
+            font-family: var(--font-primary);
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            line-height: 1;
+        }
+
+        .pricing-period {
+            font-size: 1rem;
+            color: var(--text-light);
+            margin-left: 4px;
+        }
+
+        .pricing-original {
+            text-decoration: line-through;
+            color: var(--text-light);
+            font-size: 1.125rem;
+            margin-top: var(--spacing-xs);
+        }
+
+        .pricing-card-body {
+            padding: var(--spacing-xl);
+            flex: 1;
+        }
+
+        .pricing-features {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .pricing-features li {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm) 0;
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .pricing-features li:last-child {
+            border-bottom: none;
+        }
+
+        .pricing-features li::before {
+            content: '';
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            margin-top: 2px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pricing-features li.included::before {
+            content: '\2713';
+            background: var(--success-light);
+            color: var(--success-color);
+            font-size: 0.75rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pricing-features li.excluded {
+            color: var(--text-light);
+        }
+
+        .pricing-features li.excluded::before {
+            content: '\2717';
+            background: var(--bg-light);
+            color: var(--text-light);
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pricing-card-footer {
+            padding: 0 var(--spacing-xl) var(--spacing-xl);
+        }
+
+        .pricing-card-footer .btn {
+            width: 100%;
+            padding: var(--spacing-md) var(--spacing-xl);
+            font-size: 1rem;
+        }
+
+        /* Comparison Table */
+        .comparison-section {
+            padding: var(--spacing-3xl) 0;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: var(--border-radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+        }
+
+        .comparison-table thead th {
+            background: var(--primary-color);
+            color: white;
+            padding: var(--spacing-lg);
+            font-family: var(--font-primary);
+            font-size: 1rem;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+
+        .comparison-table thead th:first-child {
+            text-align: left;
+        }
+
+        .comparison-table thead th.featured-col {
+            background: var(--primary-light);
+        }
+
+        .comparison-table tbody td {
+            padding: var(--spacing-md) var(--spacing-lg);
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .comparison-table tbody td:first-child {
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .comparison-table tbody tr:hover td {
+            background: var(--bg-light);
+        }
+
+        .check-icon {
+            color: var(--success-color);
+            font-weight: bold;
+            font-size: 1.125rem;
+        }
+
+        .cross-icon {
+            color: var(--text-light);
+            font-size: 1.125rem;
+        }
+
+        /* FAQ Section */
+        .faq-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--spacing-lg);
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .faq-item {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-xl);
+            box-shadow: var(--shadow-sm);
+            transition: box-shadow var(--transition-base);
+        }
+
+        .faq-item:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .faq-item h4 {
+            font-size: 1rem;
+            margin-bottom: var(--spacing-sm);
+            color: var(--primary-color);
+        }
+
+        .faq-item p {
+            color: var(--text-secondary);
+            font-size: 0.9375rem;
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        /* Guarantee Section */
+        .guarantee-box {
+            max-width: 700px;
+            margin: 0 auto;
+            background: white;
+            border-radius: var(--border-radius-xl);
+            padding: var(--spacing-2xl);
+            box-shadow: var(--shadow-md);
+            text-align: center;
+            border: 2px solid var(--success-light);
+        }
+
+        .guarantee-icon {
+            width: 64px;
+            height: 64px;
+            background: var(--success-light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto var(--spacing-lg);
+        }
+
+        /* Value Breakdown */
+        .value-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-lg);
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .value-item {
+            text-align: center;
+            padding: var(--spacing-lg);
+        }
+
+        .value-number {
+            font-family: var(--font-primary);
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            display: block;
+        }
+
+        .value-label {
+            color: var(--text-secondary);
+            font-size: 0.9375rem;
+            margin-top: var(--spacing-xs);
+        }
+
+        .value-detail {
+            color: var(--text-light);
+            font-size: 0.8125rem;
+            margin-top: var(--spacing-xs);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .pricing-grid {
+                grid-template-columns: 1fr;
+                max-width: 450px;
+                top: -20px;
+            }
+            .pricing-card.featured {
+                order: -1;
+            }
+            .faq-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .comparison-table {
+                font-size: 0.875rem;
+            }
+            .comparison-table thead th,
+            .comparison-table tbody td {
+                padding: var(--spacing-sm) var(--spacing-md);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-top">
+            <div class="container">
+                <span>Nivel C2 | Febrero - Mayo 2026</span>
+                <div class="header-top-links">
+                    <a href="recursos/index.html">Recursos</a>
+                    <a href="calendario.html">Calendario</a>
+                </div>
+            </div>
+        </div>
+        <div class="header-main">
+            <div class="container">
+                <a href="index.html" class="logo">
+                    <div class="logo-icon">C2</div>
+                    <div class="logo-text">
+                        <span class="logo-title">Produccion Escrita</span>
+                        <span class="logo-subtitle">Espanol Avanzado</span>
+                    </div>
+                </a>
+
+                <nav class="nav-main" id="nav-main">
+                    <a href="index.html">Inicio</a>
+                    <a href="sesiones/index.html">Sesiones</a>
+                    <a href="temas/index.html">Temas</a>
+                    <a href="talleres/index.html">Talleres</a>
+                    <a href="planes.html" class="active">Planes</a>
+                </nav>
+
+                <div class="nav-auth">
+                    <a href="auth/login.html" class="btn btn-outline-white btn-sm">Acceder</a>
+                    <a href="auth/registro.html" class="btn btn-accent btn-sm">Registrarse</a>
+                </div>
+
+                <button class="menu-toggle" id="menu-toggle" aria-label="Menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Pricing Hero -->
+    <section class="pricing-hero">
+        <div class="container">
+            <h1>Elige tu plan de inscripcion</h1>
+            <p>Accede a 27 sesiones, 11 temas y 4 talleres de escritura avanzada en espanol con retroalimentacion personalizada</p>
+        </div>
+    </section>
+
+    <!-- Value Breakdown -->
+    <section class="section section-alt">
+        <div class="container">
+            <div class="section-header">
+                <h2>Lo que incluye el curso</h2>
+                <p>Mas de 40 horas de contenido especializado para el nivel C2</p>
+            </div>
+            <div class="value-grid">
+                <div class="value-item">
+                    <span class="value-number">27</span>
+                    <div class="value-label">Sesiones de 90 min</div>
+                    <div class="value-detail">40,5 horas de formacion</div>
+                </div>
+                <div class="value-item">
+                    <span class="value-number">11</span>
+                    <div class="value-label">Unidades tematicas</div>
+                    <div class="value-detail">De perfil a periodismo</div>
+                </div>
+                <div class="value-item">
+                    <span class="value-number">4</span>
+                    <div class="value-label">Talleres creativos</div>
+                    <div class="value-detail">Proyectos colaborativos</div>
+                </div>
+                <div class="value-item">
+                    <span class="value-number">27</span>
+                    <div class="value-label">Textos modelo (PDF)</div>
+                    <div class="value-detail">Material de referencia</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Cards -->
+    <section class="section">
+        <div class="container">
+            <div class="pricing-grid">
+                <!-- Plan Libre -->
+                <div class="pricing-card">
+                    <div class="pricing-card-header">
+                        <h3>Acceso Libre</h3>
+                        <p class="pricing-subtitle">Explora el contenido del curso</p>
+                        <div class="pricing-amount-wrapper">
+                            <span class="pricing-amount">0</span>
+                            <span class="pricing-currency">&euro;</span>
+                        </div>
+                        <div class="pricing-period">Para siempre</div>
+                    </div>
+                    <div class="pricing-card-body">
+                        <ul class="pricing-features">
+                            <li class="included">Descripcion de las 27 sesiones</li>
+                            <li class="included">Indice de los 11 temas</li>
+                            <li class="included">Calendario academico completo</li>
+                            <li class="included">Recursos lingueisticos basicos</li>
+                            <li class="excluded">Contenido completo de sesiones</li>
+                            <li class="excluded">Actividades interactivas</li>
+                            <li class="excluded">Envio de entregas</li>
+                            <li class="excluded">Feedback del profesor</li>
+                            <li class="excluded">Textos modelo (PDF)</li>
+                            <li class="excluded">Certificado de finalizacion</li>
+                        </ul>
+                    </div>
+                    <div class="pricing-card-footer">
+                        <a href="sesiones/index.html" class="btn btn-outline btn-lg">Explorar gratis</a>
+                    </div>
+                </div>
+
+                <!-- Plan Mensual (Featured) -->
+                <div class="pricing-card featured">
+                    <div class="pricing-popular">Mas popular</div>
+                    <div class="pricing-card-header">
+                        <h3>Plan Mensual</h3>
+                        <p class="pricing-subtitle">Flexibilidad total, mes a mes</p>
+                        <div class="pricing-amount-wrapper">
+                            <span class="pricing-currency">&euro;</span>
+                            <span class="pricing-amount">39</span>
+                            <span class="pricing-period">/mes</span>
+                        </div>
+                        <div class="pricing-period">4 meses = 156 &euro; total</div>
+                    </div>
+                    <div class="pricing-card-body">
+                        <ul class="pricing-features">
+                            <li class="included">Acceso completo a las 27 sesiones</li>
+                            <li class="included">11 unidades tematicas con ejercicios</li>
+                            <li class="included">4 talleres creativos obligatorios</li>
+                            <li class="included">Actividades interactivas ilimitadas</li>
+                            <li class="included">Envio de entregas escritas</li>
+                            <li class="included">Feedback personalizado del profesor</li>
+                            <li class="included">27 textos modelo en PDF</li>
+                            <li class="included">4 plantillas de escritura</li>
+                            <li class="included">Panel de progreso personal</li>
+                            <li class="excluded">Certificado de finalizacion</li>
+                        </ul>
+                    </div>
+                    <div class="pricing-card-footer">
+                        <a href="auth/registro.html?plan=mensual" class="btn btn-accent btn-lg">Empezar ahora</a>
+                    </div>
+                </div>
+
+                <!-- Plan Curso Completo -->
+                <div class="pricing-card">
+                    <div class="pricing-card-header">
+                        <h3>Curso Completo</h3>
+                        <p class="pricing-subtitle">Pago unico, acceso total</p>
+                        <div class="pricing-amount-wrapper">
+                            <span class="pricing-currency">&euro;</span>
+                            <span class="pricing-amount">119</span>
+                        </div>
+                        <div class="pricing-original">156 &euro;</div>
+                        <div class="pricing-period">Pago unico &mdash; Ahorras 37 &euro; (24%)</div>
+                    </div>
+                    <div class="pricing-card-body">
+                        <ul class="pricing-features">
+                            <li class="included">Todo lo del Plan Mensual</li>
+                            <li class="included">Acceso ilimitado al material</li>
+                            <li class="included">4 talleres creativos obligatorios</li>
+                            <li class="included">Feedback prioritario del profesor</li>
+                            <li class="included">Envio de entregas escritas</li>
+                            <li class="included">27 textos modelo en PDF</li>
+                            <li class="included">4 plantillas de escritura</li>
+                            <li class="included">Panel de progreso personal</li>
+                            <li class="included">Certificado de finalizacion</li>
+                            <li class="included">Acceso post-curso (6 meses)</li>
+                        </ul>
+                    </div>
+                    <div class="pricing-card-footer">
+                        <a href="auth/registro.html?plan=completo" class="btn btn-primary btn-lg">Inscribirse al curso</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison Table -->
+    <section class="section section-alt">
+        <div class="container">
+            <div class="section-header">
+                <h2>Comparativa detallada</h2>
+                <p>Todas las caracteristicas de cada plan</p>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Caracteristica</th>
+                            <th>Acceso Libre</th>
+                            <th class="featured-col">Plan Mensual</th>
+                            <th>Curso Completo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Sesiones disponibles</td>
+                            <td>Solo descripcion</td>
+                            <td>27 completas</td>
+                            <td>27 completas</td>
+                        </tr>
+                        <tr>
+                            <td>Unidades tematicas</td>
+                            <td>Indice</td>
+                            <td><span class="check-icon">&#10003;</span> 11 unidades</td>
+                            <td><span class="check-icon">&#10003;</span> 11 unidades</td>
+                        </tr>
+                        <tr>
+                            <td>Talleres creativos</td>
+                            <td><span class="cross-icon">&#10007;</span></td>
+                            <td><span class="check-icon">&#10003;</span> 4 talleres</td>
+                            <td><span class="check-icon">&#10003;</span> 4 talleres</td>
+                        </tr>
+                        <tr>
+                            <td>Actividades interactivas</td>
+                            <td><span class="cross-icon">&#10007;</span></td>
+                            <td><span class="check-icon">&#10003;</span> Ilimitadas</td>
+                            <td><span class="check-icon">&#10003;</span> Ilimitadas</td>
+                        </tr>
+                        <tr>
+                            <td>Entrega de textos</td>
+                            <td><span class="cross-icon">&#10007;</span></td>
+                            <td><span class="check-icon">&#10003;</span></td>
+                            <td><span class="check-icon">&#10003;</span></td>
+                        </tr>
+                        <tr>
+                            <td>Feedback del profesor</td>
+                            <td><span class="cross-icon">&#10007;</span></td>
+                            <td><span class="check-icon">&#10003;</span> Estandar</td>
+                            <td><span class="check-icon">&#10003;</span> Prioritario</td>
+                        </tr>
+                        <tr>
+                            <td>Textos modelo (PDF)</td>
+                            <td><span class="cross-icon">&#10007;</span></td>
+                            <td><span class="check-icon">&#10003;</span> 27 PDFs</td>
+                            <td><span class="check-icon">&#10003;</span> 27 PDFs</td>
+                        </tr>
+                        <tr>
+                            <td>Plantillas de escritura</td>
+                            <td><span class="cross-icon">&#10007;</span></td>
+                            <td><span class="check-icon">&#10003;</span> 4 plantillas</td>
+                            <td><span class="check-icon">&#10003;</span> 4 plantillas</td>
+                        </tr>
+                        <tr>
+                            <td>Panel de progreso</td>
+                            <td><span class="cross-icon">&#10007;</span></td>
+                            <td><span class="check-icon">&#10003;</span></td>
+                            <td><span class="check-icon">&#10003;</span></td>
+                        </tr>
+                        <tr>
+                            <td>Certificado</td>
+                            <td><span class="cross-icon">&#10007;</span></td>
+                            <td><span class="cross-icon">&#10007;</span></td>
+                            <td><span class="check-icon">&#10003;</span></td>
+                        </tr>
+                        <tr>
+                            <td>Acceso post-curso</td>
+                            <td><span class="cross-icon">&#10007;</span></td>
+                            <td>Solo durante suscripcion</td>
+                            <td><span class="check-icon">&#10003;</span> 6 meses extra</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Precio</strong></td>
+                            <td><strong>Gratis</strong></td>
+                            <td><strong>39 &euro;/mes</strong></td>
+                            <td><strong>119 &euro; (unico)</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Justification -->
+    <section class="section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Desglose del valor</h2>
+                <p>Cada euro invertido se traduce en formacion de calidad</p>
+            </div>
+
+            <div class="card" style="max-width: 800px; margin: 0 auto;">
+                <div class="card-body" style="padding: var(--spacing-xl);">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tbody>
+                            <tr>
+                                <td style="padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+                                    <strong>40,5 horas de formacion especializada C2</strong>
+                                    <br><span class="text-secondary" style="font-size: 0.875rem;">27 sesiones x 90 minutos con profesor experto</span>
+                                </td>
+                                <td style="padding: 0.75rem 0; border-bottom: 1px solid var(--border-color); text-align: right; white-space: nowrap;">
+                                    <span style="text-decoration: line-through; color: var(--text-light);">810 &euro;</span>
+                                    <br><span class="text-secondary" style="font-size: 0.8125rem;">a 20 &euro;/hora</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+                                    <strong>27 correcciones personalizadas</strong>
+                                    <br><span class="text-secondary" style="font-size: 0.875rem;">Feedback detallado por un profesor nativo</span>
+                                </td>
+                                <td style="padding: 0.75rem 0; border-bottom: 1px solid var(--border-color); text-align: right; white-space: nowrap;">
+                                    <span style="text-decoration: line-through; color: var(--text-light);">270 &euro;</span>
+                                    <br><span class="text-secondary" style="font-size: 0.8125rem;">a 10 &euro;/correccion</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+                                    <strong>27 textos modelo + 4 plantillas</strong>
+                                    <br><span class="text-secondary" style="font-size: 0.875rem;">Material didactico profesional descargable</span>
+                                </td>
+                                <td style="padding: 0.75rem 0; border-bottom: 1px solid var(--border-color); text-align: right; white-space: nowrap;">
+                                    <span style="text-decoration: line-through; color: var(--text-light);">60 &euro;</span>
+                                    <br><span class="text-secondary" style="font-size: 0.8125rem;">Material exclusivo</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+                                    <strong>4 talleres creativos con proyectos reales</strong>
+                                    <br><span class="text-secondary" style="font-size: 0.875rem;">Miniserie web, safari fotografico, Granada 2031...</span>
+                                </td>
+                                <td style="padding: 0.75rem 0; border-bottom: 1px solid var(--border-color); text-align: right; white-space: nowrap;">
+                                    <span style="text-decoration: line-through; color: var(--text-light);">120 &euro;</span>
+                                    <br><span class="text-secondary" style="font-size: 0.8125rem;">a 30 &euro;/taller</span>
+                                </td>
+                            </tr>
+                            <tr style="background: var(--bg-light);">
+                                <td style="padding: 1rem 0.75rem; font-size: 1.125rem;">
+                                    <strong>Valor total estimado</strong>
+                                </td>
+                                <td style="padding: 1rem 0.75rem; text-align: right; font-size: 1.125rem;">
+                                    <strong style="text-decoration: line-through; color: var(--text-light);">1.260 &euro;</strong>
+                                </td>
+                            </tr>
+                            <tr style="background: var(--success-light);">
+                                <td style="padding: 1rem 0.75rem; font-size: 1.25rem;">
+                                    <strong style="color: var(--success-color);">Tu precio con Curso Completo</strong>
+                                </td>
+                                <td style="padding: 1rem 0.75rem; text-align: right;">
+                                    <strong style="font-size: 2rem; color: var(--success-color);">119 &euro;</strong>
+                                    <br><span style="font-size: 0.875rem; color: var(--success-color);">Ahorras un 91%</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Guarantee -->
+    <section class="section section-alt">
+        <div class="container">
+            <div class="guarantee-box">
+                <div class="guarantee-icon">&#9989;</div>
+                <h2>Garantia de satisfaccion</h2>
+                <p style="font-size: 1.125rem; color: var(--text-secondary); max-width: 500px; margin: var(--spacing-md) auto 0;">
+                    Si en los primeros 14 dias el curso no cumple tus expectativas, te devolvemos el 100% de tu dinero sin preguntas. Para el plan mensual, puedes cancelar en cualquier momento antes de la siguiente renovacion.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Preguntas frecuentes</h2>
+                <p>Todo lo que necesitas saber sobre los planes</p>
+            </div>
+
+            <div class="faq-grid">
+                <div class="faq-item">
+                    <h4>?Cuando empieza el curso?</h4>
+                    <p>El curso comienza el 3 de febrero de 2026 y finaliza el 21 de mayo de 2026. Las sesiones son los martes y jueves, con una duracion de 90 minutos cada una.</p>
+                </div>
+
+                <div class="faq-item">
+                    <h4>?Puedo cambiar de plan?</h4>
+                    <p>Si. Puedes pasar del plan mensual al curso completo en cualquier momento. El importe ya abonado se descuenta del precio del curso completo.</p>
+                </div>
+
+                <div class="faq-item">
+                    <h4>?Como funciona el plan mensual?</h4>
+                    <p>Se cobra 39 &euro; al inicio de cada mes. Tienes acceso completo a todo el contenido disponible. Puedes cancelar antes del siguiente cobro sin compromiso.</p>
+                </div>
+
+                <div class="faq-item">
+                    <h4>?Que incluye el feedback?</h4>
+                    <p>El profesor revisa cada texto entregado y proporciona correcciones detalladas, sugerencias de mejora y una calificacion. El plan completo incluye feedback prioritario (respuesta en 48h).</p>
+                </div>
+
+                <div class="faq-item">
+                    <h4>?Necesito nivel C2 para inscribirme?</h4>
+                    <p>El curso esta disenado para estudiantes de nivel C2 (avanzado). Si tienes un nivel C1 alto y mucha motivacion, tambien puedes beneficiarte del curso.</p>
+                </div>
+
+                <div class="faq-item">
+                    <h4>?Que es el certificado de finalizacion?</h4>
+                    <p>Al completar el 80% de las entregas con el plan Curso Completo, recibes un certificado digital del Centro de Lenguas Modernas de la Universidad de Granada.</p>
+                </div>
+
+                <div class="faq-item">
+                    <h4>?Que metodos de pago aceptais?</h4>
+                    <p>Aceptamos tarjetas de credito/debito (Visa, Mastercard) y transferencia bancaria. El pago se procesa de forma segura.</p>
+                </div>
+
+                <div class="faq-item">
+                    <h4>?Hay descuentos para grupos?</h4>
+                    <p>Si. Para grupos de 3 o mas estudiantes, ofrecemos un 15% de descuento en el plan Curso Completo. Contacta con el profesor para mas informacion.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="section" style="background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); color: white;">
+        <div class="container text-center">
+            <h2 style="color: white;">Empieza a escribir como un nativo</h2>
+            <p style="font-size: 1.25rem; opacity: 0.9; max-width: 600px; margin: 0 auto var(--spacing-xl);">
+                Unete a otros estudiantes de nivel C2 y transforma tu escritura en espanol con la guia de un profesor experto.
+            </p>
+            <div class="hero-actions" style="justify-content: center;">
+                <a href="auth/registro.html?plan=completo" class="btn btn-accent btn-lg">Curso Completo &mdash; 119 &euro;</a>
+                <a href="auth/registro.html?plan=mensual" class="btn btn-outline-white btn-lg">Plan Mensual &mdash; 39 &euro;/mes</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-section">
+                    <h4>Produccion Escrita C2</h4>
+                    <p style="color: rgba(255,255,255,0.7); font-size: 0.9375rem;">
+                        Curso intensivo de escritura avanzada en espanol para estudiantes de nivel C2.
+                    </p>
+                    <p style="color: rgba(255,255,255,0.7); font-size: 0.875rem; margin-top: 1rem;">
+                        <strong>Centro de Lenguas Modernas</strong><br>
+                        Universidad de Granada
+                    </p>
+                </div>
+                <div class="footer-section">
+                    <h4>Contenidos</h4>
+                    <ul>
+                        <li><a href="sesiones/index.html">Sesiones</a></li>
+                        <li><a href="temas/index.html">Temas</a></li>
+                        <li><a href="talleres/index.html">Talleres</a></li>
+                        <li><a href="recursos/index.html">Recursos</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Estudiantes</h4>
+                    <ul>
+                        <li><a href="planes.html">Planes y precios</a></li>
+                        <li><a href="auth/login.html">Acceder</a></li>
+                        <li><a href="auth/registro.html">Registrarse</a></li>
+                        <li><a href="usuario/dashboard.html">Mi area</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contacto</h4>
+                    <ul>
+                        <li><a href="mailto:benitezl@go.ugr.es">benitezl@go.ugr.es</a></li>
+                        <li><a href="mailto:benitezl@go.ugr.es?subject=Solicitud de tutoria">Solicitar tutoria</a></li>
+                        <li><a href="https://clm.ugr.es" target="_blank">CLM - UGR</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>&copy; 2026 Javier Benitez Lainez. Todos los derechos reservados.</span>
+                <span>Desarrollado por Javier Benitez Lainez | CLM - Universidad de Granada</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        window.PE_CONFIG = {
+            API_URL: 'https://produccion-escrita-c2-api-production.up.railway.app'
+        };
+    </script>
+    <script src="js/app.js"></script>
+</body>
+</html>
