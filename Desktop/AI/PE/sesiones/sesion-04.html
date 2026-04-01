@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sesión 4: Escribir un perfil profesional | Producción Escrita C2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+<body>
+    <header class="header">
+        <div class="header-top">
+            <div class="container">
+                <span>Centro de Lenguas Modernas - Universidad de Granada</span>
+                <div class="header-top-links">
+                    <a href="../recursos/index.html">Recursos</a>
+                    <a href="../calendario.html">Calendario</a>
+                </div>
+            </div>
+        </div>
+        <div class="header-main">
+            <div class="container">
+                <a href="../index.html" class="logo">
+                    <div class="logo-icon">C2</div>
+                    <div class="logo-text">
+                        <span class="logo-title">Producción Escrita</span>
+                        <span class="logo-subtitle">CLM - Universidad de Granada</span>
+                    </div>
+                </a>
+                <nav class="nav-main" id="nav-main">
+                    <a href="../index.html">Inicio</a>
+                    <a href="index.html" class="active">Sesiones</a>
+                    <a href="../temas/index.html">Temas</a>
+                    <a href="../talleres/index.html">Talleres</a>
+                </nav>
+                <div class="nav-auth"></div>
+                <button class="menu-toggle" id="menu-toggle"><span></span><span></span><span></span></button>
+            </div>
+        </div>
+    </header>
+
+    <main class="section">
+        <div class="container">
+            <div class="page-with-sidebar">
+                <aside class="sidebar">
+                    <div class="sidebar-section">
+                        <h4 class="sidebar-title">Navegación</h4>
+                        <ul class="sidebar-nav">
+                            <li><a href="#objetivos">Objetivos</a></li>
+                            <li><a href="#contenidos">Contenidos</a></li>
+                            <li><a href="#actividades">Actividades</a></li>
+                            <li><a href="#tarea">Tarea</a></li>
+                        </ul>
+                    </div>
+                    <div class="sidebar-section">
+                        <h4 class="sidebar-title">Sesiones</h4>
+                        <ul class="sidebar-nav">
+                            <li><a href="sesion-03.html">Sesión 3</a></li>
+                            <li><a href="sesion-04.html" class="active">Sesión 4</a></li>
+                            <li><a href="sesion-05.html">Sesión 5</a></li>
+                            <li><a href="index.html">Ver todas</a></li>
+                        </ul>
+                    </div>
+                    <div class="sidebar-section">
+                        <a href="/contacto.html" class="btn btn-outline btn-block btn-sm">
+                            Contactar al profesor
+                        </a>
+                    </div>
+                </aside>
+
+                <div class="main-content">
+                    <div class="card mb-4" style="background: linear-gradient(135deg, var(--primary-color), var(--primary-light)); color: white;">
+                        <div class="card-body">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                                <div>
+                                    <span class="badge" style="background: rgba(255,255,255,0.2);">Sesión 4 de 27</span>
+                                    <h1 style="color: white; margin: 0.5rem 0;">Escribir un perfil profesional</h1>
+                                    <p style="opacity: 0.9; margin: 0;">Jueves, 12 de febrero de 2026 | 90 minutos</p>
+                                </div>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <a href="sesion-03.html" class="btn btn-outline-white">&larr; Anterior</a>
+                                    <a href="sesion-05.html" class="btn btn-outline-white">Siguiente &rarr;</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <section id="objetivos" class="card mb-4">
+                        <div class="card-header">
+                            <h2 style="margin: 0;">Objetivos de la sesión</h2>
+                        </div>
+                        <div class="card-body">
+                            <ul>
+                                <li><strong>Comprender y dominar la estructura del perfil profesional C2</strong>, diferenciándolo del CV tradicional, la carta de presentación y el perfil personal</li>
+                                <li><strong>Aplicar estrategias de branding personal narrativo</strong> que combinen logros cuantificables con voz profesional distintiva</li>
+                                <li><strong>Analizar textos modelo C2</strong> que evidencien propuesta de valor clara, narrativa de carrera y autenticidad profesional</li>
+                                <li><strong>Producir un perfil profesional propio</strong> (300-350 palabras) que pueda adaptarse a LinkedIn, biografías web o presentaciones</li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <section id="contenidos" class="card mb-4">
+                        <div class="card-header">
+                            <h2 style="margin: 0;">Contenidos</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info">
+                                <strong>Contenido principal:</strong> El perfil profesional: Branding personal narrativo C2</div>
+
+                            <h4>Estructura del Perfil Profesional C2</h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                                <div class="card" style="background: var(--bg-light);">
+                                    <div class="card-body">
+                                        <h5 style="color: var(--primary-color);">1. Gancho profesional: Propuesta de valor</h5>
+                                        <ul style="font-size: 0.9rem; margin-bottom: 0;">
+                                            <li><strong>Identidad funcional:</strong> "Soy [profesión] que [hace/transforma/resuelve]..."</li>
+                                            <li><strong>Especialización única:</strong> ¿Qué te distingue de otros en tu campo?</li>
+                                            <li><strong>Cuántificación inicial:</strong> "X años de experiencia en Y sector..."</li>
+                                            <li><strong>Voz profesional:</strong> Equilibrio entre autoridad y accesibilidad</li>
+                                            <li><strong>Relevancia:</strong> ¿Por qué importa lo que haces?</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="card" style="background: var(--bg-light);">
+                                    <div class="card-body">
+                                        <h5 style="color: var(--primary-color);">2. Evidencia cuantificada: Logros seleccionados</h5>
+                                        <ul style="font-size: 0.9rem; margin-bottom: 0;">
+                                            <li><strong>Métricas de impacto:</strong> "% de aumento", "número de usuarios", "reducción de tiempo"</li>
+                                            <li><strong>Responsabilidad vs. logro:</strong> No solo lo que hiciste, sino el resultado medible</li>
+                                            <li><strong>Selección estratégica:</strong> 2-3 logros que demuestran tu valor único</li>
+                                            <li><strong>Contexto organizacional:</strong> Tipo de empresa, sector, alcance de proyectos</li>
+                                            <li><strong>Palabras clave de sector:</strong> Terminología específica que demuestra expertise</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="card" style="background: var(--bg-light);">
+                                    <div class="card-body">
+                                        <h5 style="color: var(--primary-color);">3. Cierre: Visión y aspiración</h5>
+                                        <ul style="font-size: 0.9rem; margin-bottom: 0;">
+                                            <li><strong>Valor actual:</strong> ¿Qué aportas ahora mismo a una organización?</li>
+                                            <li><strong>Proyección futura:</strong> Hacia dónde te diriges profesionalmente</li>
+                                            <li><strong>Compatibilidad cultural:</strong> Tipo de entorno/empresa donde prosperas</li>
+                                            <li><strong>Call to action sutil:</strong> "Busco oportunidades para..." o "Interesado en..."</li>
+                                            <li><strong>Información de contacto integrada:</strong> LinkedIn, email, portfolio</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h4 style="margin-top: 2rem;">Diferencias entre documentos profesionales</h4>
+                            <table>
+                                <thead>
+                                    <tr><th>Documento</th><th>Enfoque</th><th>Extensión</th><th>Registro</th><th>Uso principal</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><strong>Perfil profesional</strong></td><td>Identidad + propuesta de valor narrativa</td><td>300-500 palabras</td><td>Profesional pero accesible</td><td>LinkedIn, web personal, bio</td></tr>
+                                    <tr><td><strong>CV tradicional</strong></td><td>Historial laboral cronológico</td><td>1-2 páginas</td><td>Formal, objetivo</td><td>Solicitudes de empleo</td></tr>
+                                    <tr><td><strong>Carta de presentación</strong></td><td>Candidatura específica para puesto</td><td>1 página</td><td>Formal, persuasivo</td><td>Aplicación a empleo concreto</td></tr>
+                                    <tr><td><strong>Perfil personal</strong></td><td>Identidad + valores personales</td><td>300-500 palabras</td><td>Personal, reflexivo</td><td>Blogs, contextos creativos</td></tr>
+                                </tbody>
+                            </table>
+
+                            <h4 style="margin-top: 2rem;">Programación de aula (90 minutos)</h4>
+                            <table>
+                                <thead>
+                                    <tr><th>Tiempo</th><th>Actividad</th><th>Dinámica</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>0-15 min</td><td>Calentamiento y activación</td><td>Grupo clase</td></tr>
+                                    <tr><td>15-35 min</td><td>Análisis de textos modelo</td><td>Parejas</td></tr>
+                                    <tr><td>35-55 min</td><td>Práctica guiada</td><td>Individual</td></tr>
+                                    <tr><td>55-80 min</td><td>Producción escrita</td><td>Individual</td></tr>
+                                    <tr><td>80-90 min</td><td>Puesta en común y cierre</td><td>Grupo clase</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <section id="actividades">
+                        
+                    <!-- Actividad 1: Calentamiento -->
+                    <section class="activity mb-4">
+                        <div class="activity-header">
+                            <span class="activity-type">Actividad 1 | Calentamiento</span>
+                            <h3 class="activity-title">Activación de conocimientos previos</h3>
+                        </div>
+                        <div class="activity-body">
+                            <div class="activity-instructions">
+                                <p><strong>Instrucciones:</strong> Responde a las siguientes preguntas sobre Escribir un perfil profesional.</p>
+                            </div>
+                            <div id="quiz-activacion"></div>
+                        </div>
+                    </section>
+
+                    <!-- Actividad 2: Análisis de modelo -->
+                    <section class="activity mb-4">
+                        <div class="activity-header">
+                            <span class="activity-type">Actividad 2 | Análisis</span>
+                            <h3 class="activity-title">Análisis de textos modelo: Perfiles profesionales C2</h3>
+                        </div>
+                        <div class="activity-body">
+                            <div class="activity-instructions">
+                                <p><strong>Instrucciones:</strong> Lee los siguientes perfiles profesionales modelo y analiza cómo cada autor construye su propuesta de valor narrativa combinando identidad profesional, logros cuantificados y voz distintiva.</p>
+                            </div>
+
+                            <!-- Texto Modelo 1 -->
+                            <div class="card mb-3" style="background: var(--bg-light);">
+                                <div class="card-header" style="background: var(--primary-color); color: white;">
+                                    <strong>Texto Modelo 1: Perfil profesional tecnológico - Líder de transformación digital</strong>
+                                    <span class="badge" style="background: rgba(255,255,255,0.2); float: right;">350 palabras</span>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>[GANCHO PROFESIONAL]</strong> Soy especialista en transformación digital con más de 12 años de experiencia liderando equipos tecnológicos que convierten innovación en valor tangible para organizaciones de sectores tradicionales. Mi pasión es demistificar la jerga tecnológica para que líderes no técnicos tomen decisiones informadas sobre inversiones digitales que generan ROI medible.</p>
+
+                                    <p><strong>[EVIDENCIA CUANTIFICADA 1]</strong> En mi rol más reciente como Head of Digital Transformation en una cadena minorista europea con 450 tiendas, lideré la implementación de una plataforma de comercio unificado que aumentó las ventas online en 147% el primer año y redujo los costos operativos en 23% mediante automatización de procesos de inventario. El proyecto requirió coordinar equipos distribuidos en 6 países y gestionar una cartera de inversión de €3.2M sin sobrepasar el presupuesto.</p>
+
+                                    <p><strong>[EVIDENCIA CUANTIFICADA 2]</strong> Anteriormente, como consultor senior de estrategia digital en Deloitte, ayudé a 15 empresas del IBEX 35 a definir hojas de ruta de transformación digital alineadas con objetivos business. Un caso destacado: rediseñar la experiencia digital de un banco multicentro, resultando en un aumento del 89% en la adopción de servicios móviles y una reducción del 65% en llamadas a soporte mediante implementación de self-service automatizado.</p>
+
+                                    <p><strong>[REFLEXIÓN PROFESIONAL]</strong> Lo que distingue mi enfoque es la combinación de visión estratégica con ejecución táctica pragmática. Entiendo que la tecnología no es un fin en sí misma, sino un medio para resolver problemas de negocio reales. Me especializo en traducir requerimientos complejos de stakeholders en roadmaps técnicos claros, y luego guiar equipos multidisciplinarios para entregar en plazos ajustados sin sacrificar calidad.</p>
+
+                                    <p><strong>[CIERRE - VISIÓN Y ASPIRACIÓN]</strong> Actualmente busco oportunidades de liderar equipos de producto o tecnología en empresas que valoran tanto la innovación continua como la excelencia operativa. Mi experiencia en entornos regulados y mi capacidad para comunicar conceptos técnicos a audiencias no técnicas me permiten ser efectivo como puente entre tecnología y negocio. Si tu organización está navegando una transformación digital o busca escalar su capacidad tecnológica, me gustaría explorar cómo mi experiencia puede aportar valor. Puedes ver mi portfolio de casos en [link] y conectarme en LinkedIn.</p>
+                                </div>
+                            </div>
+
+                            <!-- Texto Modelo 2 -->
+                            <div class="card mb-3" style="background: var(--bg-light);">
+                                <div class="card-header" style="background: var(--accent-color); color: white;">
+                                    <strong>Texto Modelo 2: Perfil profesional educativo - Directora de innovación pedagógica</strong>
+                                    <span class="badge" style="background: rgba(255,255,255,0.2); float: right;">330 palabras</span>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>[GANCHO PROFESIONAL]</strong> Soy directora de innovación pedagógica con 10 años de experiencia diseñando e implementando programas de aprendizaje que combinan rigor académico con habilidades del siglo XXI. Mi misión es transformar la educación tradicional en experiencias de aprendizaje activo que preparen estudiantes no solo para exámenes, sino para la vida profesional y ciudadana en un mundo complejo.</p>
+
+                                    <p><strong>[EVIDENCIA CUANTIFICADA 1]</strong> Como directora del programa de innovación en un colegio internacional de Madrid con 1,200 estudiantes, diseñé e implementé un currículo interdisciplinario basado en proyectos que aumentó el engagement estudiantil en 76% (medido por asistencia y participación voluntaria) y mejoró las competencias de resolución de problemas en un 34% según rúbricas estandarizadas. El programa, reconocido como caso de estudio por el Ministerio de Educación, ahora ha sido adoptado por 7 instituciones en 3 países.</p>
+
+                                    <p><strong>[EVIDENCIA CUANTIFICADA 2]</strong> Mi experiencia previa como coordinadora de tecnología educativa me permitió desarrollar un programa de formación docente en herramientas digitales que capacitó a 200+ profesores en metodologías híbridas, resultando en un aumento del 92% en el uso de edtech en el aula y una mejora del 28% en las tasas de retención de contenido según evaluaciones posteriores. Este programa fue distinguido con el Premio Nacional de Innovación Educativa 2023.</p>
+
+                                    <p><strong>[REFLEXIÓN PROFESIONAL]</strong> Lo que diferencia mi enfoque es la metodología de diseño centrado en el estudiante combinada con métricas de aprendizaje. Creo firmemente que la innovación educativa no debe ser tecnología por tecnología, sino pedagogía informada por evidencia. Me especializo en cerrar la brecha entre investigación educativa y práctica de aula, traduciendo hallazgos académicos en estrategias docentes aplicables y escalables.</p>
+
+                                    <p><strong>[CIERRE - VISIÓN Y ASPIRACIÓN]</strong> Busco oportunidades de liderar equipos de innovación curricular o tecnología educativa en instituciones que comparten mi visión de educación como motor de cambio social. Estoy particularmente interesada en contextos donde pueda combinar mi experiencia en diseño curricular, formación docente y liderazgo de cambio para impactar sistemáticamente el aprendizaje. Si tu institución está explorando nuevas metodologías, integración tecnológica o transformación curricular, me encantaría conversar sobre cómo puedo aportar valor. Puedes ver mis publicaciones y casos de éxito en [portfolio] y conectarme en LinkedIn.</p>
+                                </div>
+                            </div>
+
+                            <!-- Guías de análisis -->
+                            <div class="card" style="background: #f8f9fa; border-left: 4px solid var(--primary-color);">
+                                <div class="card-body">
+                                    <h5 style="color: var(--primary-color); margin-bottom: 1rem;">📋 Guía de análisis para Texto Modelo 1 (Líder tecnológico):</h5>
+                                    <ul style="font-size: 0.9rem;">
+                                        <li><strong>Identidad funcional:</strong> ¿Cómo define el autor su rol? ("especialista en transformación digital")</li>
+                                        <li><strong>Cuántificación:</strong> Localiza todas las métricas: 147%, 23%, €3.2M, 15 empresas, 89%, 65%</li>
+                                        <li><strong>Responsabilidad vs. logro:</strong> ¿Cómo conecta lo que hizo con el resultado medible?</li>
+                                        <li><strong>Terminología técnica:</strong> ¿Qué demuestra expertise? ("comercio unificado", "plataforma", "roadmaps")</li>
+                                        <li><strong>Propuesta de valor:</strong> ¿Qué lo hace único? ("traducir requerimientos en roadmaps", "puente entre tecnología y negocio")</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="card mt-3" style="background: #f8f9fa; border-left: 4px solid var(--accent-color);">
+                                <div class="card-body">
+                                    <h5 style="color: var(--accent-color); margin-bottom: 1rem;">📋 Guía de análisis para Texto Modelo 2 (Directora educativa):</h5>
+                                    <ul style="font-size: 0.9rem;">
+                                        <li><strong>Misión declarada:</strong> ¿Cómo formula su propósito? ("transformar la educación tradicional en experiencias activas")</li>
+                                        <li><strong>Métricas de impacto:</strong> ¿Cómo mide el éxito? 76% engagement, 34% competencias, 92% uso edtech</li>
+                                        <li><strong>Reconocimiento externo:</strong> ¿Cómo valida su experiencia? (caso de estudio Ministerio, Premio Nacional)</li>
+                                        <li><strong>Valores implícitos:</strong> ¿Qué principios guía su trabajo? (pedagogía informada por evidencia, diseño centrado en estudiante)</li>
+                                        <li><strong>Voz profesional:</strong> ¿Cómo equilibra autoridad (directora) con accesibilidad? ("mi misión", "creo firmemente")</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Actividad 3: Práctica guiada -->
+                    <section class="activity mb-4">
+                        <div class="activity-header">
+                            <span class="activity-type">Actividad 3 | Práctica</span>
+                            <h3 class="activity-title">Ficha de ejercicios: Construcción de perfil profesional C2</h3>
+                        </div>
+                        <div class="activity-body">
+                            <div class="activity-instructions">
+                                <p><strong>Instrucciones:</strong> Completa los siguientes ejercicios para practicar la construcción de tu perfil profesional.</p>
+                            </div>
+
+                            <div class="card" style="background: var(--bg-light); margin-bottom: 1.5rem;">
+                                <div class="card-header">
+                                    <h4 style="margin: 0;">Ejercicio 1: Transformación de responsabilidad en logro cuantificado</h4>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Instrucción:</strong> Los perfiles profesionales C2 no solo dicen QUÉ hiciste, sino QUÉ RESULTADO medible produjo. Transforma las siguientes responsabilidades genéricas en logros cuantificados:</p>
+
+                                    <div style="background: white; padding: 1rem; border: 1px solid #dee2e6; border-radius: 0.5rem; margin: 1rem 0;">
+                                        <table style="width: 100%; border-collapse: collapse;">
+                                            <thead>
+                                                <tr style="background: var(--primary-color); color: white;">
+                                                    <th style="padding: 0.5rem; border: 1px solid white;">Responsabilidad genérica</th>
+                                                    <th style="padding: 0.5rem; border: 1px solid white;">Logro cuantificado (reescribe)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td style="padding: 0.5rem; border: 1px solid #dee2e6;">"Gestioné un equipo de ventas"</td>
+                                                    <td style="padding: 0.5rem; border: 1px solid #dee2e6;"><em>Escribe aquí cómo lo harías C2...</em> (Pista: "Lideré equipo de 10 personas que aumentó ventas en X%...")</td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="padding: 0.5rem; border: 1px solid #dee2e6;">"Desarrollé una aplicación móvil"</td>
+                                                    <td style="padding: 0.5rem; border: 1px solid #dee2e6;"><em>Escribe aquí cómo lo harías C2...</em> (Pista: "Desarrollé app con 50k descargas, promedio 4.5 estrellas...")</td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="padding: 0.5rem; border: 1px solid #dee2e6;">"Organicé eventos corporativos"</td>
+                                                    <td style="padding: 0.5rem; border: 1px solid #dee2e6;"><em>Escribe aquí cómo lo harías C2...</em> (Pista: "Organicé 20+ eventos para 500+ asistentes, satisfacción del 95%...")</td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="padding: 0.5rem; border: 1px solid #dee2e6;">"Mejoré procesos de atención al cliente"</td>
+                                                    <td style="padding: 0.5rem; border: 1px solid #dee2e6;"><em>Escribe aquí cómo lo harías C2...</em> (Pista: "Rediseñé procesos reduciendo tiempo de espera en X% y aumentando satisfacción en Y%...")</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <p style="margin-bottom: 0;"><strong>💡 Pista:</strong> Usa métricas: % de cambio, valor numérico absoluto, tiempo ahorrado, número de personas afectadas, calificación/rating obtenido.</p>
+                                </div>
+                            </div>
+
+                            <div class="card" style="background: var(--bg-light); margin-bottom: 1.5rem;">
+                                <div class="card-header">
+                                    <h4 style="margin: 0;">Ejercicio 2: Definición de propuesta de valor única</h4>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Instrucción:</strong> Tu propuesta de valor es lo que te hace único. No es "trabajador" ni "responsable". Completa esta ficha para definir la tuya:</p>
+
+                                    <div class="form-group">
+                                        <label class="form-label">1. ¿Qué problema resuelves?</label>
+                                        <textarea class="form-control" rows="2" placeholder="Ejemplo: Ayudo a empresas tradicionales a adoptar tecnología sin perder su identidad..." style="margin-bottom: 0.5rem;"></textarea>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">2. ¿Qué enfoque único aportas?</label>
+                                        <textarea class="form-control" rows="2" placeholder="Ejemplo: Combino estrategia digital con comunicación no técnica para líderes..." style="margin-bottom: 0.5rem;"></textarea>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">3. ¿Qué resultados medibles has logrado antes?</label>
+                                        <textarea class="form-control" rows="2" placeholder="Ejemplo: En roles anteriores, aumenté ROI digital de proyectos en promedio 40%..." style="margin-bottom: 0.5rem;"></textarea>
+                                    </div>
+
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label class="form-label">4. ¿Cuál es tu "frase elevator" de 15-20 segundos?</label>
+                                        <input type="text" class="form-control" placeholder="Ejemplo: Soy consultor que ayuda a empresas familiares a digitalizarse sin perder su esencia. He guiado 20+ transformaciones con ROI promedio de 35%.">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card" style="background: var(--bg-light);">
+                                <div class="card-header">
+                                    <h4 style="margin: 0;">Ejercicio 3: Análisis de voz profesional auténtica</h4>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Instrucción:</strong> Lee estos dos ejemplos de apertura de perfil profesional y analiza la voz:</p>
+
+                                    <div style="background: white; padding: 1rem; border: 1px solid #dee2e6; border-radius: 0.5rem; margin: 1rem 0;">
+                                        <p><strong>Ejemplo A (Formal y genérico):</strong></p>
+                                        <p style="color: #6c757d; font-style: italic; padding: 0.5rem; background: #f8f9fa; margin-bottom: 1rem;">"Soy un profesional muy comprometido con capacidad de trabajo en equipo y orientación a resultados. Cuento con sólida experiencia en gestión de proyectos y busco oportunidades para aplicar mis habilidades en una empresa dinámica."</p>
+
+                                        <p><strong>Ejemplo B (Auténtico y específico):</strong></p>
+                                        <p style="color: var(--primary-color); font-weight: 500; padding: 0.5rem; background: #e3f2fd; margin-bottom: 0;">"Soy especialista en transformación digital que disfruta resolviendo problemas complejos en empresas donde la tecnología se siente intimidante. Me define un enfoque pragmático: traduzco jerga técnica en decisiones de negocio claras. En los últimos 8 años, he guiado a 12 empresas familiares en su digitalización, logrando un ROI promedio del 42%."</p>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Preguntas de análisis:</label>
+                                        <ol style="font-size: 0.9rem; padding-left: 1.2rem;">
+                                            <li>¿Qué ejemplo es más memorable? ¿Por qué?</li>
+                                            <li>¿Qué ejemplo te da más información sobre la persona?</li>
+                                            <li>¿Qué clichés usa el Ejemplo A que el B evita? ("comprometido", "trabajo en equipo", "dinámica")</li>
+                                            <li>¿Cuál parece más auténtico? ¿Por qué?</li>
+                                            <li><strong>Tu turno:</strong> Escribe 2-3 frases de apertura para TU perfil que sean auténticas, específicas y eviten clichés:</li>
+                                        </ol>
+                                    </div>
+
+                                    <textarea class="form-control" rows="3" placeholder="Escribe aquí tu apertura de perfil profesional auténtica..." style="margin-bottom: 0;"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Actividad 4: Producción escrita -->
+                    <section class="activity mb-4">
+                        <div class="activity-header">
+                            <span class="activity-type">Actividad 4 | Producción</span>
+                            <h3 class="activity-title">Producción escrita: Tu perfil profesional C2</h3>
+                        </div>
+                        <div class="activity-body">
+                            <div class="activity-instructions">
+                                <p><strong>Instrucciones:</strong> Escribe TU perfil profesional siguiendo las pautas trabajadas. Tu perfil debe combinar propuesta de valor clara, logros cuantificados y voz profesional auténtica.</p>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin: 1rem 0;">
+                                <!-- Opción 1 -->
+                                <div class="card" style="border: 2px solid var(--primary-color);">
+                                    <div class="card-header" style="background: var(--primary-color); color: white;">
+                                        <strong>Opción 1: Perfil profesional general</strong>
+                                        <span class="badge" style="background: rgba(255,255,255,0.2); float: right;">300-350 palabras</span>
+                                    </div>
+                                    <div class="card-body">
+                                        <p style="margin-bottom: 1rem;"><strong>Contexto comunicativo:</strong> Escribes un perfil profesional para LinkedIn, biografía web o presentación en contexto donde valoran tanto tu propuesta única como tu trayectoria cuantificada.</p>
+
+                                        <h6 style="color: var(--primary-color); margin-bottom: 0.5rem;">Requisitos específicos:</h6>
+                                        <ol style="font-size: 0.9rem; padding-left: 1.2rem;">
+                                            <li><strong>Gancho profesional:</strong> Abrir con identidad funcional + propuesta de valor (2-3 líneas)</li>
+                                            <li><strong>Especialización clara:</strong> Define tu nicho: sector, tipo de problema que resuelves, enfoque único</li>
+                                            <li><strong>2-3 logros cuantificados:</strong> Cada uno con: contexto, responsabilidad, resultado medible (mínimo 4 métricas diferentes en todo el perfil)</li>
+                                            <li><strong>Vocabulario de sector:</strong> Usa mínimo 6 términos técnicos/profesionales específicos de tu campo</li>
+                                            <li><strong>Reflexión integrada:</strong> Después de los logros, incluye 3-4 líneas sobre tu enfoque/valores profesionales</li>
+                                            <li><strong>Palabras clave SEO:</strong> Incorpora términos que recruiters/buscarían para encontrar a alguien como tú</li>
+                                            <li><strong>CTA sutil:</strong> Cierra con qué tipo de oportunidades buscas o cómo pueden contactarte</li>
+                                            <li><strong>Voz auténtica:</strong> Evita clichés ("trabajador", "responsable"); usa voz profesional pero distintiva</li>
+                                        </ol>
+                                    </div>
+                                </div>
+
+                                <!-- Opción 2 -->
+                                <div class="card" style="border: 2px solid var(--accent-color);">
+                                    <div class="card-header" style="background: var(--accent-color); color: white;">
+                                        <strong>Opción 2: Perfil profesional para cambio de sector</strong>
+                                        <span class="badge" style="background: rgba(255,255,255,0.2); float: right;">300-350 palabras</span>
+                                    </div>
+                                    <div class="card-body">
+                                        <p style="margin-bottom: 1rem;"><strong>Contexto comunicativo:</strong> Estás cambiando de sector o rol y necesitas un perfil que destaque TRANSFERIBILIDAD de habilidades (tu experiencia anterior es un activo, no un impedimento).</p>
+
+                                        <h6 style="color: var(--accent-color); margin-bottom: 0.5rem;">Requisitos específicos:</h6>
+                                        <ol style="font-size: 0.9rem; padding-left: 1.2rem;">
+                                            <li><strong>Narrativa de transición:</strong> Abre con tu posición ACTUAL (objetivo) + cómo tu experiencia previa te da una ventaja única</li>
+                                            <li><strong>Conexión temática:</strong> Identifica el hilo conductor entre tu rol pasado y tu nuevo objetivo (ejemplo: "como profesor, desarrollé habilidades de comunicación que ahora aplico en marketing...")</li>
+                                            <li><strong>2-3 logros híbridos:</strong> Logros que demuestran habilidades transferibles entre sectores</li>
+                                            <li><strong>Reenmarcación de experiencia:</strong> Presenta tu experiencia anterior como un activo diferenciador, no como algo irrelevante</li>
+                                            <li><strong>Aptitud de aprendizaje:</strong> Muestra curiosidad y capacidad para aprender rápidamente el nuevo sector</li>
+                                            <li><strong>Proyecto de valor:</strong> Qué perspectiva única aportas al venir de otro contexto</li>
+                                            <li><strong>Voz de transición:</strong> Equilibra humildad (soy nuevo en este sector) con confianza (tengo competencias valiosas)</li>
+                                            <li><strong>CTA específico:</strong> Cierra con el tipo de rol/transición que buscas específicamente</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Criterios de evaluación C2 -->
+                            <div class="card" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-left: 4px solid var(--primary-color); margin: 1.5rem 0;">
+                                <div class="card-body">
+                                    <h5 style="color: var(--primary-color); margin-bottom: 1rem;">📊 Criterios de evaluación C2 para esta actividad:</h5>
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                                        <div>
+                                            <strong style="color: var(--primary-color);">Propuesta de valor (25%):</strong>
+                                            <ul style="font-size: 0.85rem; margin-top: 0.5rem;">
+                                                <li>Identidad funcional clara</li>
+                                                <li>Especialización única visible</li>
+                                                <li>Diferenciación de otros profesionales</li>
+                                                <li>Relevancia para empleadores/clientes</li>
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <strong style="color: var(--primary-color);">Evidencia cuantificada (25%):</strong>
+                                            <ul style="font-size: 0.85rem; margin-top: 0.5rem;">
+                                                <li>Mínimo 4 métricas diferentes</li>
+                                                <li>Conexión clara responsabilidad → logro</li>
+                                                <li>Resultados medibles, no tareas</li>
+                                                <li>Contexto organizacional claro</li>
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <strong style="color: var(--primary-color);">Vocabulario y voz (25%):</strong>
+                                            <ul style="font-size: 0.85rem; margin-top: 0.5rem;">
+                                                <li>Terminología de sector específica</li>
+                                                <li>Voz auténtica (no clichés)</li>
+                                                <li>Registro profesional consistente</li>
+                                                <li>Palabras clave de SEO incluidas</li>
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <strong style="color: var(--primary-color);">Estructura y cierre (25%):</strong>
+                                            <ul style="font-size: 0.85rem; margin-top: 0.5rem;">
+                                                <li>Propuesta de valor clara en apertura</li>
+                                                <li>Progresión lógica ( identidad → evidencia → reflexión → aspiración)</li>
+                                                <li>CTA específico y relevante</li>
+                                                <li>Extensión adecuada (300-350 palabras)</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <form data-submission-form data-session-id="4" data-activity-id="produccion" data-activity-title="Producción escrita - Sesión 4">
+                                <div class="form-group">
+                                    <label class="form-label">Opción elegida:</label>
+                                    <select class="form-control" name="opcion" required style="margin-bottom: 1rem;">
+                                        <option value="">Selecciona una opción...</option>
+                                        <option value="opcion1">Opción 1: Perfil profesional general</option>
+                                        <option value="opcion2">Opción 2: Perfil profesional para cambio de sector</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Tu perfil profesional (300-350 palabras):</label>
+                                    <div id="editor-produccion-4"></div>
+                                </div>
+                                <div class="mt-3" style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span class="text-secondary">Extensión objetivo: 300-350 palabras | 2-3 logros cuantificados | Voz auténtica</span>
+                                    <button type="submit" class="btn btn-primary">Enviar perfil</button>
+                                </div>
+                            </form>
+                        </div>
+                    </section>
+                    </section>
+
+                    <section id="tarea" class="card mb-4" style="border: 2px solid var(--accent-color);">
+                        <div class="card-header" style="background: var(--accent-color); color: var(--primary-dark);">
+                            <h2 style="margin: 0; color: var(--primary-dark);">Tarea para casa</h2>
+                        </div>
+                        <div class="card-body">
+                            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                                <h4 style="margin: 0 0 0.5rem 0; color: white;">🎯 Tareas para consolidar tu perfil profesional C2</h4>
+                                <p style="margin: 0; font-size: 0.95rem;">Tiempo total estimado: <strong>60-75 minutos</strong></p>
+                            </div>
+
+                            <div style="display: grid; gap: 1.5rem;">
+                                <!-- Actividad 1 -->
+                                <div class="card" style="border-left: 4px solid #667eea; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                                    <div class="card-body">
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                                            <h5 style="color: #667eea; margin: 0;">📝 Actividad 1: Auditoría de logros cuantificados</h5>
+                                            <span class="badge" style="background: #667eea; color: white;">30 min</span>
+                                        </div>
+                                        <p style="margin-bottom: 1rem;">Revisa tu perfil profesional de clase y transforma tus logros genéricos en <strong>evidencia cuantificada</strong> usando el marco CARF+M:</p>
+                                        <ul style="font-size: 0.9rem; line-height: 1.7;">
+                                            <li><strong>Contexto (C):</strong> Situación de partida</li>
+                                            <li><strong>Acción (A):</strong> Qué hiciste específicamente</li>
+                                            <li><strong>Resultado (R):</strong> Outcome medible</li>
+                                            <li><strong>Impacto (+M):</strong> Métrica concreta (+%, €, tiempo, personas)</li>
+                                        </ul>
+                                        <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; margin-top: 1rem;">
+                                            <strong>📌 Ejemplo:</strong><br>
+                                            <em>"Gestioné equipo de ventas"</em> →<br>
+                                            <strong>"Transformé equipo de 5 comerciales con ROI negativo en unidad top-performer: +47% revenue (€2.1M) en 18 meses mediante metodología data-driven y coaching personalizado."</strong>
+                                        </div>
+                                        <div style="margin-top: 1rem;">
+                                            <strong>Entregable:</strong> Lista de 4-6 logros CARF+M listos para integrar en tu perfil profesional
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Actividad 2 -->
+                                <div class="card" style="border-left: 4px solid #764ba2; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                                    <div class="card-body">
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                                            <h5 style="color: #764ba2; margin: 0;">🔍 Actividad 2: Análisis comparativo de propuestas de valor</h5>
+                                            <span class="badge" style="background: #764ba2; color: white;">25 min</span>
+                                        </div>
+                                        <p style="margin-bottom: 1rem;">Investiga <strong>3-5 perfiles profesionales líderes en tu sector</strong> (LinkedIn, sitios personales, biografías corporativas) y analiza:</p>
+                                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0;">
+                                            <div style="background: white; padding: 0.8rem; border-radius: 6px; border: 1px solid #e0e0e0;">
+                                                <strong style="color: #764ba2;">Gancho inicial</strong>
+                                                <p style="font-size: 0.85rem; margin: 0.5rem 0 0 0;">¿Cómo se posicionan en 1-2 frases?</p>
+                                            </div>
+                                            <div style="background: white; padding: 0.8rem; border-radius: 6px; border: 1px solid #e0e0e0;">
+                                                <strong style="color: #764ba2;">Vocabulario sectorial</strong>
+                                                <p style="font-size: 0.85rem; margin: 0.5rem 0 0 0;">¿Términos específicos que usan?</p>
+                                            </div>
+                                            <div style="background: white; padding: 0.8rem; border-radius: 6px; border: 1px solid #e0e0e0;">
+                                                <strong style="color: #764ba2;">Estructura de logros</strong>
+                                                <p style="font-size: 0.85rem; margin: 0.5rem 0 0 0;">¿Tipo de métricas que destacan?</p>
+                                            </div>
+                                        </div>
+                                        <div style="margin-top: 1rem;">
+                                            <strong>Entregable:</strong> Documento con: (a) tabla comparativa de 3 ganchos profesionales, (b) lista de 10-15 términos sectoriales C2 identificados, (c) 3 patrones de métricas exitosas en tu sector
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Actividad 3 -->
+                                <div class="card" style="border-left: 4px solid #f093fb; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                                    <div class="card-body">
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                                            <h5 style="color: #f093fb; margin: 0;">✨ Actividad 3: Refinamiento de voz profesional auténtica</h5>
+                                            <span class="badge" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">20 min</span>
+                                        </div>
+                                        <p style="margin-bottom: 1rem;">Tu perfil profesional debe sonar <strong>auténtico</strong> (no genérico ni inflado). Realiza este ejercicio de ajuste de voz:</p>
+                                        <ol style="font-size: 0.9rem; line-height: 1.8;">
+                                            <li><strong>Lee tu perfil en voz alta.</strong> ¿Suena natural o forzado?</li>
+                                            <li><strong>Identifica 3 expresiones "cliché"</strong> (ej: "apasionado por", "trabajo en equipo", "orientado a resultados")</li>
+                                            <li><strong>Sustituye por especificaciones concretas:</strong>
+                                                <ul style="margin-top: 0.5rem;">
+                                                    <li>"Apasionado por la innovación" → "He patentado 3 metodologías de..."</li>
+                                                    <li>"Orientado a resultados" → "Los proyectos que lidero cumplen KPIs en 95% de casos"</li>
+                                                </ul>
+                                            </li>
+                                            <li><strong>Ajusta el registro según tu objetivo:</strong> ¿Buscas posicionarte como experto? ¿Como líder de equipos? ¿Como consultor estratégico?</li>
+                                        </ol>
+                                        <div style="margin-top: 1rem;">
+                                            <strong>Entregable:</strong> Versión refinada de tu perfil profesional con voz auténtica + breve párrafo explicando los cambios realizados y por qué
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Recursos recomendados -->
+                            <div style="background: #e8f5e9; border-left: 4px solid #4caf50; padding: 1rem; border-radius: 6px; margin-top: 2rem;">
+                                <h6 style="color: #2e7d32; margin: 0 0 0.5rem 0;">📚 Recursos recomendados</h6>
+                                <ul style="font-size: 0.85rem; margin: 0; padding-left: 1.2rem;">
+                                    <li><strong>LinkedIn:</strong> Busca "Featured" sections de líderes en tu sector</li>
+                                    <li><strong>Marcos de logros:</strong> Método STAR (Situation-Task-Action-Result) y CARF (Context-Action-Result-Feeling)</li>
+                                    <li><strong>Vocabulario sectorial:</strong> Informes anuales de empresas líderes en tu campo, publicaciones profesionales especializadas</li>
+                                </ul>
+                            </div>
+
+                            <!-- Formulario de entrega -->
+                            <form data-submission-form data-session-id="4" data-activity-id="tarea" data-activity-title="Tarea - Sesión 4" style="margin-top: 2rem;">
+                                <div class="form-group">
+                                    <label class="form-label">Entrega de actividades (puedes adjuntar todas juntas):</label>
+                                    <textarea name="content" class="form-control" rows="8" placeholder="Escribe o pega aquí tu tarea...&#10;&#10;Puedes estructurarla así:&#10;ACTIVIDAD 1: [tus logros CARF+M]&#10;ACTIVIDAD 2: [análisis comparativo]&#10;ACTIVIDAD 3: [perfil refinado]" required></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Enviar tarea</button>
+                            </form>
+                        </div>
+                    </section>
+
+                    <div style="display: flex; justify-content: space-between; margin-top: var(--spacing-xl);">
+                        <a href="sesion-03.html" class="btn btn-outline">&larr; Sesión anterior</a>
+                        <a href="sesion-05.html" class="btn btn-primary">Siguiente sesión &rarr;</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom" style="border: none; padding-top: 0;">
+                <span>&copy; 2026 Javier Benítez Láinez | CLM - Universidad de Granada</span>
+                <a href="/contacto.html" style="color: rgba(255,255,255,0.7);">Contacto</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/config.js"></script>
+<script src="../js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // Quiz de activación - Nivel C2
+            PE.Activities.initQuiz('quiz-activacion', [
+                {
+                    question: '¿Cuál es el propósito principal del gancho profesional en un perfil C2?',
+                    options: ['Presentar nombre y apellidos', 'Establecer la propuesta de valor y especialización única', 'Listar títulos académicos', 'Mencionar hobbies personales'],
+                    correct: 1
+                },
+                {
+                    question: '¿Qué caracteriza a la evidencia cuantificada en un perfil profesional C2?',
+                    options: ['Usar adjetivos elogiosos como "excelente" y "extraordinario"', 'Incluir métricas concretas: %, €, tiempo, personas impactadas', 'Citar nombres de empresas reconocidas', 'Describir sentimientos y emociones'],
+                    correct: 1
+                },
+                {
+                    question: '¿En qué se diferencia un perfil profesional de un CV tradicional?',
+                    options: ['El perfil profesional es narrativo y estratégico; el CV es estructurado y enumerativo', 'El CV es más largo que el perfil', 'No hay diferencia entre ambos documentos', 'El perfil incluye foto y el CV no'],
+                    correct: 0
+                },
+                {
+                    question: '¿Qué es la propuesta de valor única en un perfil profesional?',
+                    options: ['El salario que esperas ganar', 'La combinación distintiva de habilidades, experiencia y enfoque que te diferencia', 'La lista de referencias laborales', 'El resumen de tu formación académica'],
+                    correct: 1
+                },
+                {
+                    question: '¿Qué estrategia C2 usa el marco CARF+M para estructurar logros?',
+                    options: ['Citar-Agradecer-Referir-Finalizar + Motivación', 'Contexto-Acción-Resultado-Feelings + Métrica', 'Crear-Analizar-Registrar-Formalizar + Mapa', 'Comunicar-Aprender-Recibir-Feedback + Medios'],
+                    correct: 1
+                }
+            ]);
+
+            // Completar espacios
+            PE.Activities.initFillBlanks('fill-blanks-practice',
+                'El [1] profesional abre con tu identidad funcional y propuesta de valor. A diferencia del CV tradicional, el perfil incorpora [2] cuantificada mediante métricas de impacto. La voz [3] auténtica evita clichés como "apasionado por" y "trabajo en equipo".',
+                ['gancho', 'evidencia', 'profesional']
+            );
+
+            // Editor de texto
+            PE.TextEditor.init('editor-produccion-4');
+        });
+    </script>
+</body>
+</html>

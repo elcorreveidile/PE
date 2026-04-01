@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sesión 9: TALLER: Mini serie web (I) | Producción Escrita C2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+<body>
+    <header class="header">
+        <div class="header-top">
+            <div class="container">
+                <span>Centro de Lenguas Modernas - Universidad de Granada</span>
+                <div class="header-top-links">
+                    <a href="../recursos/index.html">Recursos</a>
+                    <a href="../calendario.html">Calendario</a>
+                </div>
+            </div>
+        </div>
+        <div class="header-main">
+            <div class="container">
+                <a href="../index.html" class="logo">
+                    <div class="logo-icon">C2</div>
+                    <div class="logo-text">
+                        <span class="logo-title">Producción Escrita</span>
+                        <span class="logo-subtitle">CLM - Universidad de Granada</span>
+                    </div>
+                </a>
+                <nav class="nav-main" id="nav-main">
+                    <a href="../index.html">Inicio</a>
+                    <a href="index.html" class="active">Sesiones</a>
+                    <a href="../temas/index.html">Temas</a>
+                    <a href="../talleres/index.html">Talleres</a>
+                </nav>
+                <div class="nav-auth"></div>
+                <button class="menu-toggle" id="menu-toggle"><span></span><span></span><span></span></button>
+            </div>
+        </div>
+    </header>
+
+    <main class="section">
+        <div class="container">
+            <div class="page-with-sidebar">
+                <aside class="sidebar">
+                    <div class="sidebar-section">
+                        <h4 class="sidebar-title">Navegación</h4>
+                        <ul class="sidebar-nav">
+                            <li><a href="#objetivos">Objetivos</a></li>
+                            <li><a href="#contenidos">Contenidos</a></li>
+                            <li><a href="#actividades">Actividades</a></li>
+                            <li><a href="#tarea">Tarea</a></li>
+                        </ul>
+                    </div>
+                    <div class="sidebar-section">
+                        <h4 class="sidebar-title">Sesiones</h4>
+                        <ul class="sidebar-nav">
+                            <li><a href="sesion-08.html">Sesión 8</a></li>
+                            <li><a href="sesion-09.html" class="active">Sesión 9</a></li>
+                            <li><a href="sesion-10.html">Sesión 10</a></li>
+                            <li><a href="index.html">Ver todas</a></li>
+                        </ul>
+                    </div>
+                    <div class="sidebar-section">
+                        <a href="/contacto.html" class="btn btn-outline btn-block btn-sm">
+                            Contactar al profesor
+                        </a>
+                    </div>
+                </aside>
+
+                <div class="main-content">
+                    <div class="card mb-4" style="background: linear-gradient(135deg, var(--primary-color), var(--primary-light)); color: white;">
+                        <div class="card-body">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                                <div>
+                                    <span class="badge" style="background: rgba(255,255,255,0.2);">Sesión 9 de 27</span>
+                                    <h1 style="color: white; margin: 0.5rem 0;">TALLER: Mini serie web (I)</h1>
+                                    <p style="opacity: 0.9; margin: 0;">Martes, 3 de marzo de 2026 | 90 minutos</p>
+                                </div>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <a href="sesion-08.html" class="btn btn-outline-white">&larr; Anterior</a>
+                                    <a href="sesion-10.html" class="btn btn-outline-white">Siguiente &rarr;</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <section id="objetivos" class="card mb-4">
+                        <div class="card-header">
+                            <h2 style="margin: 0;">Objetivos del taller</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-warning mb-3">
+                                <strong>🎬 PROYECTO CREATIVO:</strong> Este taller se desarrolla durante 2-3 sesiones. Hoy crearemos una mini serie web colectiva (episodios de 5-7 minutos) escrita, producida y actuada por el grupo.
+                            </div>
+                            <h4 style="margin-bottom: 1rem;">Objetivos específicos:</h4>
+                            <ul>
+                                <li><strong>Comprender la estructura del guion audiovisual:</strong> aprender formato, escenas, diálogos y narrativa visual</li>
+                                <li><strong>Desarrollar personajes complejos:</strong> crear perfiles psicológicos, motivaciones y arcos de transformación</li>
+                                <li><strong>Escribir diálogos naturales:</strong> capturar el habla coloquial, subtextos y registros diversos</li>
+                                <li><strong>Planificar una narrativa serial:</strong> diseñar cliffhangers, tramas episódicas y arcos temporales</li>
+                                <li><strong>Colaborar en equipo:</strong> negociar visiones creativas, integrar aportaciones diversas</li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <section id="contenidos" class="card mb-4">
+                        <div class="card-header">
+                            <h2 style="margin: 0;">Contenidos</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info">
+                                <strong>Contenido principal:</strong> TALLER: Mini serie web (I)</div>
+                            <h4>Programación de aula (90 minutos)</h4>
+                            <table>
+                                <thead>
+                                    <tr><th>Tiempo</th><th>Actividad</th><th>Dinámica</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>0-15 min</td><td>Calentamiento y activación</td><td>Grupo clase</td></tr>
+                                    <tr><td>15-35 min</td><td>Análisis de textos modelo</td><td>Parejas</td></tr>
+                                    <tr><td>35-55 min</td><td>Práctica guiada</td><td>Individual</td></tr>
+                                    <tr><td>55-80 min</td><td>Producción escrita</td><td>Individual</td></tr>
+                                    <tr><td>80-90 min</td><td>Puesta en común y cierre</td><td>Grupo clase</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <section id="actividades">
+
+                    <!-- Actividad 1: Análisis de guiones modelo -->
+                    <section class="activity mb-4">
+                        <div class="activity-header">
+                            <span class="activity-type">Actividad 1 | Análisis</span>
+                            <h3 class="activity-title">Guiones modelo: Análisis de formato y narrativa</h3>
+                        </div>
+                        <div class="activity-body">
+                            <div class="activity-instructions">
+                                <p><strong>Instrucciones:</strong> Lee los siguientes extractos de guiones para mini series web. Analiza el formato, la construcción de personajes y el uso de diálogos. Estos ejemplos te ayudarán a comprender cómo estructurar tu propia serie.</p>
+                            </div>
+
+                            <!-- Guion Modelo 1: Drama contemporáneo -->
+                            <div class="card mb-3" style="background: var(--bg-light);">
+                                <div class="card-header" style="background: var(--primary-light);">
+                                    <h4 style="margin: 0; color: var(--primary-dark);">📜 Guion Modelo 1: Drama contemporáneo (Extracto)</h4>
+                                </div>
+                                <div class="card-body">
+                                    <div style="background: white; padding: 1.5rem; border-left: 4px solid var(--primary-color); font-family: 'Courier New', monospace; line-height: 1.6; font-size: 0.95rem;">
+                                        <p style="margin: 0 0 1rem 0;"><strong>EPISODIO 1: "LA DECISIÓN"</strong></p>
+                                        <p style="margin: 0 0 1rem 0;"><strong>ESCENA 1</strong></p>
+                                        <p style="margin: 0 0 1rem 0;"><em>INT. APARTAMENTO DE ELENA - NOCHE</em></p>
+                                        <p style="margin: 0 0 1rem 0;">ELENA (32 años, ojos cansados,仍然是工作状态) mira su teléfono. La pantalla ilumina su preocupación.</p>
+                                        <p style="margin: 0 0 1rem 0;">ELENA<br>
+(susurra)<br>
+No puedo hacerlo. No hoy.</p>
+                                        <p style="margin: 0 0 1rem 0;">Su mano tiembla. Toca la pantalla pero no responde. Decide dejar el teléfono boca abajo sobre la mesa.</p>
+                                        <p style="margin: 0 0 1rem 0;">La puerta se abre. MARCOS (30 años, sonrisa fácil que no llega a los ojos) entra con dos bolsas de compra.</p>
+                                        <p style="margin: 0 0 1rem 0;">MARCOS<br>
+¿Compré vino. Demasiado?</p>
+                                        <p style="margin: 0 0 1rem 0;">Elena no responde inmediatamente. Sus ojos encuentran los de Marcos. Hay algo que no dice.</p>
+                                        <p style="margin: 0 0 1rem 0;">ELENA<br>
+(dudosa)<br>
+Marcos... ¿y si no estamos listos?</p>
+                                        <p style="margin: 0 0 1rem 0;">Marcos se congela. Las bolsas pesan.</p>
+                                        <p style="margin: 0 0 1rem 0;">MARCOS<br>
+¿Para qué?</p>
+                                        <p style="margin: 0 0 1rem 0;">ELENA<br>
+Para todo.</p>
+                                        <p style="margin: 0 0 0 0;">Silencio. El sonido de una vecina que pasa por el pasillo rompe la tensión momentáneamente.</p>
+                                    </div>
+
+                                    <div class="mt-3">
+                                        <h6 style="color: var(--primary-dark); margin-bottom: 0.5rem;">📊 Análisis de características del guion:</h6>
+                                        <ul style="margin: 0; padding-left: 1.5rem; font-size: 0.9rem;">
+                                            <li><strong>Formato visual:</strong> Descripciones concisas que pintan una imagen clara («ojos cansados», «sonrisa fácil que no llega a los ojos»)</li>
+                                            <li><strong>Subtexto en diálogos:</strong> Lo que no se dice («¿y si no estamos listos? Para todo») es más importante que lo que se dice</li>
+                                            <li><strong>Acciones reveladoras:</strong> «Deja el teléfono boca abajo» comunica tensión sin explicarla</li>
+                                            <li><strong>Transiciones emocionales:</strong> La tensión física (las bolsas que pesan) refleja la tensión emocional</li>
+                                            <li><strong>Cliffhanger:</strong> La pregunta queda suspendida, creando intriga para el siguiente episodio</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Guion Modelo 2: Comedia de situación -->
+                            <div class="card mb-3" style="background: var(--bg-light);">
+                                <div class="card-header" style="background: var(--accent-color);">
+                                    <h4 style="margin: 0; color: var(--primary-dark);">📜 Guion Modelo 2: Comedia de situación (Extracto)</h4>
+                                </div>
+                                <div class="card-body">
+                                    <div style="background: white; padding: 1.5rem; border-left: 4px solid var(--accent-color); font-family: 'Courier New', monospace; line-height: 1.6; font-size: 0.95rem;">
+                                        <p style="margin: 0 0 1rem 0;"><strong>EPISODIO 1: "EL ERROR"</strong></p>
+                                        <p style="margin: 0 0 1rem 0;"><strong>ESCENA 3</strong></p>
+                                        <p style="margin: 0 0 1rem 0;"><em>INT. OFICINA ABIERTA - DÍA</em></p>
+                                        <p style="margin: 0 0 1rem 0;">CARLOS (28 años, parece no haber dormido en tres días) intenta disimular que su pantalla de ordenador muestra un video de gatos.</p>
+                                        <p style="margin: 0 0 1rem 0;">LUISA (50 años, directora, tiene el don de aparecer sin hacer ruido) se materializa detrás de él.</p>
+                                        <p style="margin: 0 0 1rem 0;">LUISA<br>
+(seca)<br>
+Gatos. Fascinante.</p>
+                                        <p style="margin: 0 0 1rem 0;">Carlos salta. Cierra las pestañas con demasiada fuerza. En el proceso, abre 17 ventanas más.</p>
+                                        <p style="margin: 0 0 1rem 0;">CARLOS<br>
+(elevado, ridículo)<br>
+No son gatos. Es... investigación de mercado para la nueva campaña de.</p>
+                                        <p style="margin: 0 0 1rem 0;">Luisa espera. Carlos espera. Las 17 ventanas muestran variaciones del mismo gato.</p>
+                                        <p style="margin: 0 0 1rem 0;">LUISA<br>
+¿Me vas a decir qué campaña?</p>
+                                        <p style="margin: 0 0 1rem 0;">CARLOS<br>
+(murmullo)<br>
+PetFriendly.</p>
+                                        <p style="margin: 0 0 1rem 0;">Luisa asiente. Como si esto explicara todo.</p>
+                                        <p style="margin: 0 0 1rem 0;">LUISA<br>
+Tienes una reunión en cinco minutos. Con el cliente que odia los animales.</p>
+                                        <p style="margin: 0 0 1rem 0;">CARLOS<br>
+(paralizado)<br>
+¿Odios... a los animales?</p>
+                                        <p style="margin: 0 0 1rem 0;">LUISA<br>
+No. A las personas que pierden el tiempo con gatos en lugar de preparar su presentación.</p>
+                                        <p style="margin: 0 0 0 0;">Luisa se va. Carlos mira el gato en la pantalla. El gato le devuelve la mirada con juicio.</p>
+                                    </div>
+
+                                    <div class="mt-3">
+                                        <h6 style="color: var(--primary-dark); margin-bottom: 0.5rem;">📊 Análisis de características del guion:</h6>
+                                        <ul style="margin: 0; padding-left: 1.5rem; font-size: 0.9rem;">
+                                            <li><strong>Timing cómico:</strong> La precisión («17 ventanas») crea el efecto humorístico</li>
+                                            <li><strong>Registro coloquial:</strong> Diálogos naturales que imitan el habla real («murmullo», «elevado, ridículo»)</li>
+                                            <li><strong>Irreverencia:</strong> El gato que devuelve la mirada «con juicio» antropomorfiza el absurdo</li>
+                                            <li><strong>Situación over the top:</strong> La exageración (directora que aparece sin ruido, cliente que odia animales) genera comedia</li>
+                                            <li><strong>Premisa recurrente:</strong> El conflicto (Carlos vs. profesionalidad) se establecerá como patrón episódico</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Guía de análisis -->
+                            <div class="card mb-3" style="background: white; border: 2px solid var(--primary-color);">
+                                <div class="card-body">
+                                    <h5 style="color: var(--primary-dark); margin-bottom: 1rem;">📝 Tu análisis comparado</h5>
+                                    <p style="margin-bottom: 1rem;">Compara los dos guiones modelo y responde:</p>
+                                    <ol style="margin-bottom: 0;">
+                                        <li>¿Cómo difiere el <strong>ritmo</strong> del drama vs. la comedia?</li>
+                                        <li>¿Qué <strong>recursos visuales</strong> usa cada género?</li>
+                                        <li>¿Cómo se comunica el <strong>subtexto</strong> en cada caso?</li>
+                                        <li>¿Qué tipo de <strong>cliffhanger</strong> usarías para continuar cada historia?</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Actividad 2: Desarrollo de personajes -->
+                    <section class="activity mb-4">
+                        <div class="activity-header">
+                            <span class="activity-type">Actividad 2 | Creación</span>
+                            <h3 class="activity-title">Desarrollo de personajes para serie web</h3>
+                        </div>
+                        <div class="activity-body">
+                            <div class="activity-instructions">
+                                <p><strong>Instrucciones:</strong> Una mini serie web exitosa depende de personajes memorables. Completa esta ficha de desarrollo de personaje para tu serie.</p>
+                            </div>
+
+                            <div class="card mb-3" style="background: var(--bg-light);">
+                                <div class="card-body">
+                                    <h5 style="color: var(--primary-dark); margin-bottom: 1rem;">📋 Ficha de personaje</h5>
+
+                                    <div class="form-group mb-3">
+                                        <label class="form-label"><strong>Nombre del personaje:</strong></label>
+                                        <input type="text" class="form-control" placeholder="Ej: Elena García Martínez">
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        <label class="form-label"><strong>Edad y ocupación:</strong></label>
+                                        <input type="text" class="form-control" placeholder="Ej: 32 años, periodista freelance">
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        <label class="form-label"><strong>Trauma o evento formativo (el «ghost» que los define):</strong></label>
+                                        <textarea class="form-control" rows="2" placeholder="¿Qué evento del pasado explica quién son hoy?"></textarea>
+                                        <small class="text-secondary">Ej: «A los 18, fue rechazada en la escuela de cine. Todavía escribe guiones en secreto, convencida de que no son suficientemente buenos.»</small>
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        <label class="form-label"><strong>Motivo explícito (lo que dicen que quieren):</strong></label>
+                                        <input type="text" class="form-control" placeholder="Ej: Quiero ascender en el trabajo">
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        <label class="form-label"><strong>Necesidad emocional real (lo que realmente necesitan):</strong></label>
+                                        <input type="text" class="form-control" placeholder="Ej: Necesita aprender a confiar en los demás">
+                                        <small class="text-secondary">La diferencia entre motivo explícito y necesidad real crea conflicto interno.</small>
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        <label class="form-label"><strong>Flaw o defecto fatal (su obstáculo interno):</strong></label>
+                                        <input type="text" class="form-control" placeholder="Ej: Perfeccionismo que la paraliza">
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        <label class="form-label"><strong>Voz y registro lingüístico:</strong></label>
+                                        <textarea class="form-control" rows="3" placeholder="¿Cómo habla? ¿Coloquial? ¿Formal? ¿Usa jerga específica?"></textarea>
+                                    </div>
+
+                                    <div class="form-group mb-0">
+                                        <label class="form-label"><strong>Arc de transformación (cómo cambiarán en la serie):</strong></label>
+                                        <textarea class="form-control" rows="3" placeholder="Al inicio: [estado] → Al final: [estado transformado]"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Actividad 3: Escritura de escena -->
+                    <section class="activity mb-4">
+                        <div class="activity-header">
+                            <span class="activity-type">Actividad 3 | Producción</span>
+                            <h3 class="activity-title">Escribe la primera escena de tu episodio</h3>
+                        </div>
+                        <div class="activity-body">
+                            <div class="activity-instructions">
+                                <p><strong>Instrucciones:</strong> Escribe una escena completa (2-3 páginas de guion) que introduzca tu personaje principal y establezca el conflicto inicial de tu mini serie. Usa el formato de guion que hemos analizado.</p>
+                            </div>
+
+                            <div class="card mb-3" style="background: white; border: 2px solid var(--accent-color);">
+                                <div class="card-body">
+                                    <h5 style="color: var(--primary-dark); margin-bottom: 1rem;">🎬 Requisitos de la escena</h5>
+
+                                    <div style="background: var(--bg-light); padding: 1rem; border-left: 4px solid var(--accent-color); margin-bottom: 1rem;">
+                                        <p style="margin: 0 0 0.5rem 0;"><strong>Tu escena debe incluir:</strong></p>
+                                        <ul style="margin: 0; padding-left: 1.5rem;">
+                                            <li><strong>Encabezado de escena:</strong> INT./EXT. + LUGAR + DÍA/NOCHE</li>
+                                            <li><strong>Descripción de acción:</strong> Párrafos en presente que visualicen lo que ocurre</li>
+                                            <li><strong>Diálogos con subtexto:</strong> Lo que se dice vs. lo que realmente se comunica</li>
+                                            <li><strong>Al menos un momento visual:</strong> Algo que solo funciona en pantalla (no se podría contar en prosa)</li>
+                                            <li><strong>Cliffhanger de escena:</strong> Un giro que genere pregunta sobre qué pasará después</li>
+                                            <li><strong>Uso de paréntesis:</strong> Indicaciones de tono para los actores (susurra, elevado, Dudosa)</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <form data-submission-form data-session-id="9" data-activity-id="produccion" data-activity-title="Escena de mini serie web - Sesión 9">
+                                <div class="form-group mb-3">
+                                    <label class="form-label"><strong>Título de tu mini serie:</strong></label>
+                                    <input type="text" class="form-control" name="titulo_serie" placeholder="Ej: 'Décadas en sombras'">
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label class="form-label"><strong>Género:</strong></label>
+                                    <select class="form-control" name="genero">
+                                        <option value="">Selecciona...</option>
+                                        <option value="drama">Drama</option>
+                                        <option value="comedia">Comedia</option>
+                                        <option value="thriller">Thriller</option>
+                                        <option value="romance">Romance</option>
+                                        <option value="ciencia-ficcion">Ciencia ficción</option>
+                                        <option value="fantasia">Fantasía</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label class="form-label"><strong>Tu escena (en formato de guion):</strong></label>
+                                    <textarea name="content" class="form-control" rows="15" placeholder="Escribe aquí tu escena en formato de guion...
+
+EPISODIO 1: &quot;[TÍTULO DEL EPISODIO]&quot;
+
+ESCENA 1
+
+INT. [LUGAR] - DÍA/NOCHE
+
+[Descripción de acción y personajes]
+
+PERSONAJE
+(indicación de tono)
+Diálogo..." required></textarea>
+                                    <small class="text-secondary">Usa formato Courier New o monoespaciado para facilitar la lectura como guion.</small>
+                                </div>
+
+                                <div class="alert alert-info mb-3">
+                                    <strong>📏 Extensión recomendada:</strong> 2-3 páginas (aprox. 300-500 palabras en formato de guion)
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">Enviar escena</button>
+                            </form>
+                        </div>
+                    </section>
+                    </section>
+
+                    <section id="tarea" class="card mb-4" style="border: 2px solid var(--accent-color);">
+                        <div class="card-header" style="background: var(--accent-color); color: var(--primary-dark);">
+                            <h2 style="margin: 0; color: var(--primary-dark);">Tarea para casa</h2>
+                        </div>
+                        <div class="card-body">
+                            <h4 style="margin-bottom: 1rem;">🎬 Preparación para la continuación del taller</h4>
+
+                            <div class="alert alert-info mb-3">
+                                <strong>⏱️ Tiempo estimado de trabajo:</strong> 75-90 minutos
+                            </div>
+
+                            <!-- Tarea 1: Revisión y mejora de la escena -->
+                            <div class="card mb-3" style="background: white;">
+                                <div class="card-body">
+                                    <h5 style="color: var(--primary-dark); margin-bottom: 0.5rem;">1️⃣ Revisión y pulido de tu escena (30 min)</h5>
+                                    <p style="margin-bottom: 1rem;">Revisa la escena que escribiste en clase siguiendo esta lista de control de nivel C2:</p>
+
+                                    <div style="background: var(--bg-light); padding: 1rem; border-left: 4px solid var(--primary-color); margin-bottom: 1rem;">
+                                        <p style="margin: 0 0 0.5rem 0;"><strong>📋 Lista de control para guiones:</strong></p>
+                                        <ul style="margin: 0; padding-left: 1.5rem;">
+                                            <li><strong>Mostrar, no contar:</strong> ¿Tu escena usa acción visual para comunicar información emocional?</li>
+                                            <li><strong>Subtexto:</strong> ¿Hay al menos un momento donde lo que no se dice es más importante que lo que se dice?</li>
+                                            <li><strong>Voz distintiva:</strong> ¿Cada personaje tiene un modo de hablar único y reconocible?</li>
+                                            <li><strong>Formato correcto:</strong> ¿Usaste INT./EXT., descripciones en presente, diálogos centrados?</li>
+                                            <li><strong>Cliffhanger efectivo:</strong> ¿El final de la escena genera genuina intriga sobre qué pasará después?</li>
+                                        </ul>
+                                    </div>
+
+                                    <p style="margin-bottom: 0;"><strong>Entregable:</strong> Escena revisada + párrafo explicando qué cambios hiciste y por qué (100-150 palabras).</p>
+                                </div>
+                            </div>
+
+                            <!-- Tarea 2: Análisis de serie web existente -->
+                            <div class="card mb-3" style="background: white;">
+                                <div class="card-body">
+                                    <h5 style="color: var(--primary-dark); margin-bottom: 0.5rem;">2️⃣ Análisis de mini serie web (25 min)</h5>
+                                    <p style="margin-bottom: 1rem;">Elige una mini serie web en español (o con doblaje/subtítulos en español) de 5-10 minutos por episodio y analiza su primer episodio.</p>
+
+                                    <div style="background: var(--bg-light); padding: 1rem; border-left: 4px solid var(--accent-color); margin-bottom: 1rem;">
+                                        <p style="margin: 0 0 0.5rem 0;"><strong>📝 Aspectos a analizar:</strong></p>
+                                        <ul style="margin: 0; padding-left: 1.5rem;">
+                                            <li><strong>El hook inicial:</strong> ¿Cómo capturan la atención en los primeros 30 segundos?</li>
+                                            <li><strong>Presentación de personaje:</strong> ¿Qué aprendemos del protagonista sin que nadie nos lo diga explícitamente?</li>
+                                            <li><strong>Conflicto establecido:</strong> ¿Qué problema o pregunta se plantea que motiva a seguir viendo?</li>
+                                            <li><strong>Registro lingüístico:</strong> ¿Cómo habla la gente? ¿Natural? ¿Estilizado? ¿Qué efecto crea?</li>
+                                            <li><strong>Cliffhanger del episodio:</strong> ¿Cómo termina el episodio? ¿Qué pregunta deja sin responder?</li>
+                                        </ul>
+                                    </div>
+
+                                    <p style="margin-bottom: 0;"><strong>Entregable:</strong> Título + enlace a la serie + análisis (200-250 palabras).</p>
+                                </div>
+                            </div>
+
+                            <!-- Tarea 3: Planificación de arco serial -->
+                            <div class="card mb-3" style="background: white;">
+                                <div class="card-body">
+                                    <h5 style="color: var(--primary-dark); margin-bottom: 0.5rem;">3️⃣ Planificación del arco de tu serie (20-25 min)</h5>
+                                    <p style="margin-bottom: 1rem;">Tu mini serie tendrá 3-5 episodios de 5-7 minutos. Planifica el arco narrativo completo respondiendo:</p>
+
+                                    <div style="background: var(--bg-light); padding: 1rem; border-left: 4px solid var(--primary-color); margin-bottom: 1rem;">
+                                        <p style="margin: 0 0 0.5rem 0;"><strong>🎯 Estructura serial:</strong></p>
+                                        <ol style="margin: 0; padding-left: 1.5rem;">
+                                            <li><strong>Episodio 1 (El setup):</strong> ¿Qué situación establecemos? ¿Qué pregunta inicial planteamos?</li>
+                                            <li><strong>Episodio 2-3 (El desarrollo):</strong> ¿Cómo complica la situación? ¿Qué obstáculos enfrentan los personajes?</li>
+                                            <li><strong>Episodio 4-5 (El clímax y resolución):</strong> ¿Cómo converge todo? ¿Qué transforma a los personajes?</li>
+                                        </ol>
+                                    </div>
+
+                                    <p style="margin-bottom: 0;"><strong>Entregable:</strong> Esquema de 3-5 episodios con 2-3 frases por episodio (150-200 palabras).</p>
+                                </div>
+                            </div>
+
+                            <!-- Formulario de entrega -->
+                            <div class="alert alert-warning mb-3">
+                                <strong>📤 Instrucciones de entrega:</strong> Organiza tu trabajo en secciones claras como se indica abajo.
+                            </div>
+
+                            <form data-submission-form data-session-id="9" data-activity-id="tarea" data-activity-title="Tarea - Taller Mini Serie Web (Sesión 9)">
+                                <div class="form-group mb-3">
+                                    <label class="form-label"><strong>Tu trabajo completo:</strong></label>
+                                    <textarea name="content" class="form-control" rows="12" placeholder="Organiza así:
+
+━━━ TAREA 1: Escena revisada ━━━
+[Tu escena revisada]
+
+Párrafo de explicación de cambios (100-150 palabras):
+[Tu explicación]
+
+━━━ TAREA 2: Análisis de serie web ━━━
+Título de la serie: [Título]
+Enlace: [URL]
+
+Análisis (200-250 palabras):
+[Tu análisis del primer episodio]
+
+━━━ TAREA 3: Arco serial ━━━
+Episodio 1: [setup]
+Episodio 2: [desarrollo]
+Episodio 3: [desarrollo/clímax]
+Episodio 4: [resolución - opcional]
+Episodio 5: [resolución - opcional]" required></textarea>
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label class="form-label"><strong>Enlace a la serie que analizaste:</strong></label>
+                                    <input type="url" class="form-control" name="serie_url" placeholder="https://youtube.com/watch?v=...">
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label class="form-label"><strong>Preguntas o dudas sobre el guion:</strong></label>
+                                    <input type="text" class="form-control" name="preguntas" placeholder="Aspectos del guion que te gustaría que trabajáramos en la próxima sesión...">
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">Enviar tarea completa</button>
+                            </form>
+
+                            <!-- Recursos adicionales -->
+                            <div class="card mt-3" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+                                <div class="card-body">
+                                    <h6 style="margin: 0 0 0.5rem 0;">📚 Recursos recomendados para este taller:</h6>
+                                    <ul style="margin: 0; padding-left: 1.5rem;">
+                                        <li><strong>Formato de guion:</strong> <em>The Screenwriter's Bible</em> de David Trottier (capítulo de formato, disponible en PDF)</li>
+                                        <li><strong>Mini series web:</strong> Plataformas como YouTube (buscar «web series español»), Vimeo Staff Picks, Netflix (cortos format)</li>
+                                        <li><strong>Construcción de personajes:</strong> <em>Story</em> de Robert McKee (capítulo 4, «The Structure of Character»)</li>
+                                        <li><strong>Diálogos con subtexto:</strong> <em>Dialogue</em> de Robert McKee (ejercicios de capítulo 2)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <div style="display: flex; justify-content: space-between; margin-top: var(--spacing-xl);">
+                        <a href="sesion-08.html" class="btn btn-outline">&larr; Sesión anterior</a>
+                        <a href="sesion-10.html" class="btn btn-primary">Siguiente sesión &rarr;</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom" style="border: none; padding-top: 0;">
+                <span>&copy; 2026 Javier Benítez Láinez | CLM - Universidad de Granada</span>
+                <a href="/contacto.html" style="color: rgba(255,255,255,0.7);">Contacto</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/config.js"></script>
+<script src="../js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+        });
+    </script>
+</body>
+</html>
