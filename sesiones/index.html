@@ -9,11 +9,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <script>
-        window.PE_CONFIG = {
-            API_URL: 'https://produccion-escrita-c2-api-production.up.railway.app'
-        };
-    </script>
 </head>
 <body>
     <header class="header">
@@ -103,22 +98,26 @@
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
-            <div class="footer-bottom" style="border: none; padding-top: 0;">
+            <div class="footer-bottom">
                 <span>&copy; 2026 Javier Benítez Láinez | CLM - Universidad de Granada</span>
-                <a href="mailto:benitezl@go.ugr.es" style="color: rgba(255,255,255,0.7);">benitezl@go.ugr.es</a>
+                <span>
+                    <a href="/contacto.html">Contacto</a>
+                    <span style="color: rgba(255,255,255,0.3); margin: 0 0.5rem;">|</span>
+                    <a href="/terminos.html">Términos y Condiciones</a>
+                    <span style="color: rgba(255,255,255,0.3); margin: 0 0.5rem;">|</span>
+                    <a href="/privacidad.html">Privacidad</a>
+                </span>
             </div>
         </div>
     </footer>
 
-    <script src="../js/app.js"></script>
+    <script src="../js/config.js"></script>
+<script src="../js/app.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const container = document.getElementById('sessions-container');
-            const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
-            
             const sessions = PE.CourseData.sessions;
             const progress = PE.CourseData.getCourseProgress();
-            const today = PE.CourseData.getTodayDate ? PE.CourseData.getTodayDate() : new Date();
 
             // Actualizar progreso
             document.getElementById('course-progress').style.width = progress.percentage + '%';
@@ -143,8 +142,7 @@
                 }
 
                 container.innerHTML = filteredSessions.map(session => {
-                    const sessionDate = PE.CourseData.getSessionDate ? PE.CourseData.getSessionDate(session.date) : new Date(session.date);
-                    const isPast = sessionDate < today;
+                    const isPast = new Date(session.date) < new Date();
                     const isCurrent = session.id === PE.CourseData.getCurrentSession().id;
                     const isWorkshop = session.theme === 'taller';
 
@@ -182,7 +180,7 @@
                                 ` : ''}
                             </div>
                             <div class="card-footer">
-                                <a href="${basePath}/sesiones/sesion-${String(session.id).padStart(2, '0')}.html" class="btn btn-sm ${isCurrent ? 'btn-primary' : 'btn-outline'}">
+                                <a href="/sesiones/sesion-${String(session.id).padStart(2, '0')}.html" class="btn btn-sm ${isCurrent ? 'btn-primary' : 'btn-outline'}">
                                     ${isPast ? 'Revisar' : isCurrent ? 'Ir a la sesión' : 'Ver detalles'}
                                 </a>
                             </div>
