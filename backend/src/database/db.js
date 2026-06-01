@@ -4,12 +4,18 @@
 
 const { Pool } = require('pg');
 
+// Determinar si usar SSL basado en la URL de la base de datos
+const useSSL = process.env.DATABASE_URL &&
+    !process.env.DATABASE_URL.includes('localhost') &&
+    !process.env.DATABASE_URL.includes('127.0.0.1') &&
+    process.env.NODE_ENV !== 'development';
+
 // Crear pool de conexiones
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: {
+    ssl: useSSL ? {
         rejectUnauthorized: false
-    }
+    } : false
 });
 
 // Verificar conexión

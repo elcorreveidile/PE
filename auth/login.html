@@ -258,6 +258,9 @@
                     <label class="form-label" for="registration-code">Código de registro</label>
                     <input type="text" id="registration-code" class="form-control" placeholder="Ej: PIO7-2026-CLM" required>
                 </div>
+
+                <!-- Información del curso (se muestra al validar el código) -->
+                <div id="course-info-display" style="display: none;"></div>
                 <div id="registration-error" class="alert alert-error" style="display: none;"></div>
                 <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-lg);">
                     <button type="button" class="btn btn-outline" onclick="closeOAuthRegistrationModal()">Cancelar</button>
@@ -338,5 +341,6 @@
     </script>
     <script src="../js/config.js"></script>
 <script src="../js/app.js"></script>
+    <script src="../js/courses.js"></script>
 </body>
 </html>

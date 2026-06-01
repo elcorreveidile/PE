@@ -27,6 +27,8 @@ const rubricsRoutes = require('./routes/rubrics');
 const statisticsRoutes = require('./routes/statistics');
 const contactRoutes = require('./routes/contact');
 const studentTasksRoutes = require('./routes/studentTasks');
+const coursesRoutes = require('./routes/courses');
+const publicRoutes = require('./routes/public');
 
 // Importar middleware
 const { trackVisit } = require('./middleware/visits');
@@ -116,6 +118,8 @@ app.use('/api/rubrics', rubricsRoutes);
 app.use('/api/statistics', statisticsRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/student-tasks', studentTasksRoutes);
+app.use('/api/courses', coursesRoutes);
+app.use('/api/public', publicRoutes);
 
 // Ruta de health check
 app.get('/api/health', (req, res) => {

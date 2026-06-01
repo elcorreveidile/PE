@@ -55,13 +55,13 @@ async function sendPasswordResetEmail({ email, name, resetLink }) {
 
 /**
  * POST /api/auth/register
- * Registrar nuevo usuario
+ * Registrar nuevo usuario con soporte multi-curso
  */
 router.post('/register', [
     body('email').isEmail().normalizeEmail().withMessage('Email invalido'),
     body('password').isLength({ min: 6 }).withMessage('La contrasena debe tener al menos 6 caracteres'),
     body('name').trim().isLength({ min: 2 }).withMessage('El nombre debe tener al menos 2 caracteres'),
-    body('level').optional().isIn(['C2-8', 'C2-9', 'C2']).withMessage('Nivel invalido'),
+    body('level').optional().isIn(['C1', 'C2-8', 'C2-9', 'C2']).withMessage('Nivel invalido'),
     body().custom((value, { req }) => {
         const registrationCode = req.body.registration_code ?? req.body.registrationCode;
         if (!registrationCode || !String(registrationCode).trim()) {
@@ -80,10 +80,56 @@ router.post('/register', [
         const { email, password, name, level, motivation } = req.body;
         const registrationCode = (req.body.registration_code ?? req.body.registrationCode ?? '').toString().trim();
 
-        // Verificar codigo de registro
-        const validCode = process.env.REGISTRATION_CODE || 'PIO7-2026-CLM';
-        if (registrationCode !== validCode) {
-            return res.status(400).json({ error: 'Codigo de registro invalido' });
+        // Validar código de registro y obtener curso
+        let courseId = null;
+        let courseName = '';
+        let courseTitle = '';
+
+        try {
+            // Intentar validar contra la nueva tabla registration_codes
+            const codeValidation = await query(`
+                SELECT rc.course_id, c.name, c.title, rc.current_uses, rc.max_uses
+                FROM registration_codes rc
+                JOIN courses c ON rc.course_id = c.id
+                WHERE rc.code = $1
+                AND rc.is_active = TRUE
+                AND (rc.valid_until IS NULL OR rc.valid_until > CURRENT_TIMESTAMP)
+                AND (rc.max_uses IS NULL OR rc.current_uses < rc.max_uses)
+            `, [registrationCode]);
+
+            if (codeValidation.rows.length === 0) {
+                // Fallback al sistema antiguo si la tabla no existe
+                const validCode = process.env.REGISTRATION_CODE || 'PIO7-2026-CLM';
+                if (registrationCode !== validCode) {
+                    return res.status(400).json({ error: 'Codigo de registro invalido' });
+                }
+                // Usar curso por defecto (C2)
+                const defaultCourse = await query("SELECT id, name, title FROM courses WHERE code = 'C2-PROD-ESCRITA'");
+                if (defaultCourse.rows.length > 0) {
+                    courseId = defaultCourse.rows[0].id;
+                    courseName = defaultCourse.rows[0].name;
+                    courseTitle = defaultCourse.rows[0].title;
+                }
+            } else {
+                const codeData = codeValidation.rows[0];
+                courseId = codeData.course_id;
+                courseName = codeData.name;
+                courseTitle = codeData.title;
+
+                // Incrementar contador de usos del código
+                await query(`
+                    UPDATE registration_codes
+                    SET current_uses = current_uses + 1
+                    WHERE code = $1
+                `, [registrationCode]);
+            }
+        } catch (error) {
+            // Si falla la consulta a registration_codes, usar sistema antiguo
+            console.warn('Error al validar código contra nueva tabla, usando fallback:', error.message);
+            const validCode = process.env.REGISTRATION_CODE || 'PIO7-2026-CLM';
+            if (registrationCode !== validCode) {
+                return res.status(400).json({ error: 'Codigo de registro invalido' });
+            }
         }
 
         // Verificar si el email ya existe
@@ -95,23 +141,28 @@ router.post('/register', [
         // Hash de la contrasena
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Insertar usuario
+        // Insertar usuario con course_id
         const result = await query(`
-            INSERT INTO users (email, password, name, level, motivation)
-            VALUES ($1, $2, $3, $4, $5)
-            RETURNING id
-        `, [email, hashedPassword, name, level || 'C2', motivation || null]);
+            INSERT INTO users (email, password, name, level, motivation, course_id)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING id, course_id
+        `, [email, hashedPassword, name, level || 'C2', motivation || null, courseId]);
 
         const userId = result.rows[0].id;
 
         // Generar token
         const token = generateToken(userId);
 
+        // Mensaje de bienvenida personalizado según curso
+        const welcomeMessage = courseTitle
+            ? `Te has registrado correctamente en ${courseTitle}. Bienvenido/a al curso.`
+            : 'Te has registrado correctamente en el curso de Produccion Escrita C2. El curso comienza el 2 de febrero de 2026.';
+
         // Crear notificacion de bienvenida
         await query(`
             INSERT INTO notifications (user_id, type, title, message)
-            VALUES ($1, 'welcome', 'Bienvenido/a al curso', 'Te has registrado correctamente en el curso de Produccion Escrita C2. El curso comienza el 2 de febrero de 2026.')
-        `, [userId]);
+            VALUES ($1, 'welcome', 'Bienvenido/a al curso', $2)
+        `, [userId, welcomeMessage]);
 
         res.status(201).json({
             message: 'Usuario registrado correctamente',
@@ -120,7 +171,9 @@ router.post('/register', [
                 email,
                 name,
                 level: level || 'C2',
-                role: 'student'
+                role: 'student',
+                course_id: courseId,
+                course_name: courseName
             },
             token
         });
@@ -147,8 +200,13 @@ router.post('/login', [
 
         const { email, password } = req.body;
 
-        // Buscar usuario
-        const result = await query('SELECT * FROM users WHERE email = $1', [email]);
+        // Buscar usuario con información del curso
+        const result = await query(`
+            SELECT u.*, c.name as course_name, c.title as course_title, c.code as course_code
+            FROM users u
+            LEFT JOIN courses c ON u.course_id = c.id
+            WHERE u.email = $1
+        `, [email]);
 
         if (result.rows.length === 0) {
             return res.status(401).json({ error: 'Email o contrasena incorrectos' });
@@ -179,7 +237,11 @@ router.post('/login', [
                 email: user.email,
                 name: user.name,
                 level: user.level,
-                role: user.role
+                role: user.role,
+                course_id: user.course_id,
+                course_name: user.course_name,
+                course_title: user.course_title,
+                course_code: user.course_code
             },
             token
         });
@@ -197,8 +259,11 @@ router.post('/login', [
 router.get('/me', authenticateToken, async (req, res) => {
     try {
         const userResult = await query(`
-            SELECT id, email, name, role, level, motivation, created_at, last_login
-            FROM users WHERE id = $1
+            SELECT u.id, u.email, u.name, u.role, u.level, u.motivation, u.created_at, u.last_login, u.course_id,
+                   c.name as course_name, c.title as course_title, c.code as course_code, c.description as course_description
+            FROM users u
+            LEFT JOIN courses c ON u.course_id = c.id
+            WHERE u.id = $1
         `, [req.user.id]);
 
         if (userResult.rows.length === 0) {
