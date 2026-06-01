@@ -1266,7 +1266,6 @@ Cerramos el curso como lo empezamos: ante una obra de arte y con más preguntas 
                         const words = content.split(/\s+/).filter(w => w.length > 0).length;
                         const formData = {};
                         formData.session_id = `C1-${this.currentSession}`;
-                        formData.session_title = DEBATES_C1[this.currentSession - 1].titulo;
                         formData.activity_id = `tarea-sesion-${this.currentSession}`;
                         formData.activity_title = `Tarea - Sesión ${this.currentSession}`;
                         formData.content = content;
@@ -1304,8 +1303,6 @@ Cerramos el curso como lo empezamos: ante una obra de arte y con más preguntas 
 
                 try {
                     const formData = {};
-                    formData.session_id = `C1-${this.currentSession}`;
-                    formData.session_title = DEBATES_C1[this.currentSession - 1].titulo;
                     formData.activity_id = `tarea-sesion-${this.currentSession}`;
                     formData.activity_title = `Tarea - Sesión ${this.currentSession}`;
                     formData.content = content;
@@ -1325,7 +1322,6 @@ Cerramos el curso como lo empezamos: ante una obra de arte y con más preguntas 
                     console.error('Error al enviar tarea:', error);
                     alert('❌ Error al enviar tarea: ' + error.message);
                 }
-            },
 
             loadDraft(sessionNum) {
                 const draft = localStorage.getItem(`c1-draft-${sessionNum}`);
@@ -1384,7 +1380,6 @@ Cerramos el curso como lo empezamos: ante una obra de arte y con más preguntas 
             const words = content.split(/\s+/).filter(w => w.length > 0).length;
             const formData = {};
             formData.session_id = `C1-${sessionNum}`;
-            formData.session_title = DEBATES_C1[sessionNum - 1].titulo;
             formData.activity_id = `tarea-sesion-${sessionNum}`;
             formData.activity_title = `Tarea para casa - Sesión ${sessionNum}`;
             formData.content = content;
@@ -1445,7 +1440,6 @@ Cerramos el curso como lo empezamos: ante una obra de arte y con más preguntas 
 
                 const formData = {};
                 formData.session_id = `C1-${sessionNum}`;
-                formData.session_title = DEBATES_C1[sessionNum - 1].titulo;
                 formData.activity_id = `tarea-sesion-${sessionNum}`;
                 formData.activity_title = `Tarea para casa - Sesión ${sessionNum}`;
                 formData.content = content;
