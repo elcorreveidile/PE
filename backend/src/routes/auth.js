@@ -85,6 +85,22 @@ router.post('/register', [
         let courseName = '';
         let courseTitle = '';
 
+        // SOLUCIÓN TEMPORAL: Mapeo directo de códigos mientras se ejecuta la migración en producción
+        const temporaryCodeMapping = {
+            'C1-2026-ARTE': {
+                courseId: 2, // ID temporal para C1
+                courseName: 'Arte y Sociedad C1',
+                courseTitle: 'C1 Arte y Sociedad en la Cultura Hispánica',
+                level: 'C1'
+            },
+            'PIO7-2026-CLM': {
+                courseId: 1, // ID temporal para C2
+                courseName: 'Producción Escrita C2',
+                courseTitle: 'Producción Escrita C2 | Curso de Escritura Avanzada en Español',
+                level: 'C2'
+            }
+        };
+
         try {
             // Intentar validar contra la nueva tabla registration_codes
             const codeValidation = await query(`
@@ -98,17 +114,27 @@ router.post('/register', [
             `, [registrationCode]);
 
             if (codeValidation.rows.length === 0) {
-                // Fallback al sistema antiguo si la tabla no existe
-                const validCode = process.env.REGISTRATION_CODE || 'PIO7-2026-CLM';
-                if (registrationCode !== validCode) {
-                    return res.status(400).json({ error: 'Codigo de registro invalido' });
-                }
-                // Usar curso por defecto (C2)
-                const defaultCourse = await query("SELECT id, name, title FROM courses WHERE code = 'C2-PROD-ESCRITA'");
-                if (defaultCourse.rows.length > 0) {
-                    courseId = defaultCourse.rows[0].id;
-                    courseName = defaultCourse.rows[0].name;
-                    courseTitle = defaultCourse.rows[0].title;
+                // Verificar si es un código del mapeo temporal
+                if (temporaryCodeMapping[registrationCode]) {
+                    const tempCourse = temporaryCodeMapping[registrationCode];
+                    courseId = tempCourse.courseId;
+                    courseName = tempCourse.courseName;
+                    courseTitle = tempCourse.courseTitle;
+
+                    console.log(`Usando mapeo temporal para código: ${registrationCode}`);
+                } else {
+                    // Fallback al sistema antiguo
+                    const validCode = process.env.REGISTRATION_CODE || 'PIO7-2026-CLM';
+                    if (registrationCode !== validCode) {
+                        return res.status(400).json({ error: 'Codigo de registro invalido' });
+                    }
+                    // Usar curso por defecto (C2)
+                    const defaultCourse = await query("SELECT id, name, title FROM courses WHERE code = 'C2-PROD-ESCRITA'");
+                    if (defaultCourse.rows.length > 0) {
+                        courseId = defaultCourse.rows[0].id;
+                        courseName = defaultCourse.rows[0].name;
+                        courseTitle = defaultCourse.rows[0].title;
+                    }
                 }
             } else {
                 const codeData = codeValidation.rows[0];
@@ -124,9 +150,27 @@ router.post('/register', [
                 `, [registrationCode]);
             }
         } catch (error) {
-            // Si falla la consulta a registration_codes, usar sistema antiguo
+            // Si falla la consulta, usar mapeo temporal primero
             console.warn('Error al validar código contra nueva tabla, usando fallback:', error.message);
-            const validCode = process.env.REGISTRATION_CODE || 'PIO7-2026-CLM';
+
+            if (temporaryCodeMapping[registrationCode]) {
+                const tempCourse = temporaryCodeMapping[registrationCode];
+                courseId = tempCourse.courseId;
+                courseName = tempCourse.courseName;
+                courseTitle = tempCourse.courseTitle;
+            } else {
+                // Último fallback al sistema antiguo
+                const validCode = process.env.REGISTRATION_CODE || 'PIO7-2026-CLM';
+                if (registrationCode !== validCode) {
+                    return res.status(400).json({ error: 'Codigo de registro invalido' });
+                }
+                if (registrationCode === validCode) {
+                    courseId = 1;
+                    courseName = 'Producción Escrita C2';
+                    courseTitle = 'Producción Escrita C2 | Curso de Escritura Avanzada en Español';
+                }
+            }
+        }
             if (registrationCode !== validCode) {
                 return res.status(400).json({ error: 'Codigo de registro invalido' });
             }

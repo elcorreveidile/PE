@@ -38,17 +38,50 @@ router.get('/validate-code/:code', async (req, res) => {
     try {
         const { code } = req.params;
 
-        const result = await query(`
-            SELECT rc.id, c.code as course_code, c.name as course_name, c.title as course_title, c.level
-            FROM registration_codes rc
-            JOIN courses c ON rc.course_id = c.id
-            WHERE rc.code = $1
-            AND rc.is_active = TRUE
-            AND (rc.valid_until IS NULL OR rc.valid_until > CURRENT_TIMESTAMP)
-            AND (rc.max_uses IS NULL OR rc.current_uses < rc.max_uses)
-        `, [code]);
+        // SOLUCIÓN TEMPORAL: Mapeo directo de códigos mientras se ejecuta la migración en producción
+        const temporaryCodeMapping = {
+            'C1-2026-ARTE': {
+                course_code: 'C1-ARTE-SOCIEDAD',
+                course_name: 'Arte y Sociedad C1',
+                course_title: 'C1 Arte y Sociedad en la Cultura Hispánica',
+                level: 'C1'
+            },
+            'PIO7-2026-CLM': {
+                course_code: 'C2-PROD-ESCRITA',
+                course_name: 'Producción Escrita C2',
+                course_title: 'Producción Escrita C2 | Curso de Escritura Avanzada en Español',
+                level: 'C2'
+            }
+        };
 
+        // Primero intentar contra la base de datos
+        let result;
+        try {
+            result = await query(`
+                SELECT rc.id, c.code as course_code, c.name as course_name, c.title as course_title, c.level
+                FROM registration_codes rc
+                JOIN courses c ON rc.course_id = c.id
+                WHERE rc.code = $1
+                AND rc.is_active = TRUE
+                AND (rc.valid_until IS NULL OR rc.valid_until > CURRENT_TIMESTAMP)
+                AND (rc.max_uses IS NULL OR rc.current_uses < rc.max_uses)
+            `, [code]);
+        } catch (dbError) {
+            console.warn('Error consultando tabla registration_codes, usando fallback:', dbError.message);
+            result = { rows: [] };
+        }
+
+        // Si no hay resultados en BD, verificar mapeo temporal
         if (result.rows.length === 0) {
+            if (temporaryCodeMapping[code]) {
+                return res.json({
+                    success: true,
+                    valid: true,
+                    data: temporaryCodeMapping[code],
+                    using_temporary_mapping: true
+                });
+            }
+
             return res.json({
                 success: false,
                 valid: false,
