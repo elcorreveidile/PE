@@ -1012,24 +1012,6 @@ Cerramos el curso como lo empezamos: ante una obra de arte y con más preguntas 
             `;
 
             window.scrollTo(0, 0);
-
-            // Añadir botón de envío de tareas al final de cada sesión
-            setTimeout(() => {
-                const sessionNav = document.querySelector('.session-nav');
-                if (sessionNav) {
-                    const taskButtonHTML = `
-                        <div style="margin: 32px 0 20px 0; text-align: center;">
-                            <button onclick="document.querySelector('[data-submission-form]')?.scrollIntoView({behavior: 'smooth', block: 'center'})" class="btn btn-accent" style="font-size: 1.1rem; padding: 16px 32px;">
-                                📝 Enviar tarea para esta sesión
-                            </button>
-                            <p style="margin-top: 12px; color: #5A5043; font-size: .9rem;">
-                                Click para abrir el formulario de envío
-                            </p>
-                        </div>
-                    `;
-                    sessionNav.insertAdjacentHTML('beforebegin', taskButtonHTML);
-                }
-            }, 100);
         }
 
         // Función para volver al grid

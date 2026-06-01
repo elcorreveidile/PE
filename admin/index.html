@@ -92,7 +92,7 @@
                             </div>
                             <h3 class="mt-2 mb-0">Javier Benítez Láinez</h3>
                             <p class="text-secondary" style="font-size: 0.875rem; margin: 0.25rem 0;">Profesor</p>
-                            <a href="/contacto.html" class="text-secondary" style="font-size: 0.8125rem;">Contactar</a>
+                            <a href="mailto:benitezl@go.ugr.es" class="text-secondary" style="font-size: 0.8125rem;">benitezl@go.ugr.es</a>
                         </div>
                     </div>
 
@@ -102,13 +102,8 @@
                             <li><a href="index.html" class="active">Panel principal</a></li>
                             <li><a href="estudiantes.html">Estudiantes</a></li>
                             <li><a href="correcciones.html">Correcciones</a></li>
-                            <li><a href="notificaciones.html">Notificaciones</a></li>
-                            <li><a href="asistencia.html">Asistencia QR</a></li>
                             <li><a href="tareas.html">Gestión de tareas</a></li>
                             <li><a href="estadisticas.html">Estadísticas</a></li>
-                            <li><a href="comparacion.html">Comparación</a></li>
-                            <li><a href="rubricas.html">📊 Rúbricas</a></li>
-                            <li><a href="boletines.html">📋 Boletines</a></li>
                         </ul>
                     </div>
 
@@ -156,10 +151,6 @@
                         </div>
                     </div>
 
-                    <div class="text-right mb-3">
-                        <a href="estadisticas.html" class="btn btn-sm btn-primary">Ver estadísticas completas →</a>
-                    </div>
-
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-lg);">
                         <!-- Entregas pendientes de corrección -->
                         <div class="card">
@@ -201,7 +192,6 @@
                         </div>
                         <div class="card-body">
                             <div style="display: flex; gap: var(--spacing-md); flex-wrap: wrap;">
-                                <a href="asistencia.html" class="btn btn-primary">Abrir asistencia QR</a>
                                 <a href="correcciones.html" class="btn btn-primary">Corregir entregas</a>
                                 <a href="../sesiones/index.html" class="btn btn-outline">Ver sesiones</a>
                                 <a href="../calendario.html" class="btn btn-outline">Calendario</a>
@@ -224,62 +214,21 @@
         </div>
     </footer>
 
-    <script>
-        window.PE_CONFIG = {
-            API_URL: 'https://produccion-escrita-c2-api-production.up.railway.app'
-        };
-    </script>
-    <script src="../js/config.js"></script>
-<script src="../js/app.js"></script>
+    <script src="../js/app.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
-            document.querySelectorAll('a[href$=".html"]').forEach(link => {
-                const href = link.getAttribute('href');
-                if (!href || href.startsWith('http') || href.startsWith('/') || href.startsWith('../')) {
-                    return;
-                }
-                link.setAttribute('href', `${basePath}/admin/${href}`);
-            });
-
             // Verificar autenticación de admin
-            const user = await PE.Auth.checkSession();
+            const user = PE.Auth.getCurrentUser();
             if (!user || user.role !== 'admin') {
                 window.location.href = '../auth/login.html';
                 return;
             }
 
-            const API = PE.API;
-            const CONFIG = window.CONFIG || { USE_API: false };
-
-            try {
-                await API.ensureAvailability();
-                CONFIG.USE_API = true;
-            } catch (e) {
-                console.error('API no disponible:', e);
-            }
-
             // Obtener datos
-            let users = [];
-            let submissions = [];
-
-            try {
-                if (CONFIG.USE_API) {
-                    users = await API.get('/users');
-                    // Obtener todas las submissions usando el método correcto
-                    submissions = await PE.Submissions.getAll();
-                } else {
-                    users = JSON.parse(localStorage.getItem('pe_c2_users') || '[]');
-                    submissions = await PE.Submissions.getAll();
-                }
-            } catch (e) {
-                console.error('Error cargando datos:', e);
-                users = [];
-                submissions = [];
-            }
-
+            const users = JSON.parse(localStorage.getItem('pe_c2_users') || '[]');
+            const students = users.filter(u => u.role !== 'admin');
+            let submissions = await PE.Submissions.getAll();
             submissions = Array.isArray(submissions) ? submissions : [];
-            const students = users.filter(u => (u.role || 'student') !== 'admin');
             const pending = submissions.filter(s => s.status === 'pending');
             const progress = PE.CourseData.getCourseProgress();
 
@@ -298,12 +247,12 @@
                     <div class="submission-item">
                         <div class="submission-header">
                             <div>
-                                <strong>${PE.Utils.escapeHtml(s.userName || s.user_name || 'Estudiante')}</strong>
+                                <strong>${PE.Utils.escapeHtml(s.userName || 'Estudiante')}</strong>
                                 <span class="badge badge-warning ml-2">Pendiente</span>
                             </div>
-                            <span class="text-secondary" style="font-size: 0.875rem;">${PE.Utils.formatDate(s.created_at || s.createdAt)}</span>
+                            <span class="text-secondary" style="font-size: 0.875rem;">${PE.Utils.formatDate(s.createdAt)}</span>
                         </div>
-                        <p class="text-secondary mb-2" style="font-size: 0.875rem;">${PE.Utils.escapeHtml(s.activity_title || s.activityTitle)}</p>
+                        <p class="text-secondary mb-2" style="font-size: 0.875rem;">${PE.Utils.escapeHtml(s.activityTitle)}</p>
                         <button class="btn btn-sm btn-primary" onclick="reviewSubmission('${s.id}')">Corregir</button>
                     </div>
                 `).join('');
@@ -315,8 +264,7 @@
                 studentContainer.innerHTML = '<p class="text-secondary text-center">No hay estudiantes registrados.</p>';
             } else {
                 studentContainer.innerHTML = students.map(s => {
-                    const studentSubmissions = submissions.filter(sub => String(sub.user_id || sub.userId) === String(s.id));
-                    const submissionCount = s.submissions_count || studentSubmissions.length;
+                    const studentSubmissions = submissions.filter(sub => sub.userId === s.id);
                     return `
                         <div class="submission-item">
                             <div class="submission-header">
@@ -324,7 +272,7 @@
                                 <span class="badge badge-primary">${s.level || 'C2'}</span>
                             </div>
                             <p class="text-secondary mb-0" style="font-size: 0.875rem;">
-                                ${s.email} - ${submissionCount} entregas
+                                ${s.email} - ${studentSubmissions.length} entregas
                             </p>
                         </div>
                     `;
@@ -340,7 +288,7 @@
                         <h4 style="margin: 0.5rem 0;">${nextSession.title}</h4>
                         <p class="text-secondary mb-0">${nextSession.day}, ${PE.Utils.formatDate(nextSession.date, 'long')}</p>
                     </div>
-                    <a href="/sesiones/sesion-${String(nextSession.id).padStart(2, '0')}.html" class="btn btn-primary">
+                    <a href="../sesiones/sesion-${String(nextSession.id).padStart(2, '0')}.html" class="btn btn-primary">
                         Ver/Editar sesión
                     </a>
                 </div>
@@ -350,8 +298,7 @@
         async function reviewSubmission(id) {
             let submissions = await PE.Submissions.getAll();
             submissions = Array.isArray(submissions) ? submissions : [];
-            const targetId = String(id);
-            const submission = submissions.find(s => String(s.id) === targetId);
+            const submission = submissions.find(s => s.id === id);
 
             if (submission) {
                 PE.UI.showModal('Corregir entrega', `

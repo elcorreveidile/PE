@@ -53,12 +53,8 @@
                             <li><a href="index.html">Panel principal</a></li>
                             <li><a href="estudiantes.html">Estudiantes</a></li>
                             <li><a href="correcciones.html">Correcciones</a></li>
-                            <li><a href="notificaciones.html">Notificaciones</a></li>
                             <li><a href="tareas.html">Gestion de tareas</a></li>
                             <li><a href="estadisticas.html" class="active">Estadisticas</a></li>
-                            <li><a href="comparacion.html">Comparacion</a></li>
-                            <li><a href="rubricas.html">📊 Rúbricas</a></li>
-                            <li><a href="boletines.html">📋 Boletines</a></li>
                         </ul>
                     </div>
                     <div class="sidebar-section">
@@ -72,12 +68,11 @@
                             <h1 style="margin-bottom: 0.25rem;">Estadisticas del curso</h1>
                             <p class="text-secondary mb-0">Metricas y analisis del progreso general</p>
                         </div>
-                        <button class="btn btn-outline" onclick="exportStats('csv')" title="Exportar a CSV">📊 CSV</button>
-                        <button class="btn btn-outline" onclick="exportStats('xlsx')" title="Exportar a Excel">📈 Excel</button>
+                        <button class="btn btn-outline" onclick="exportStats()">Exportar informe</button>
                     </div>
 
                     <!-- Estadisticas principales -->
-                    <div class="sessions-grid mb-4" style="grid-template-columns: repeat(5, 1fr);">
+                    <div class="sessions-grid mb-4" style="grid-template-columns: repeat(4, 1fr);">
                         <div class="card stat-card">
                             <span class="stat-value text-primary" id="stat-students">0</span>
                             <p class="stat-label">Estudiantes matriculados</p>
@@ -87,16 +82,12 @@
                             <p class="stat-label">Total de entregas</p>
                         </div>
                         <div class="card stat-card">
-                            <span class="stat-value" style="color: var(--accent-color);" id="stat-graded">0</span>
-                            <p class="stat-label">Entregas calificadas</p>
-                        </div>
-                        <div class="card stat-card">
-                            <span class="stat-value" style="color: var(--warning-color);" id="stat-avg-grade">-</span>
-                            <p class="stat-label">Nota media curso</p>
-                        </div>
-                        <div class="card stat-card">
-                            <span class="stat-value text-primary" id="stat-words">0</span>
+                            <span class="stat-value" style="color: var(--accent-color);" id="stat-words">0</span>
                             <p class="stat-label">Palabras escritas</p>
+                        </div>
+                        <div class="card stat-card">
+                            <span class="stat-value text-primary" id="stat-avg">0</span>
+                            <p class="stat-label">Media palabras/entrega</p>
                         </div>
                     </div>
 
@@ -124,7 +115,7 @@
                                         <div class="chart-container">
                                             <div class="chart-bar" id="bar-themes" style="width: 0%; background: var(--success-color);"></div>
                                         </div>
-                                        <span class="chart-value" id="val-themes">0/11</span>
+                                        <span class="chart-value" id="val-themes">0/14</span>
                                     </div>
                                     <div class="chart-row">
                                         <span class="chart-label">Talleres</span>
@@ -182,24 +173,14 @@
                             </div>
                         </div>
 
-                        <!-- Distribucion de notas -->
+                        <!-- Distribucion por nivel -->
                         <div class="card">
                             <div class="card-header">
-                                <h3 class="card-title">Distribucion de notas</h3>
+                                <h3 class="card-title">Distribucion por nivel</h3>
                             </div>
-                            <div class="card-body" id="grade-distribution">
+                            <div class="card-body" id="level-distribution">
                                 <div class="loader"></div>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Distribucion por nivel -->
-                    <div class="card mt-4">
-                        <div class="card-header">
-                            <h3 class="card-title">Distribucion por nivel</h3>
-                        </div>
-                        <div class="card-body" id="level-distribution">
-                            <div class="loader"></div>
                         </div>
                     </div>
                 </div>
@@ -215,146 +196,33 @@
         </div>
     </footer>
 
-    <script>
-        window.PE_CONFIG = {
-            API_URL: 'https://produccion-escrita-c2-api-production.up.railway.app'
-        };
-    </script>
-    <script src="../js/config.js"></script>
-<script src="../js/app.js"></script>
+    <script src="../js/app.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            const user = await PE.Auth.checkSession();
+            const user = PE.Auth.getCurrentUser();
             if (!user || user.role !== 'admin') {
                 const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
                 window.location.href = basePath + '/auth/login.html';
                 return;
             }
 
-            const API = PE.API;
-            const CONFIG = window.CONFIG || { USE_API: false };
-
-            try {
-                await API.ensureAvailability();
-                CONFIG.USE_API = true;
-            } catch (e) {
-                console.error('API no disponible:', e);
-            }
-
-            // Obtener datos
-            let users = [];
-            let submissions = [];
-            let rubricMaxById = {};
-
-            try {
-                if (CONFIG.USE_API) {
-                    users = await API.get('/users');
-                    submissions = await PE.Submissions.getAll();
-                } else {
-                    users = JSON.parse(localStorage.getItem('pe_c2_users') || '[]');
-                    submissions = await PE.Submissions.getAll();
-                }
-            } catch (e) {
-                console.error('Error cargando datos:', e);
-                users = [];
-                submissions = [];
-            }
-
+            const users = JSON.parse(localStorage.getItem('pe_c2_users') || '[]');
+            const students = users.filter(u => u.role !== 'admin');
+            let submissions = await PE.Submissions.getAll();
             submissions = Array.isArray(submissions) ? submissions : [];
-            const students = users.filter(u => (u.role || 'student') !== 'admin');
             const sessions = PE.CourseData.sessions;
             const progress = PE.CourseData.getCourseProgress();
-            const today = PE.CourseData.getTodayDate ? PE.CourseData.getTodayDate() : new Date();
 
-            const normStatus = (v) => String(v || '').trim().toLowerCase();
-            const reviewed = submissions.filter(s => normStatus(s.status) === 'reviewed');
-            const pending = submissions.filter(s => normStatus(s.status) === 'pending');
-            const totalWords = submissions.reduce((sum, s) => sum + (s.word_count || s.wordCount || 0), 0);
+            const reviewed = submissions.filter(s => s.status === 'reviewed');
+            const pending = submissions.filter(s => s.status === 'pending');
+            const totalWords = submissions.reduce((sum, s) => sum + (s.wordCount || 0), 0);
             const avgWords = submissions.length > 0 ? Math.round(totalWords / submissions.length) : 0;
-
-            // Cargar rúbricas (para normalizar notas a escala /10 cuando hay rúbrica)
-            try {
-                const rubrics = await API.get('/rubrics');
-                (Array.isArray(rubrics) ? rubrics : []).forEach(r => {
-                    if (r && r.id) rubricMaxById[String(r.id)] = parseFloat(r.maxPoints) || 0;
-                });
-            } catch (e) {
-                console.warn('[Stats] No se pudieron cargar rúbricas:', e?.message || e);
-            }
-
-            const qualitativeTo10 = (g) => {
-                const v = String(g || '').trim().toLowerCase();
-                if (!v) return null;
-                if (v === 'excelente') return 9.5;
-                if (v === 'muy bien') return 8.5;
-                if (v === 'bien') return 7.5;
-                if (v === 'suficiente') return 6.0;
-                if (v === 'necesita mejorar') return 4.5;
-                return null;
-            };
-
-            const parseJsonMaybe = (value) => {
-                if (!value) return null;
-                if (typeof value === 'object') return value;
-                if (typeof value !== 'string') return null;
-                try { return JSON.parse(value); } catch { return null; }
-            };
-
-            const sumCriterionScores = (scores) => {
-                const obj = parseJsonMaybe(scores);
-                if (!obj || typeof obj !== 'object') return null;
-                let total = 0;
-                let any = false;
-                for (const v of Object.values(obj)) {
-                    const n = parseFloat(v);
-                    if (!Number.isNaN(n)) {
-                        total += n;
-                        any = true;
-                    }
-                }
-                return any ? total : null;
-            };
-
-            // Nota en escala /10 si se puede calcular
-            const gradeValue10 = (s) => {
-                const rubricId = s.rubricId ?? s.rubric_id;
-                const maxPoints = rubricId ? (rubricMaxById[String(rubricId)] || 0) : 0;
-
-                const numeric = parseFloat(s.numericGrade ?? s.numeric_grade);
-                if (!Number.isNaN(numeric)) {
-                    return maxPoints > 0 ? (numeric / maxPoints) * 10 : numeric;
-                }
-
-                const scoresTotal = sumCriterionScores(s.criterionScores ?? s.criterion_scores);
-                if (scoresTotal !== null) {
-                    return maxPoints > 0 ? (scoresTotal / maxPoints) * 10 : scoresTotal;
-                }
-
-                const q = qualitativeTo10(s.grade);
-                if (q !== null) return q;
-
-                // Formato texto "8/10" (compat)
-                if (s.grade) {
-                    const match = String(s.grade).trim().match(/^(\d+\.?\d*)/);
-                    if (match) return parseFloat(match[1]);
-                }
-                return null;
-            };
-
-            const gradedReviewed = reviewed
-                .map(s => gradeValue10(s))
-                .filter(v => v !== null && !Number.isNaN(v));
-
-            const averageGrade = gradedReviewed.length > 0
-                ? (gradedReviewed.reduce((sum, v) => sum + v, 0) / gradedReviewed.length).toFixed(1)
-                : '-';
 
             // Estadisticas principales
             document.getElementById('stat-students').textContent = students.length;
             document.getElementById('stat-submissions').textContent = submissions.length;
-            document.getElementById('stat-graded').textContent = gradedReviewed.length;
-            document.getElementById('stat-avg-grade').textContent = averageGrade;
             document.getElementById('stat-words').textContent = totalWords.toLocaleString('es-ES');
+            document.getElementById('stat-avg').textContent = avgWords;
 
             // Progreso del curso
             document.getElementById('course-progress').textContent = progress.percentage + '%';
@@ -362,13 +230,10 @@
             document.getElementById('val-sessions').textContent = progress.completed + '/27';
 
             const themesCompleted = Math.floor(progress.completed / 2);
-            document.getElementById('bar-themes').style.width = Math.round(themesCompleted / 11 * 100) + '%';
-            document.getElementById('val-themes').textContent = themesCompleted + '/11';
+            document.getElementById('bar-themes').style.width = Math.round(themesCompleted / 14 * 100) + '%';
+            document.getElementById('val-themes').textContent = themesCompleted + '/14';
 
-            const workshopsCompleted = sessions.filter(s => {
-                const sessionDate = PE.CourseData.getSessionDate ? PE.CourseData.getSessionDate(s.date) : new Date(s.date);
-                return s.workshop && sessionDate < today;
-            }).length;
+            const workshopsCompleted = sessions.filter(s => s.workshop && new Date(s.date) < new Date()).length;
             document.getElementById('bar-workshops').style.width = Math.round(workshopsCompleted / 4 * 100) + '%';
             document.getElementById('val-workshops').textContent = workshopsCompleted + '/4';
 
@@ -380,9 +245,9 @@
             document.getElementById('correction-rate').textContent = correctionRate + '% de entregas corregidas';
 
             // Entregas por sesion
-            const maxSubmissions = Math.max(...sessions.map(s => submissions.filter(sub => sub.session_id == s.id || sub.sessionId == s.id).length), 1);
+            const maxSubmissions = Math.max(...sessions.map(s => submissions.filter(sub => sub.sessionId == s.id).length), 1);
             document.getElementById('sessions-chart').innerHTML = sessions.map(session => {
-                const count = submissions.filter(s => s.session_id == session.id || s.sessionId == session.id).length;
+                const count = submissions.filter(s => s.sessionId == session.id).length;
                 const width = (count / maxSubmissions) * 100;
                 return `
                     <div class="chart-row">
@@ -395,82 +260,33 @@
                 `;
             }).join('');
 
-            // Ranking de estudiantes por nota (escala /10)
-            const studentStats = students.map(s => {
-                const studentSubmissions = submissions.filter(sub => String(sub.user_id || sub.userId) === String(s.id));
-                const studentReviewed = studentSubmissions.filter(sub => (sub.status || '').toString() === 'reviewed');
-                const studentGrades = studentReviewed
-                    .map(sub => gradeValue10(sub))
-                    .filter(v => v !== null && !Number.isNaN(v));
-                const avgGrade = studentGrades.length > 0
-                    ? studentGrades.reduce((sum, v) => sum + v, 0) / studentGrades.length
-                    : null;
-                
-                return {
-                    ...s,
-                    submissions: studentSubmissions.length,
-                    gradedSubmissions: studentGrades.length,
-                    words: studentSubmissions.reduce((sum, sub) => sum + (sub.word_count || sub.wordCount || 0), 0),
-                    avgGrade: avgGrade
-                };
-            }).filter(s => s.avgGrade !== null).sort((a, b) => b.avgGrade - a.avgGrade);
+            // Ranking de estudiantes
+            const studentStats = students.map(s => ({
+                ...s,
+                submissions: submissions.filter(sub => sub.userId === s.id).length,
+                words: submissions.filter(sub => sub.userId === s.id).reduce((sum, sub) => sum + (sub.wordCount || 0), 0)
+            })).sort((a, b) => b.submissions - a.submissions);
 
             if (studentStats.length === 0) {
-                document.getElementById('student-ranking').innerHTML = '<p class="text-secondary text-center">No hay estudiantes con notas.</p>';
+                document.getElementById('student-ranking').innerHTML = '<p class="text-secondary text-center">No hay estudiantes registrados.</p>';
             } else {
                 document.getElementById('student-ranking').innerHTML = studentStats.slice(0, 5).map((s, i) => `
                     <div class="ranking-item">
                         <div class="ranking-position ${i < 3 ? 'ranking-' + (i + 1) : 'ranking-other'}">${i + 1}</div>
                         <div style="flex: 1;">
                             <strong>${PE.Utils.escapeHtml(s.name)}</strong>
-                            <p class="text-secondary mb-0" style="font-size: 0.8rem;">${s.submissions} entregas (${s.gradedSubmissions} calificadas)</p>
+                            <p class="text-secondary mb-0" style="font-size: 0.8rem;">${s.words.toLocaleString('es-ES')} palabras</p>
                         </div>
-                        <div class="badge badge-primary">${s.avgGrade.toFixed(1)}</div>
+                        <div class="badge badge-primary">${s.submissions} entregas</div>
                     </div>
                 `).join('');
             }
 
-            // Distribución de notas (escala /10)
-            const gradeRanges = {
-                'Sobresaliente (9-10)': gradedReviewed.filter(v => v >= 9).length,
-                'Notable (7-8.9)': gradedReviewed.filter(v => v >= 7 && v < 9).length,
-                'Bien (6-6.9)': gradedReviewed.filter(v => v >= 6 && v < 7).length,
-                'Suficiente (5-5.9)': gradedReviewed.filter(v => v >= 5 && v < 6).length,
-                'Insuficiente (<5)': gradedReviewed.filter(v => v < 5).length
-            };
-
-            const maxGradeCount = Math.max(...Object.values(gradeRanges), 1);
-            const totalGraded = gradedReviewed.length || 1;
-
-            const gradeDistHtml = Object.entries(gradeRanges).map(([range, count]) => {
-                const width = (count / maxGradeCount) * 100;
-                const percentage = (count / totalGraded * 100).toFixed(0);
-                const colors = {
-                    'Sobresaliente (9-10)': 'var(--success-color)',
-                    'Notable (7-8.9)': 'var(--primary-color)',
-                    'Bien (6-6.9)': 'var(--accent-color)',
-                    'Suficiente (5-5.9)': 'var(--warning-color)',
-                    'Insuficiente (<5)': 'var(--danger-color)'
-                };
-                return `
-                    <div class="chart-row">
-                        <span class="chart-label">${range}</span>
-                        <div class="chart-container">
-                            <div class="chart-bar" style="width: ${width}%; background: ${colors[range]};"></div>
-                        </div>
-                        <span class="chart-value">${count} (${percentage}%)</span>
-                    </div>
-                `;
-            }).join('');
-            
-            document.getElementById('grade-distribution').innerHTML = gradeDistHtml;
-
             // Distribucion por nivel
             const levels = { 'B2': 0, 'C1': 0, 'C2': 0 };
             students.forEach(s => {
-                const raw = (s.level || 'C2').toString().trim().toUpperCase();
-                const level = levels.hasOwnProperty(raw) ? raw : 'C2';
-                levels[level]++;
+                const level = s.level || 'C2';
+                if (levels.hasOwnProperty(level)) levels[level]++;
             });
 
             const totalStudents = students.length || 1;
@@ -488,42 +304,40 @@
             }).join('');
         });
 
-        async function exportStats(format) {
-            try {
-                const CONFIG = window.PE_CONFIG || {};
-                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
+        async function exportStats() {
+            const users = JSON.parse(localStorage.getItem('pe_c2_users') || '[]');
+            const students = users.filter(u => u.role !== 'admin');
+            let submissions = await PE.Submissions.getAll();
+            submissions = Array.isArray(submissions) ? submissions : [];
+            const progress = PE.CourseData.getCourseProgress();
 
-                if (!token) {
-                    throw new Error('No hay sesión activa');
-                }
+            const report = {
+                fecha: new Date().toISOString(),
+                curso: 'Produccion Escrita C2 - CLM UGR',
+                resumen: {
+                    estudiantes: students.length,
+                    entregas_totales: submissions.length,
+                    entregas_corregidas: submissions.filter(s => s.status === 'reviewed').length,
+                    entregas_pendientes: submissions.filter(s => s.status === 'pending').length,
+                    palabras_totales: submissions.reduce((sum, s) => sum + (s.wordCount || 0), 0),
+                    progreso_curso: progress.percentage + '%'
+                },
+                estudiantes: students.map(s => ({
+                    nombre: s.name,
+                    email: s.email,
+                    nivel: s.level || 'C2',
+                    entregas: submissions.filter(sub => sub.userId === s.id).length
+                }))
+            };
 
-                const response = await fetch(`${CONFIG.API_URL}/api/users/export/stats?format=${format}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+            const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'informe_estadisticas_' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
 
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.error || 'Error al exportar estadísticas');
-                }
-
-                // Descargar archivo
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `estadisticas_${new Date().toISOString().split('T')[0]}.${format}`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-
-                PE.UI.notify(`Estadísticas exportadas a ${format.toUpperCase()} correctamente`, 'success');
-            } catch (error) {
-                console.error('Error exportando:', error);
-                PE.UI.notify(error.message || 'Error al exportar estadísticas', 'error');
-            }
+            PE.UI.notify('Informe exportado correctamente', 'success');
         }
     </script>
 </body>

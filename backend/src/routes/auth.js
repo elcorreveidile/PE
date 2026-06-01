@@ -84,6 +84,7 @@ router.post('/register', [
         let courseId = null;
         let courseName = '';
         let courseTitle = '';
+        let courseCode = '';
 
         // SOLUCIÓN TEMPORAL: Mapeo directo de códigos mientras se ejecuta la migración en producción
         const temporaryCodeMapping = {
@@ -91,12 +92,14 @@ router.post('/register', [
                 courseId: 2, // ID temporal para C1
                 courseName: 'Arte y Sociedad C1',
                 courseTitle: 'C1 Arte y Sociedad en la Cultura Hispánica',
+                courseCode: 'C1-ARTE-SOCIEDAD',
                 level: 'C1'
             },
             'PIO7-2026-CLM': {
                 courseId: 1, // ID temporal para C2
                 courseName: 'Producción Escrita C2',
                 courseTitle: 'Producción Escrita C2 | Curso de Escritura Avanzada en Español',
+                courseCode: 'C2-PROD-ESCRITA',
                 level: 'C2'
             }
         };
@@ -120,8 +123,9 @@ router.post('/register', [
                     courseId = tempCourse.courseId;
                     courseName = tempCourse.courseName;
                     courseTitle = tempCourse.courseTitle;
+                    courseCode = tempCourse.courseCode;
 
-                    console.log(`Usando mapeo temporal para código: ${registrationCode}`);
+                    console.log(`Usando mapeo temporal para código: ${registrationCode} -> courseCode: ${courseCode}`);
                 } else {
                     // Fallback al sistema antiguo
                     const validCode = process.env.REGISTRATION_CODE || 'PIO7-2026-CLM';
@@ -158,6 +162,7 @@ router.post('/register', [
                 courseId = tempCourse.courseId;
                 courseName = tempCourse.courseName;
                 courseTitle = tempCourse.courseTitle;
+                courseCode = tempCourse.courseCode;
             } else {
                 // Último fallback al sistema antiguo
                 const validCode = process.env.REGISTRATION_CODE || 'PIO7-2026-CLM';
@@ -168,6 +173,7 @@ router.post('/register', [
                     courseId = 1;
                     courseName = 'Producción Escrita C2';
                     courseTitle = 'Producción Escrita C2 | Curso de Escritura Avanzada en Español';
+                    courseCode = 'C2-PROD-ESCRITA';
                 }
             }
         }
@@ -228,6 +234,7 @@ router.post('/register', [
                 level: level || 'C2',
                 role: 'student',
                 course_id: courseId,
+                course_code: courseCode,
                 course_name: courseName
             },
             token

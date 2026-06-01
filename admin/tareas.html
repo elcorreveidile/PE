@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Tareas | Panel de Administración</title>
+    <title>Gestion de Tareas | Panel de Administracion</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/styles.css">
@@ -12,12 +12,9 @@
         .admin-badge { background: #c53030; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; margin-left: 0.5rem; }
         .task-card { padding: var(--spacing-md); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); margin-bottom: var(--spacing-sm); }
         .task-card:hover { background: var(--bg-light); }
-        .student-chip { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0.75rem; background: var(--primary-light); color: white; border-radius: 1rem; font-size: 0.875rem; margin: 0.25rem; }
         .session-group { margin-bottom: 2rem; }
         .session-group-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: var(--primary-color); color: white; border-radius: var(--border-radius-md) var(--border-radius-md) 0 0; }
         .session-group-content { border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 var(--border-radius-md) var(--border-radius-md); padding: 1rem; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
     </style>
 </head>
 <body>
@@ -27,7 +24,7 @@
                 <a href="../index.html" class="logo">
                     <div class="logo-icon">C2</div>
                     <div class="logo-text">
-                        <span class="logo-title">Panel de Administración <span class="admin-badge">ADMIN</span></span>
+                        <span class="logo-title">Panel de Administracion <span class="admin-badge">ADMIN</span></span>
                         <span class="logo-subtitle">CLM - UGR</span>
                     </div>
                 </a>
@@ -42,172 +39,68 @@
             <div class="page-with-sidebar">
                 <aside class="sidebar">
                     <div class="sidebar-section">
-                        <h4 class="sidebar-title">Administración</h4>
+                        <h4 class="sidebar-title">Administracion</h4>
                         <ul class="sidebar-nav">
                             <li><a href="index.html">Panel principal</a></li>
                             <li><a href="estudiantes.html">Estudiantes</a></li>
                             <li><a href="correcciones.html">Correcciones</a></li>
-                            <li><a href="notificaciones.html">Notificaciones</a></li>
-                            <li><a href="asistencia.html">Asistencia QR</a></li>
-                            <li><a href="tareas.html" class="active">Gestión de tareas</a></li>
-                            <li><a href="estadisticas.html">Estadísticas</a></li>
-                            <li><a href="comparacion.html">Comparación</a></li>
-                            <li><a href="rubricas.html">📊 Rúbricas</a></li>
-                            <li><a href="boletines.html">📋 Boletines</a></li>
+                            <li><a href="tareas.html" class="active">Gestion de tareas</a></li>
+                            <li><a href="estadisticas.html">Estadisticas</a></li>
                         </ul>
                     </div>
                     <div class="sidebar-section">
-                        <button onclick="PE.Auth.logout()" class="btn btn-outline btn-block">Cerrar sesión</button>
+                        <button onclick="PE.Auth.logout()" class="btn btn-outline btn-block">Cerrar sesion</button>
                     </div>
                 </aside>
 
                 <div class="main-content">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-xl);">
                         <div>
-                            <h1 style="margin-bottom: 0.25rem;">Gestión de tareas</h1>
-                            <p class="text-secondary mb-0">Control de actividades y entregas</p>
+                            <h1 style="margin-bottom: 0.25rem;">Gestion de tareas</h1>
+                            <p class="text-secondary mb-0">Control de actividades y entregas por sesion</p>
                         </div>
                     </div>
 
-                    <!-- Pestañas para cambiar entre entregas de sesiones y tareas para estudiantes -->
+                    <!-- Resumen de tareas -->
+                    <div class="sessions-grid mb-4" style="grid-template-columns: repeat(4, 1fr);">
+                        <div class="card text-center" style="padding: 1.5rem;">
+                            <h3 class="text-primary" style="font-size: 2rem; margin: 0;" id="stat-total">0</h3>
+                            <p class="text-secondary mb-0">Total entregas</p>
+                        </div>
+                        <div class="card text-center" style="padding: 1.5rem;">
+                            <h3 style="font-size: 2rem; margin: 0; color: var(--warning-color);" id="stat-pending">0</h3>
+                            <p class="text-secondary mb-0">Pendientes</p>
+                        </div>
+                        <div class="card text-center" style="padding: 1.5rem;">
+                            <h3 style="font-size: 2rem; margin: 0; color: var(--success-color);" id="stat-reviewed">0</h3>
+                            <p class="text-secondary mb-0">Corregidas</p>
+                        </div>
+                        <div class="card text-center" style="padding: 1.5rem;">
+                            <h3 class="text-primary" style="font-size: 2rem; margin: 0;" id="stat-sessions">0</h3>
+                            <p class="text-secondary mb-0">Sesiones activas</p>
+                        </div>
+                    </div>
+
+                    <!-- Filtro por sesion -->
                     <div class="card mb-4">
                         <div class="card-body">
-                            <div style="display: flex; gap: var(--spacing-md);">
-                                <button class="btn btn-primary" id="tab-sesiones" onclick="switchTab('sesiones')">
-                                    Entregas de sesiones
-                                </button>
-                                <button class="btn btn-outline" id="tab-tareas" onclick="switchTab('tareas')">
-                                    Tareas para estudiantes
-                                </button>
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                                <select id="filter-session" class="form-control form-select" style="flex: 1; min-width: 200px;">
+                                    <option value="">Todas las sesiones</option>
+                                </select>
+                                <select id="filter-status" class="form-control form-select" style="width: auto;">
+                                    <option value="">Todos los estados</option>
+                                    <option value="pending">Pendientes</option>
+                                    <option value="reviewed">Corregidas</option>
+                                </select>
+                                <button class="btn btn-outline" onclick="exportSessionData()">Exportar datos</button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- CONTENIDO: ENTREGAS DE SESIONES -->
-                    <div id="content-sesiones" class="tab-content active">
-                        <!-- Estadísticas generales -->
-                        <div class="sessions-grid mb-4" style="grid-template-columns: repeat(4, 1fr);">
-                            <div class="card text-center" style="padding: 1.5rem;">
-                                <h3 class="text-primary" style="font-size: 2rem; margin: 0;" id="stat-total">0</h3>
-                                <p class="text-secondary mb-0">Total entregas</p>
-                            </div>
-                            <div class="card text-center" style="padding: 1.5rem;">
-                                <h3 style="font-size: 2rem; margin: 0; color: var(--warning-color);" id="stat-pending">0</h3>
-                                <p class="text-secondary mb-0">Pendientes</p>
-                            </div>
-                            <div class="card text-center" style="padding: 1.5rem;">
-                                <h3 style="font-size: 2rem; margin: 0; color: var(--success-color);" id="stat-reviewed">0</h3>
-                                <p class="text-secondary mb-0">Corregidas</p>
-                            </div>
-                            <div class="card text-center" style="padding: 1.5rem;">
-                                <h3 class="text-primary" style="font-size: 2rem; margin: 0;" id="stat-sessions">0</h3>
-                                <p class="text-secondary mb-0">Sesiones activas</p>
-                            </div>
-                        </div>
-
-                        <!-- Filtro por sesión -->
-                        <div class="card mb-4">
-                            <div class="card-body">
-                                <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
-                                    <select id="filter-session" class="form-control form-select" style="flex: 1; min-width: 200px;">
-                                        <option value="">Todas las sesiones</option>
-                                    </select>
-                                    <select id="filter-status" class="form-control form-select" style="width: auto;">
-                                        <option value="">Todos los estados</option>
-                                        <option value="pending">Pendientes</option>
-                                        <option value="reviewed">Corregidas</option>
-                                    </select>
-                                    <button class="btn btn-outline" onclick="exportSessionData()">Exportar datos</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Lista de entregas por sesión -->
-                        <div id="tasks-list">
-                            <div class="loader"></div>
-                        </div>
-                    </div>
-
-                    <!-- CONTENIDO: TAREAS PARA ESTUDIANTES -->
-                    <div id="content-tareas" class="tab-content">
-                        <!-- Botón de crear tarea -->
-                        <div class="card mb-4">
-                            <div class="card-body" style="display: flex; justify-content: space-between; align-items: center;">
-                                <div>
-                                    <h3 style="margin: 0;">Tareas asignadas por el profesor</h3>
-                                    <p class="text-secondary mb-0">Crea tareas personalizadas para estudiantes</p>
-                                </div>
-                                <button class="btn btn-primary" onclick="showCreateStudentTaskModal()">
-                                    + Nueva tarea para estudiantes
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Estadísticas de tareas de estudiantes -->
-                        <div class="sessions-grid mb-4" style="grid-template-columns: repeat(4, 1fr);">
-                            <div class="card text-center" style="padding: 1.5rem;">
-                                <h3 class="text-primary" style="font-size: 2rem; margin: 0;" id="task-stat-total">0</h3>
-                                <p class="text-secondary mb-0">Total tareas</p>
-                            </div>
-                            <div class="card text-center" style="padding: 1.5rem;">
-                                <h3 style="font-size: 2rem; margin: 0; color: var(--success-color);" id="task-stat-active">0</h3>
-                                <p class="text-secondary mb-0">Activas</p>
-                            </div>
-                            <div class="card text-center" style="padding: 1.5rem;">
-                                <h3 style="font-size: 2rem; margin: 0; color: var(--warning-color);" id="task-stat-pending">0</h3>
-                                <p class="text-secondary mb-0">Entregas pendientes</p>
-                            </div>
-                            <div class="card text-center" style="padding: 1.5rem;">
-                                <h3 style="font-size: 2rem; margin: 0; color: var(--accent-color);" id="task-stat-completed">0</h3>
-                                <p class="text-secondary mb-0">Completadas</p>
-                            </div>
-                        </div>
-
-                        <!-- Filtros de tareas -->
-                        <div class="card mb-4">
-                            <div class="card-body">
-                                <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
-                                    <select id="filter-task-status" class="form-control form-select" style="width: auto;">
-                                        <option value="">Todos los estados</option>
-                                        <option value="active">Activas</option>
-                                        <option value="inactive">Inactivas</option>
-                                        <option value="expired">Caducadas</option>
-                                        <option value="completed">Completadas</option>
-                                        <option value="draft">Borradores</option>
-                                    </select>
-                                    <select id="filter-assignment" class="form-control form-select" style="width: auto;">
-                                        <option value="">Todos los tipos</option>
-                                        <option value="all">Todo el curso</option>
-                                        <option value="specific">Estudiantes específicos</option>
-                                    </select>
-                                    <button class="btn btn-outline" onclick="exportStudentTasks()">Exportar tareas</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Acciones rápidas -->
-                        <div class="card mb-4">
-                            <div class="card-body" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
-                                <div>
-                                    <h4 style="margin: 0 0 0.25rem;">Acciones rápidas</h4>
-                                    <p class="text-secondary mb-0">Archivado y limpieza para evitar duplicados o tareas ya cerradas.</p>
-                                </div>
-                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                                    <button class="btn btn-outline" onclick="archiveCompletedTasks()">📦 Archivar completadas</button>
-                                    <button class="btn btn-outline" onclick="archiveExpiredTasks()">🕒 Archivar caducadas</button>
-                                    <button class="btn btn-danger" onclick="deleteDuplicateTasks()">🧹 Eliminar duplicadas (sin entregas)</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Lista de tareas para estudiantes -->
-                        <div class="card">
-                            <div class="card-body">
-                                <div id="student-tasks-list">
-                                    <div class="loader"></div>
-                                </div>
-                            </div>
-                        </div>
+                    <!-- Lista de tareas por sesion -->
+                    <div id="tasks-list">
+                        <div class="loader"></div>
                     </div>
                 </div>
             </div>
@@ -222,175 +115,140 @@
         </div>
     </footer>
 
+    <script src="../js/app.js"></script>
     <script>
-        window.PE_CONFIG = {
-            API_URL: 'https://produccion-escrita-c2-api-production.up.railway.app'
-        };
-    </script>
-    <script src="../js/config.js"></script>
-<script src="../js/app.js"></script>
-    <script>
-        let allStudentTasks = [];
-        let allRubrics = [];
-        let allUsers = [];
-        let submissions = [];
-        let sessions = PE.CourseData.sessions;
-
         document.addEventListener('DOMContentLoaded', async () => {
-            const user = await PE.Auth.checkSession();
+            const user = PE.Auth.getCurrentUser();
             if (!user || user.role !== 'admin') {
-                window.location.href = '../auth/login.html';
+                const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
+                window.location.href = basePath + '/auth/login.html';
                 return;
             }
 
-            // Cargar datos en paralelo
-            await Promise.all([
-                loadSubmissions(),
-                loadStudentTasks(),
-                loadRubrics(),
-                loadUsers()
-            ]);
+            let submissions = await PE.Submissions.getAll();
 
-            // Renderizar entregas de sesiones
-            renderSessionSubmissions();
-        });
+            submissions = Array.isArray(submissions) ? submissions : [];
+            const sessions = PE.CourseData.sessions;
+            const pending = submissions.filter(s => s.status === 'pending');
+            const reviewed = submissions.filter(s => s.status === 'reviewed');
 
-        // Función para cambiar entre pestañas
-        function switchTab(tab) {
-            const contentSesiones = document.getElementById('content-sesiones');
-            const contentTareas = document.getElementById('content-tareas');
-            const tabSesiones = document.getElementById('tab-sesiones');
-            const tabTareas = document.getElementById('tab-tareas');
-
-            if (tab === 'sesiones') {
-                contentSesiones.classList.add('active');
-                contentTareas.classList.remove('active');
-                tabSesiones.className = 'btn btn-primary';
-                tabTareas.className = 'btn btn-outline';
-            } else {
-                contentSesiones.classList.remove('active');
-                contentTareas.classList.add('active');
-                tabSesiones.className = 'btn btn-outline';
-                tabTareas.className = 'btn btn-primary';
-            }
-        }
-
-        // ====================================================================
-        // ENTREGAS DE SESIONES
-        // ====================================================================
-
-        async function loadSubmissions() {
-            try {
-                submissions = await PE.Submissions.getAll();
-                submissions = Array.isArray(submissions) ? submissions : [];
-            } catch (e) {
-                console.error('Error cargando entregas:', e);
-                submissions = [];
-            }
-        }
-
-        function renderSessionSubmissions(filter = {}) {
-            let filtered = submissions.filter(s => !s.taskId); // Solo entregas de sesiones, no de tareas
-
-            if (filter.session) {
-                filtered = filtered.filter(s => s.sessionId == filter.session);
-            }
-
-            if (filter.status) {
-                filtered = filtered.filter(s => s.status === filter.status);
-            }
-
-            const pending = filtered.filter(s => s.status === 'pending');
-            const reviewed = filtered.filter(s => s.status === 'reviewed');
-
-            // Actualizar estadísticas
-            document.getElementById('stat-total').textContent = filtered.length;
+            // Estadisticas
+            document.getElementById('stat-total').textContent = submissions.length;
             document.getElementById('stat-pending').textContent = pending.length;
             document.getElementById('stat-reviewed').textContent = reviewed.length;
 
-            const sessionsWithSubmissions = new Set(filtered.map(s => s.sessionId));
+            // Sesiones con entregas
+            const sessionsWithSubmissions = new Set(submissions.map(s => s.sessionId));
             document.getElementById('stat-sessions').textContent = sessionsWithSubmissions.size;
 
             // Poblar selector de sesiones
             const sessionSelect = document.getElementById('filter-session');
-            sessionSelect.innerHTML = '<option value="">Todas las sesiones</option>';
             sessions.forEach(s => {
-                const count = filtered.filter(sub => sub.sessionId == s.id).length;
+                const count = submissions.filter(sub => sub.sessionId == s.id).length;
                 const option = document.createElement('option');
                 option.value = s.id;
-                option.textContent = `Sesión ${s.id}: ${s.title} (${count} entregas)`;
+                option.textContent = `Sesion ${s.id}: ${s.title} (${count} entregas)`;
                 sessionSelect.appendChild(option);
             });
 
-            const container = document.getElementById('tasks-list');
+            function renderTasks(filter = {}) {
+                let filtered = [...submissions];
 
-            if (filtered.length === 0) {
-                container.innerHTML = '<div class="card"><div class="card-body text-center"><p class="text-secondary">No hay entregas con los filtros seleccionados.</p></div></div>';
-                return;
-            }
+                if (filter.session) {
+                    filtered = filtered.filter(s => s.sessionId == filter.session);
+                }
 
-            // Agrupar por sesión
-            const grouped = {};
-            filtered.forEach(s => {
-                const sessionId = s.sessionId || 'sin-sesion';
-                if (!grouped[sessionId]) grouped[sessionId] = [];
-                grouped[sessionId].push(s);
-            });
+                if (filter.status) {
+                    filtered = filtered.filter(s => s.status === filter.status);
+                }
 
-            let html = '';
-            Object.keys(grouped).sort((a, b) => parseInt(a) - parseInt(b)).forEach(sessionId => {
-                const session = sessions.find(s => s.id == sessionId);
-                const sessionSubmissions = grouped[sessionId];
-                const sessionPending = sessionSubmissions.filter(s => s.status === 'pending').length;
+                const container = document.getElementById('tasks-list');
 
-                html += `
-                    <div class="session-group">
-                        <div class="session-group-header">
-                            <div>
-                                <strong>Sesión ${sessionId}</strong>: ${session ? session.title : 'Sesión no identificada'}
+                if (filtered.length === 0) {
+                    container.innerHTML = '<div class="card"><div class="card-body text-center"><p class="text-secondary">No hay entregas con los filtros seleccionados.</p></div></div>';
+                    return;
+                }
+
+                // Agrupar por sesion
+                const grouped = {};
+                filtered.forEach(s => {
+                    const sessionId = s.sessionId || 'sin-sesion';
+                    if (!grouped[sessionId]) grouped[sessionId] = [];
+                    grouped[sessionId].push(s);
+                });
+
+                let html = '';
+                Object.keys(grouped).sort((a, b) => parseInt(a) - parseInt(b)).forEach(sessionId => {
+                    const session = sessions.find(s => s.id == sessionId);
+                    const sessionSubmissions = grouped[sessionId];
+                    const sessionPending = sessionSubmissions.filter(s => s.status === 'pending').length;
+
+                    html += `
+                        <div class="session-group">
+                            <div class="session-group-header">
+                                <div>
+                                    <strong>Sesion ${sessionId}</strong>: ${session ? session.title : 'Sesion no identificada'}
+                                </div>
+                                <div>
+                                    <span class="badge" style="background: rgba(255,255,255,0.2);">${sessionSubmissions.length} entregas</span>
+                                    ${sessionPending > 0 ? `<span class="badge badge-warning" style="margin-left: 0.5rem;">${sessionPending} pendientes</span>` : ''}
+                                </div>
                             </div>
-                            <div>
-                                <span class="badge" style="background: rgba(255,255,255,0.2);">${sessionSubmissions.length} entregas</span>
-                                ${sessionPending > 0 ? `<span class="badge badge-warning" style="margin-left: 0.5rem;">${sessionPending} pendientes</span>` : ''}
-                            </div>
-                        </div>
-                        <div class="session-group-content">
-                            ${sessionSubmissions.map(s => `
-                                <div class="task-card">
-                                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                                        <div>
-                                            <strong>${PE.Utils.escapeHtml(s.userName || 'Estudiante')}</strong>
-                                            <span class="badge badge-${s.status === 'reviewed' ? 'success' : 'warning'}" style="margin-left: 0.5rem;">
-                                                ${s.status === 'reviewed' ? 'Corregido' : 'Pendiente'}
-                                            </span>
-                                            <p class="text-secondary mb-0" style="font-size: 0.875rem; margin-top: 0.25rem;">
-                                                ${PE.Utils.escapeHtml(s.activityTitle)} - ${s.wordCount} palabras
-                                            </p>
-                                            <p class="text-secondary mb-0" style="font-size: 0.8rem;">
-                                                Entregado: ${PE.Utils.formatDate(s.createdAt, 'long')}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            ${s.status === 'pending' ?
-                                                `<a href="correcciones.html" class="btn btn-sm btn-primary">Corregir</a>` :
-                                                `<button class="btn btn-sm btn-outline" onclick="viewSubmission('${s.id}')">Ver</button>`
-                                            }
+                            <div class="session-group-content">
+                                ${sessionSubmissions.map(s => `
+                                    <div class="task-card">
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                            <div>
+                                                <strong>${PE.Utils.escapeHtml(s.userName || 'Estudiante')}</strong>
+                                                <span class="badge badge-${s.status === 'reviewed' ? 'success' : 'warning'}" style="margin-left: 0.5rem;">
+                                                    ${s.status === 'reviewed' ? 'Corregido' : 'Pendiente'}
+                                                </span>
+                                                <p class="text-secondary mb-0" style="font-size: 0.875rem; margin-top: 0.25rem;">
+                                                    ${PE.Utils.escapeHtml(s.activityTitle)} - ${s.wordCount} palabras
+                                                </p>
+                                                <p class="text-secondary mb-0" style="font-size: 0.8rem;">
+                                                    Entregado: ${PE.Utils.formatDate(s.createdAt, 'long')}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                ${s.status === 'pending' ?
+                                                    `<a href="correcciones.html" class="btn btn-sm btn-primary">Corregir</a>` :
+                                                    `<button class="btn btn-sm btn-outline" onclick="viewSubmission('${s.id}')">Ver</button>`
+                                                }
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            `).join('')}
+                                `).join('')}
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
+                });
+
+                container.innerHTML = html;
+            }
+
+            renderTasks();
+
+            // Filtros
+            document.getElementById('filter-session').addEventListener('change', (e) => {
+                renderTasks({
+                    session: e.target.value,
+                    status: document.getElementById('filter-status').value
+                });
             });
 
-            container.innerHTML = html;
-        }
+            document.getElementById('filter-status').addEventListener('change', (e) => {
+                renderTasks({
+                    session: document.getElementById('filter-session').value,
+                    status: e.target.value
+                });
+            });
+        });
 
         async function viewSubmission(id) {
-            const targetId = String(id);
-            const s = submissions.find(sub => String(sub.id) === targetId);
-
+            let submissions = await PE.Submissions.getAll();
+            submissions = Array.isArray(submissions) ? submissions : [];
+            const s = submissions.find(sub => sub.id === id);
             if (s) {
                 PE.UI.showModal(s.activityTitle, `
                     <div class="mb-3">
@@ -408,9 +266,9 @@
                     </div>
                     ${s.feedback ? `
                         <div class="alert alert-success">
-                            <strong>Retroalimentación:</strong>
+                            <strong>Retroalimentacion:</strong>
                             <p style="margin: 0.5rem 0 0;">${PE.Utils.escapeHtml(s.feedback)}</p>
-                            ${s.grade ? `<p style="margin: 0.5rem 0 0;"><strong>Calificación:</strong> ${s.grade}</p>` : ''}
+                            ${s.grade ? `<p style="margin: 0.5rem 0 0;"><strong>Calificacion:</strong> ${s.grade}</p>` : ''}
                         </div>
                     ` : ''}
                 `, [{ text: 'Cerrar' }]);
@@ -418,8 +276,12 @@
         }
 
         async function exportSessionData() {
+            let submissions = await PE.Submissions.getAll();
+            submissions = Array.isArray(submissions) ? submissions : [];
+            const sessions = PE.CourseData.sessions;
+
             const data = sessions.map(session => {
-                const sessionSubmissions = submissions.filter(s => s.sessionId == session.id && !s.taskId);
+                const sessionSubmissions = submissions.filter(s => s.sessionId == session.id);
                 return {
                     sesion: session.id,
                     titulo: session.title,
@@ -434,715 +296,11 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'entregas_por_sesion_' + new Date().toISOString().split('T')[0] + '.json';
+            a.download = 'tareas_por_sesion_' + new Date().toISOString().split('T')[0] + '.json';
             a.click();
 
             PE.UI.notify('Datos exportados correctamente', 'success');
         }
-
-        // Event listeners para filtros de sesiones
-        document.addEventListener('DOMContentLoaded', () => {
-            const filterSession = document.getElementById('filter-session');
-            const filterStatus = document.getElementById('filter-status');
-
-            if (filterSession) {
-                filterSession.addEventListener('change', () => {
-                    renderSessionSubmissions({
-                        session: filterSession.value,
-                        status: filterStatus.value
-                    });
-                });
-            }
-
-            if (filterStatus) {
-                filterStatus.addEventListener('change', () => {
-                    renderSessionSubmissions({
-                        session: filterSession.value,
-                        status: filterStatus.value
-                    });
-                });
-            }
-        });
-
-        // ====================================================================
-        // TAREAS PARA ESTUDIANTES
-        // ====================================================================
-
-        // Cargar tareas de estudiantes desde la API
-        async function loadStudentTasks() {
-            try {
-                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
-
-                if (!token) {
-                    throw new Error('No hay token de autenticación');
-                }
-
-                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/student-tasks`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (response.ok) {
-                    allStudentTasks = await response.json();
-                    allStudentTasks = Array.isArray(allStudentTasks) ? allStudentTasks : [];
-                } else {
-                    allStudentTasks = [];
-                }
-            } catch (error) {
-                console.error('Error cargando tareas:', error);
-                allStudentTasks = [];
-            }
-
-            renderStudentTasks();
-            updateTaskStatistics();
-        }
-
-        // Cargar rúbricas desde la API
-        async function loadRubrics() {
-            try {
-                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
-
-                if (!token) {
-                    console.warn('No hay token para cargar rúbricas');
-                    return;
-                }
-
-                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/rubrics`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (response.ok) {
-                    allRubrics = await response.json();
-                    allRubrics = Array.isArray(allRubrics) ? allRubrics : [];
-                } else {
-                    allRubrics = [];
-                }
-            } catch (error) {
-                console.error('Error cargando rúbricas:', error);
-                allRubrics = [];
-            }
-        }
-
-        // Cargar usuarios (estudiantes)
-        async function loadUsers() {
-            try {
-                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
-
-                if (!token) {
-                    console.warn('No hay token para cargar usuarios');
-                    return;
-                }
-
-                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/users`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (response.ok) {
-                    allUsers = await response.json();
-                    allUsers = Array.isArray(allUsers) ? allUsers : [];
-                } else {
-                    allUsers = [];
-                }
-            } catch (error) {
-                console.error('Error cargando usuarios:', error);
-                allUsers = [];
-            }
-        }
-
-        function updateTaskStatistics() {
-            const active = allStudentTasks.filter(t => t.status === 'active' && new Date(t.dueDate) >= new Date()).length;
-
-            let pendingSubmissions = 0;
-            let completedSubmissions = 0;
-
-            allStudentTasks.forEach(task => {
-                if (task.assignmentType === 'all') {
-                    const studentCount = allUsers.filter(u => (u.role || 'student') !== 'admin').length;
-                    const submissionCount = task.submissions?.length || 0;
-                    pendingSubmissions += (studentCount - submissionCount);
-                    completedSubmissions += submissionCount;
-                } else {
-                    const assignedCount = task.assignedStudents?.length || 0;
-                    const submissionCount = task.submissions?.length || 0;
-                    pendingSubmissions += (assignedCount - submissionCount);
-                    completedSubmissions += submissionCount;
-                }
-            });
-
-            document.getElementById('task-stat-total').textContent = allStudentTasks.length;
-            document.getElementById('task-stat-active').textContent = active;
-            document.getElementById('task-stat-pending').textContent = pendingSubmissions;
-            document.getElementById('task-stat-completed').textContent = completedSubmissions;
-        }
-
-        function getTaskSubmissionsCount(task) {
-            return task?.submissions?.length || 0;
-        }
-
-        function getTaskTotalStudents(task) {
-            return task?.assignmentType === 'all'
-                ? allUsers.filter(u => (u.role || 'student') !== 'admin').length
-                : (task?.assignedStudents?.length || 0);
-        }
-
-        function isTaskExpired(task) {
-            try {
-                return new Date(task.dueDate) < new Date();
-            } catch {
-                return false;
-            }
-        }
-
-        function isTaskCompleted(task) {
-            const total = getTaskTotalStudents(task);
-            if (!total) return false;
-            return getTaskSubmissionsCount(task) >= total;
-        }
-
-        function renderStudentTasks(filter = {}) {
-            let filtered = [...allStudentTasks];
-
-            if (filter.status) {
-                const now = new Date();
-                if (filter.status === 'active') {
-                    filtered = filtered.filter(t => t.status === 'active' && new Date(t.dueDate) >= now);
-                } else if (filter.status === 'inactive') {
-                    filtered = filtered.filter(t => t.status === 'inactive');
-                } else if (filter.status === 'expired') {
-                    filtered = filtered.filter(t => isTaskExpired(t));
-                } else if (filter.status === 'completed') {
-                    filtered = filtered.filter(t => isTaskCompleted(t));
-                } else if (filter.status === 'draft') {
-                    filtered = filtered.filter(t => t.status === 'draft');
-                }
-            }
-
-            if (filter.assignment) {
-                filtered = filtered.filter(t => t.assignmentType === filter.assignment);
-            }
-
-            const container = document.getElementById('student-tasks-list');
-
-            if (filtered.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center text-secondary" style="padding: 3rem;">
-                        <p style="font-size: 3rem; margin-bottom: 1rem;">📝</p>
-                        <p>No hay tareas para estudiantes ${Object.keys(filter).length > 0 ? 'con los filtros seleccionados' : ''}.</p>
-                        <button class="btn btn-primary mt-3" onclick="showCreateStudentTaskModal()">+ Crear primera tarea</button>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = filtered.map(task => {
-                const expired = isTaskExpired(task);
-                const completed = isTaskCompleted(task);
-                const rubric = allRubrics.find(r => r.id === task.rubricId);
-
-                // Formatear fecha de forma segura
-                let formattedDate = 'Fecha no disponible';
-                try {
-                    const date = new Date(task.dueDate);
-                    if (!isNaN(date.getTime())) {
-                        formattedDate = PE.Utils.formatDate(task.dueDate, 'long');
-                    }
-                } catch (e) {
-                    console.warn('Error formateando fecha:', task.dueDate, e);
-                }
-
-                // Mostrar estudiantes asignados
-                let studentsHtml = '';
-                if (task.assignmentType === 'all') {
-                    studentsHtml = '<span class="badge badge-success">Todo el curso</span>';
-                } else if (task.assignedStudents && task.assignedStudents.length > 0) {
-                    const studentNames = task.assignedStudents.map(studentId => {
-                        const student = allUsers.find(u => u.id === studentId);
-                        return student ? student.name : 'Estudiante';
-                    });
-                    studentsHtml = studentNames.map(name =>
-                        `<span class="student-chip">${PE.Utils.escapeHtml(name)}</span>`
-                    ).join('');
-                }
-
-                // Obtener entregas
-                const submissionsCount = getTaskSubmissionsCount(task);
-                const totalStudents = getTaskTotalStudents(task);
-
-                return `
-                    <div class="task-card" style="border-left: 4px solid ${expired ? 'var(--danger-color)' : 'var(--primary-color)'};">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                            <div style="flex: 1;">
-                                <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap;">
-                                    <strong>${PE.Utils.escapeHtml(task.title)}</strong>
-                                    ${task.status === 'inactive' ? '<span class="badge badge-warning">Archivada</span>' : ''}
-                                    ${completed ? '<span class="badge badge-success">Completada</span>' : ''}
-                                    ${expired ? '<span class="badge badge-danger">Caducada</span>' : (!expired && task.status === 'active' ? '<span class="badge badge-success">Activa</span>' : '')}
-                                    ${rubric ? `<span class="badge badge-primary" style="background: var(--accent-color);">📊 ${PE.Utils.escapeHtml(rubric.name)}</span>` : ''}
-                                </div>
-                                <p class="text-secondary mb-2" style="font-size: 0.875rem;">${PE.Utils.escapeHtml(task.description)}</p>
-                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem;">
-                                    <span class="text-secondary" style="font-size: 0.8rem;">📅 Límite: ${formattedDate}</span>
-                                    ${task.sessionId ? `<span class="text-secondary" style="font-size: 0.8rem;">📚 Sesión ${task.sessionId}</span>` : ''}
-                                </div>
-                                <div style="margin-bottom: 0.5rem;">
-                                    <span class="text-secondary" style="font-size: 0.8rem;">Asignada a: </span>
-                                    ${studentsHtml}
-                                </div>
-                                <div style="display: flex; gap: 1rem; align-items: center;">
-                                    <span class="text-secondary" style="font-size: 0.8rem;">
-                                        📥 ${submissionsCount}/${totalStudents} entregas
-                                    </span>
-                                    ${submissionsCount > 0 ? `<a href="correcciones.html?taskId=${task.id}" class="btn btn-sm btn-outline">Ver entregas</a>` : ''}
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: 0.5rem;">
-                                <button class="btn btn-sm btn-outline" onclick="viewStudentTask('${task.id}')">👁️ Ver</button>
-                                <button class="btn btn-sm btn-outline" onclick="editStudentTask('${task.id}')">✏️ Editar</button>
-                                <button class="btn btn-sm btn-${task.status === 'active' ? 'warning' : 'success'}" onclick="toggleTaskStatus('${task.id}')">
-                                    ${task.status === 'active' ? '📦 Archivar' : '▶️ Activar'}
-                                </button>
-                                <button class="btn btn-sm btn-danger" onclick="deleteStudentTask('${task.id}')">🗑️</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        async function showCreateStudentTaskModal(taskId = null) {
-            const sessionsOptions = sessions.map(s =>
-                `<option value="${s.id}">Sesión ${s.id}: ${s.title}</option>`
-            ).join('');
-
-            const rubricsOptions = allRubrics.map(r =>
-                `<option value="${r.id}">${PE.Utils.escapeHtml(r.name)} (${r.maxPoints} pts)</option>`
-            ).join('');
-
-            // Obtener lista de estudiantes
-            const students = allUsers.filter(u => (u.role || 'student') !== 'admin');
-            const studentsOptions = students.map(s =>
-                `<option value="${s.id}">${PE.Utils.escapeHtml(s.name)} (${s.email})</option>`
-            ).join('');
-
-            const isEdit = taskId !== null;
-            const task = isEdit ? allStudentTasks.find(t => t.id === taskId) : null;
-
-            const taskData = task || {
-                id: null,
-                title: '',
-                description: '',
-                assignmentType: 'all',
-                assignedStudents: [],
-                dueDate: '',
-                sessionId: '',
-                rubricId: '',
-                status: 'active'
-            };
-
-            PE.UI.showModal(isEdit ? '✏️ Editar tarea para estudiantes' : '📝 Nueva tarea para estudiantes', `
-                <form id="create-student-task-form">
-                    <div class="form-group">
-                        <label class="form-label">Título de la tarea *</label>
-                        <input type="text" name="title" class="form-control" required placeholder="Ej: Ensayo argumentativo sobre cambio climático" value="${PE.Utils.escapeHtml(taskData.title)}">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Descripción *</label>
-                        <textarea name="description" class="form-control" rows="3" required placeholder="Instrucciones detalladas de la tarea...">${PE.Utils.escapeHtml(taskData.description)}</textarea>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Fecha límite *</label>
-                        <input type="datetime-local" name="dueDate" class="form-control" required value="${taskData.dueDate ? taskData.dueDate.slice(0, 16) : ''}">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Tipo de asignación *</label>
-                        <select name="assignmentType" class="form-control form-select" required onchange="toggleStudentSelector(this.value)">
-                            <option value="all" ${taskData.assignmentType === 'all' ? 'selected' : ''}>Todo el curso</option>
-                            <option value="specific" ${taskData.assignmentType === 'specific' ? 'selected' : ''}>Estudiantes específicos</option>
-                        </select>
-                    </div>
-                    <div class="form-group" id="student-selector-group" style="display: ${taskData.assignmentType === 'specific' ? 'block' : 'none'};">
-                        <label class="form-label">Estudiantes asignados</label>
-                        <select name="assignedStudents" class="form-control form-select" multiple size="5" style="height: auto;">
-                            ${studentsOptions}
-                        </select>
-                        <small class="text-secondary">Mantén presionado Ctrl/Cmd para seleccionar varios estudiantes</small>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Sesión relacionada (opcional)</label>
-                        <select name="sessionId" class="form-control form-select">
-                            <option value="">Sin sesión específica</option>
-                            ${sessionsOptions}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Rúbrica de evaluación (opcional)</label>
-                        <select name="rubricId" class="form-control form-select">
-                            <option value="">Sin rúbrica</option>
-                            ${rubricsOptions}
-                        </select>
-                        <p class="text-secondary" style="font-size: 0.8rem; margin-top: 0.25rem;">
-                            La rúbrica seleccionada se usará para corregir las entregas de esta tarea.
-                        </p>
-                    </div>
-                </form>
-            `, [
-                { text: 'Cancelar' },
-                {
-                    text: isEdit ? '💾 Guardar cambios' : '✅ Crear tarea',
-                    class: 'btn-primary',
-                    callback: () => saveStudentTaskFromModal(taskId)
-                }
-            ]);
-        }
-
-        async function saveStudentTaskFromModal(taskId) {
-            const form = document.getElementById('create-student-task-form');
-            if (!form) return;
-
-            const formData = new FormData(form);
-
-            // Convertir sessionId a entero o null
-            let sessionId = formData.get('sessionId');
-            sessionId = sessionId && sessionId !== '' ? parseInt(sessionId, 10) : null;
-
-            // Convertir assignedStudents a enteros
-            const assignedStudents = formData.getAll('assignedStudents')
-                .filter(id => id && id !== '')
-                .map(id => parseInt(id, 10));
-
-            // Convertir fecha local a ISO 8601
-            let dueDate = formData.get('dueDate');
-            if (dueDate) {
-                // datetime-local devuelve formato "2026-02-14T04:42"
-                // Convertir a fecha local y luego a ISO 8601 preservando la zona horaria local
-                const date = new Date(dueDate);
-                if (isNaN(date.getTime())) {
-                    PE.UI.notify('Fecha inválida. Por favor, verifica la fecha y hora.', 'error');
-                    return false;
-                }
-                // Crear una fecha en la zona horaria local y convertirla a ISO
-                const offset = date.getTimezoneOffset() * 60000;
-                const localISOTime = new Date(date.getTime() - offset).toISOString().slice(0, -1);
-                dueDate = localISOTime;
-            }
-
-            const taskData = {
-                title: formData.get('title'),
-                description: formData.get('description'),
-                dueDate: dueDate,
-                assignmentType: formData.get('assignmentType'),
-                assignedStudents: assignedStudents,
-                sessionId: sessionId,
-                rubricId: formData.get('rubricId') || null,
-                status: 'active'
-            };
-
-            if (!taskData.title || !taskData.description || !taskData.dueDate) {
-                PE.UI.notify('Por favor, completa todos los campos requeridos', 'error');
-                return false;
-            }
-
-            try {
-                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
-                const url = taskId
-                    ? `${window.PE_CONFIG.API_URL}/api/student-tasks/${taskId}`
-                    : `${window.PE_CONFIG.API_URL}/api/student-tasks`;
-                const method = taskId ? 'PUT' : 'POST';
-
-                const response = await fetch(url, {
-                    method: method,
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(taskData)
-                });
-
-                if (response.ok) {
-                    PE.UI.notify(taskId ? 'Tarea actualizada correctamente' : 'Tarea creada correctamente', 'success');
-                    await loadStudentTasks();
-                    return true;
-                } else {
-                    const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
-                    console.error('Error response:', errorData);
-                    throw new Error(errorData.error || errorData.errors?.[0]?.msg || 'Error al guardar la tarea');
-                }
-            } catch (error) {
-                console.error('Error saving task:', error);
-                PE.UI.notify('Error: ' + error.message, 'error');
-                return false;
-            }
-        }
-
-        function toggleStudentSelector(value) {
-            const group = document.getElementById('student-selector-group');
-            if (group) {
-                group.style.display = value === 'specific' ? 'block' : 'none';
-            }
-        }
-
-        async function viewStudentTask(taskId) {
-            const task = allStudentTasks.find(t => t.id === taskId);
-            if (!task) return;
-
-            const rubric = allRubrics.find(r => r.id === task.rubricId);
-            const studentsHtml = task.assignmentType === 'all'
-                ? '<span class="badge badge-success">Todo el curso</span>'
-                : task.assignedStudents?.map(studentId => {
-                    const student = allUsers.find(u => u.id === studentId);
-                    return student ? `<span class="student-chip">${PE.Utils.escapeHtml(student.name)}</span>` : '';
-                  }).join('') || '';
-
-            PE.UI.showModal(task.title, `
-                <div class="mb-3">
-                    <strong>📝 Descripción:</strong>
-                    <p class="text-secondary">${PE.Utils.escapeHtml(task.description)}</p>
-                </div>
-                <div class="mb-3">
-                    <strong>📅 Fecha límite:</strong> ${PE.Utils.formatDate(task.dueDate, 'long')}
-                </div>
-                <div class="mb-3">
-                    <strong>👥 Asignada a:</strong><br>
-                    ${studentsHtml}
-                </div>
-                ${task.sessionId ? `<div class="mb-3"><strong>📚 Sesión relacionada:</strong> ${task.sessionId}</div>` : ''}
-                ${rubric ? `<div class="mb-3"><strong>📊 Rúbrica:</strong> ${PE.Utils.escapeHtml(rubric.name)} (${rubric.maxPoints} pts)</div>` : ''}
-                <div class="mb-3">
-                    <strong>📥 Entregas:</strong> ${task.submissions?.length || 0}
-                </div>
-                <div class="alert alert-info">
-                    <strong>ℹ️ Estado:</strong>
-                    <small class="mb-0">${task.status === 'active' ? 'Activa - visible para estudiantes' : 'Inactiva - no visible'}</small>
-                </div>
-            `, [
-                { text: 'Cerrar' },
-                { text: 'Editar', class: 'btn-primary', callback: () => { PE.UI.closeModal(); editStudentTask(taskId); }}
-            ]);
-        }
-
-        function editStudentTask(taskId) {
-            showCreateStudentTaskModal(taskId);
-        }
-
-        async function toggleTaskStatus(taskId) {
-            const task = allStudentTasks.find(t => t.id === taskId);
-            if (!task) return;
-
-            const newStatus = task.status === 'active' ? 'inactive' : 'active';
-
-            try {
-                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
-                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/student-tasks/${taskId}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ status: newStatus })
-                });
-
-                if (response.ok) {
-                    PE.UI.notify(`Tarea ${newStatus === 'active' ? 'activada' : 'desactivada'}`, 'success');
-                    await loadStudentTasks();
-                }
-            } catch (error) {
-                PE.UI.notify('Error al cambiar estado', 'error');
-            }
-        }
-
-        async function deleteStudentTask(taskId) {
-            if (!confirm('¿Estás seguro de que deseas eliminar esta tarea? Las entregas ya enviadas se conservarán, pero la tarea desaparecerá.')) return;
-
-            try {
-                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
-                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/student-tasks/${taskId}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (response.ok) {
-                    PE.UI.notify('Tarea eliminada', 'success');
-                    await loadStudentTasks();
-                }
-            } catch (error) {
-                PE.UI.notify('Error al eliminar tarea', 'error');
-            }
-        }
-
-        function makeDuplicateKey(task) {
-            const title = (task?.title || '').trim().toLowerCase();
-            const desc = (task?.description || '').trim().toLowerCase();
-            const due = (task?.dueDate || '').trim();
-            const type = (task?.assignmentType || '').trim();
-            const assigned = Array.isArray(task?.assignedStudents) ? [...task.assignedStudents].map(String).sort().join(',') : '';
-            const sessionId = task?.sessionId ? String(task.sessionId) : '';
-            const rubricId = task?.rubricId ? String(task.rubricId) : '';
-            return [title, desc, due, type, assigned, sessionId, rubricId].join('|');
-        }
-
-        async function deleteDuplicateTasks() {
-            // Detectar duplicadas por contenido, y eliminar solo las que NO tienen entregas.
-            const groups = new Map();
-            for (const task of allStudentTasks) {
-                const key = makeDuplicateKey(task);
-                if (!groups.has(key)) groups.set(key, []);
-                groups.get(key).push(task);
-            }
-
-            const dupGroups = [...groups.values()].filter(list => list.length > 1);
-            if (dupGroups.length === 0) {
-                PE.UI.notify('No se detectaron tareas duplicadas', 'info');
-                return;
-            }
-
-            // Mantener la mas reciente (por createdAt/updatedAt si existe, si no por id), borrar el resto si 0 entregas.
-            const candidatesToDelete = [];
-            for (const list of dupGroups) {
-                const sorted = [...list].sort((a, b) => {
-                    const ta = new Date(a.updatedAt || a.createdAt || 0).getTime();
-                    const tb = new Date(b.updatedAt || b.createdAt || 0).getTime();
-                    if (ta !== tb) return tb - ta;
-                    return String(b.id).localeCompare(String(a.id));
-                });
-                const keep = sorted[0];
-                for (const t of sorted.slice(1)) {
-                    if (getTaskSubmissionsCount(t) === 0) candidatesToDelete.push(t);
-                }
-                // Si la tarea "keep" no tiene entregas pero otra si, no intentamos resolver automaticamente.
-                void keep;
-            }
-
-            if (candidatesToDelete.length === 0) {
-                PE.UI.notify('Hay duplicadas, pero ninguna es eliminable (tienen entregas)', 'warning');
-                return;
-            }
-
-            if (!confirm(`Se eliminarán ${candidatesToDelete.length} tareas duplicadas sin entregas. ¿Continuar?`)) return;
-
-            try {
-                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
-                for (const t of candidatesToDelete) {
-                    await fetch(`${window.PE_CONFIG.API_URL}/api/student-tasks/${t.id}`, {
-                        method: 'DELETE',
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                }
-                PE.UI.notify('Duplicadas eliminadas', 'success');
-                await loadStudentTasks();
-            } catch (e) {
-                console.error('Error eliminando duplicadas:', e);
-                PE.UI.notify('Error eliminando duplicadas', 'error');
-            }
-        }
-
-        async function archiveTasks(taskIds) {
-            if (!taskIds || taskIds.length === 0) return 0;
-            const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
-            let ok = 0;
-            for (const taskId of taskIds) {
-                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/student-tasks/${taskId}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ status: 'inactive' })
-                });
-                if (response.ok) ok++;
-            }
-            return ok;
-        }
-
-        async function archiveCompletedTasks() {
-            const ids = allStudentTasks
-                .filter(t => t.status === 'active' && isTaskCompleted(t))
-                .map(t => t.id);
-
-            if (ids.length === 0) {
-                PE.UI.notify('No hay tareas completadas activas para archivar', 'info');
-                return;
-            }
-
-            if (!confirm(`Se archivarán ${ids.length} tareas completadas (pasarán a inactivas). ¿Continuar?`)) return;
-
-            try {
-                const ok = await archiveTasks(ids);
-                PE.UI.notify(`Archivadas: ${ok}/${ids.length}`, 'success');
-                await loadStudentTasks();
-            } catch (e) {
-                console.error('Error archivando completadas:', e);
-                PE.UI.notify('Error al archivar tareas completadas', 'error');
-            }
-        }
-
-        async function archiveExpiredTasks() {
-            const ids = allStudentTasks
-                .filter(t => t.status === 'active' && isTaskExpired(t))
-                .map(t => t.id);
-
-            if (ids.length === 0) {
-                PE.UI.notify('No hay tareas caducadas activas para archivar', 'info');
-                return;
-            }
-
-            if (!confirm(`Se archivarán ${ids.length} tareas caducadas (pasarán a inactivas). ¿Continuar?`)) return;
-
-            try {
-                const ok = await archiveTasks(ids);
-                PE.UI.notify(`Archivadas: ${ok}/${ids.length}`, 'success');
-                await loadStudentTasks();
-            } catch (e) {
-                console.error('Error archivando caducadas:', e);
-                PE.UI.notify('Error al archivar tareas caducadas', 'error');
-            }
-        }
-
-        function exportStudentTasks() {
-            const data = allStudentTasks.map(task => ({
-                titulo: task.title,
-                descripcion: task.description,
-                fecha_limite: task.dueDate,
-                tipo_asignacion: task.assignmentType === 'all' ? 'Todo el curso' : 'Específico',
-                estudiantes_asignados: task.assignedStudents?.length || 0,
-                sesion: task.sessionId,
-                rubrica: task.rubricId,
-                estado: task.status,
-                entregas: task.submissions?.length || 0,
-                creada: task.createdAt
-            }));
-
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'tareas_estudiantes_' + new Date().toISOString().split('T')[0] + '.json';
-            a.click();
-
-            PE.UI.notify('Tareas exportadas correctamente', 'success');
-        }
-
-        // Event listeners para filtros de tareas
-        document.addEventListener('DOMContentLoaded', () => {
-            const filterTaskStatus = document.getElementById('filter-task-status');
-            const filterAssignment = document.getElementById('filter-assignment');
-
-            if (filterTaskStatus) {
-                filterTaskStatus.addEventListener('change', () => {
-                    renderStudentTasks({
-                        status: filterTaskStatus.value,
-                        assignment: filterAssignment.value
-                    });
-                });
-            }
-
-            if (filterAssignment) {
-                filterAssignment.addEventListener('change', () => {
-                    renderStudentTasks({
-                        status: filterTaskStatus.value,
-                        assignment: filterAssignment.value
-                    });
-                });
-            }
-        });
     </script>
 </body>
 </html>

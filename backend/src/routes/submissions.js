@@ -251,7 +251,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
  * Crear nueva entrega
  */
 router.post('/', authenticateToken, [
-    body('session_id').optional().isInt(),
+    body('session_id').optional().isString(),
     body('task_id').optional().isString(),
     body('activity_id').optional().isString(),
     body('activity_title').optional().isString(),

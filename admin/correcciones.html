@@ -40,13 +40,6 @@
                             <li><a href="index.html">Panel principal</a></li>
                             <li><a href="estudiantes.html">Estudiantes</a></li>
                             <li><a href="correcciones.html" class="active">Correcciones</a></li>
-                            <li><a href="notificaciones.html">Notificaciones</a></li>
-                            <li><a href="asistencia.html">Asistencia QR</a></li>
-                            <li><a href="tareas.html">Gestión de tareas</a></li>
-                            <li><a href="estadisticas.html">Estadísticas</a></li>
-                            <li><a href="comparacion.html">Comparación</a></li>
-                            <li><a href="rubricas.html">📊 Rúbricas</a></li>
-                            <li><a href="boletines.html">📋 Boletines</a></li>
                         </ul>
                     </div>
                     <div class="sidebar-section">
@@ -57,23 +50,6 @@
                 <div class="main-content">
                     <h1>Corrección de entregas</h1>
                     <p class="text-secondary mb-4">Revisa y proporciona retroalimentación a las entregas de los estudiantes</p>
-
-                    <!-- Contexto de tarea (si se accede con ?taskId=...) -->
-                    <div class="card mb-4" id="task-context" style="display:none;">
-                        <div class="card-body" style="display:flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
-                            <div style="min-width: 260px; flex: 1;">
-                                <div class="text-secondary" style="font-size: 0.85rem; margin-bottom: 0.25rem;">Tarea seleccionada</div>
-                                <h3 style="margin: 0 0 0.25rem;" id="task-context-title">-</h3>
-                                <div class="text-secondary" style="font-size: 0.9rem;" id="task-context-meta">-</div>
-                            </div>
-                            <div style="display:flex; gap: 0.5rem; flex-wrap: wrap;">
-                                <a class="btn btn-outline" href="tareas.html">↩︎ Volver a tareas</a>
-                                <button class="btn btn-outline" onclick="deleteDuplicateSubmissionsForCurrentTask()">🧹 Borrar duplicadas</button>
-                                <button class="btn btn-outline" onclick="archiveCurrentTask()">📦 Archivar tarea</button>
-                                <button class="btn btn-danger" onclick="deleteCurrentTask()">🗑️ Eliminar tarea</button>
-                            </div>
-                        </div>
-                    </div>
 
                     <!-- Estadísticas -->
                     <div class="sessions-grid mb-4" style="grid-template-columns: repeat(3, 1fr);">
@@ -97,56 +73,13 @@
                         </div>
                     </div>
 
-                    <!-- Filtros avanzados -->
+                    <!-- Filtros -->
                     <div class="card mb-4">
                         <div class="card-body">
-                            <!-- Filtros principales -->
-                            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
-                                <button class="btn btn-sm btn-primary filter-btn active" data-filter="pending">
-                                    📝 Pendientes <span class="badge badge-light ml-1" id="count-pending">0</span>
-                                </button>
-                                <button class="btn btn-sm btn-outline filter-btn" data-filter="recent">
-                                    🕒 Recientes (7 días) <span class="badge badge-light ml-1" id="count-recent">0</span>
-                                </button>
-                                <button class="btn btn-sm btn-outline filter-btn" data-filter="reviewed">
-                                    ✓ Corregidas (archivo) <span class="badge badge-light ml-1" id="count-reviewed">0</span>
-                                </button>
-                                <button class="btn btn-sm btn-outline filter-btn" data-filter="all">
-                                    📋 Todas
-                                </button>
-                            </div>
-
-                            <!-- Filtros adicionales -->
-                            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; padding-top: 1rem; border-top: 1px solid var(--border-color);">
-                                <input type="text" id="search-input" class="form-control" placeholder="🔍 Buscar por estudiante o actividad..." style="flex: 1; min-width: 250px; max-width: 400px;">
-
-                                <select id="session-filter" class="form-control form-select" style="width: auto;">
-                                    <option value="">Todas las sesiones</option>
-                                </select>
-
-                                <select id="student-filter" class="form-control form-select" style="width: auto;">
-                                    <option value="">Todos los estudiantes</option>
-                                </select>
-
-                                <select id="limit-select" class="form-control form-select" style="width: auto;">
-                                    <option value="20">20 por página</option>
-                                    <option value="50">50 por página</option>
-                                    <option value="100">100 por página</option>
-                                </select>
-
-                                <button class="btn btn-sm btn-outline" onclick="resetFilters()">🔄 Limpiar filtros</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Información de paginación -->
-                    <div class="card mb-3" id="pagination-info" style="display: none;">
-                        <div class="card-body" style="padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center;">
-                            <span class="text-secondary" id="pagination-text">Mostrando 1-20 de 100</span>
-                            <div style="display: flex; gap: 0.5rem;">
-                                <button class="btn btn-sm btn-outline" id="prev-page" disabled>← Anterior</button>
-                                <span class="text-secondary" style="padding: 0.25rem 0.5rem;" id="page-indicator">Página 1</span>
-                                <button class="btn btn-sm btn-outline" id="next-page">Siguiente →</button>
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                <button class="btn btn-sm btn-primary filter-btn active" data-filter="pending">Pendientes</button>
+                                <button class="btn btn-sm btn-outline filter-btn" data-filter="reviewed">Corregidas</button>
+                                <button class="btn btn-sm btn-outline filter-btn" data-filter="all">Todas</button>
                             </div>
                         </div>
                     </div>
@@ -166,152 +99,79 @@
         </div>
     </footer>
 
+    <script src="../js/app.js"></script>
     <script>
-        window.PE_CONFIG = {
-            API_URL: 'https://produccion-escrita-c2-api-production.up.railway.app'
-        };
-    </script>
-    <script src="../js/config.js"></script>
-<script src="../js/app.js"></script>
-    <script>
-        // Estado global de la aplicación
-        let allSubmissions = [];
-        let allUsers = [];
-        let currentPage = 1;
-        let itemsPerPage = 20;
-        let currentFilter = 'pending';
-        let filteredSubmissions = [];
-        let currentTaskId = null;
-        let currentTask = null;
-
         document.addEventListener('DOMContentLoaded', async () => {
-            const user = await PE.Auth.checkSession();
+            const user = PE.Auth.getCurrentUser();
             if (!user || user.role !== 'admin') {
                 window.location.href = '../auth/login.html';
                 return;
             }
 
-            // Si se llega desde admin/tareas.html?taskId=..., mostrar contexto y filtrar
-            const params = new URLSearchParams(window.location.search || '');
-            currentTaskId = params.get('taskId');
-            if (currentTaskId) {
-                // Mostrar UI de gestión aunque aún no hayamos podido cargar el detalle de la tarea.
-                const titleEl = document.getElementById('task-context-title');
-                const metaEl = document.getElementById('task-context-meta');
-                const cardEl = document.getElementById('task-context');
-                if (titleEl) titleEl.textContent = currentTaskId;
-                if (metaEl) metaEl.textContent = `ID: ${currentTaskId}`;
-                if (cardEl) cardEl.style.display = 'block';
-            }
+            let allSubmissions = await PE.Submissions.getAll();
 
-            // Cargar datos
-            await loadData();
-
-            // Configurar event listeners
-            setupEventListeners();
-
-            // Render inicial
-            applyFilters();
-        });
-
-        async function loadData() {
-            try {
-                allSubmissions = await PE.Submissions.getAll();
-                allSubmissions = Array.isArray(allSubmissions) ? allSubmissions : [];
-
-                allUsers = await PE.API.get('/users');
-                allUsers = Array.isArray(allUsers) ? allUsers.filter(u => (u.role || 'student') !== 'admin') : [];
-
-                refreshStats();
-
-                // Poblar selects
-                populateFilters();
-
-                // Cargar contexto de tarea (si aplica)
-                if (currentTaskId) {
-                    await loadTaskContext(currentTaskId);
-                }
-
-            } catch (error) {
-                console.error('Error cargando datos:', error);
-                PE.UI.notify('Error al cargar los datos', 'error');
-            }
-        }
-
-        function refreshStats() {
+            allSubmissions = Array.isArray(allSubmissions) ? allSubmissions : [];
             const pending = allSubmissions.filter(s => s.status === 'pending');
-            const recent = allSubmissions.filter(s => {
-                const daysDiff = (Date.now() - new Date(s.createdAt).getTime()) / (1000 * 60 * 60 * 24);
-                return daysDiff <= 7;
-            });
             const reviewed = allSubmissions.filter(s => s.status === 'reviewed');
 
             document.getElementById('stat-total').textContent = allSubmissions.length;
             document.getElementById('stat-pending').textContent = pending.length;
             document.getElementById('stat-reviewed').textContent = reviewed.length;
-            document.getElementById('count-pending').textContent = pending.length;
-            document.getElementById('count-recent').textContent = recent.length;
-            document.getElementById('count-reviewed').textContent = reviewed.length;
-        }
 
-        async function loadTaskContext(taskId) {
-            try {
-                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
-                if (!token) throw new Error('No hay token de autenticación');
+            async function renderSubmissions(filter = 'pending') {
+                let submissions = allSubmissions;
+                if (filter === 'pending') submissions = pending;
+                else if (filter === 'reviewed') submissions = reviewed;
 
-                // Asegurar que el panel se ve aunque luego falle el fetch.
-                const titleEl = document.getElementById('task-context-title');
-                const metaEl = document.getElementById('task-context-meta');
-                const cardEl = document.getElementById('task-context');
-                if (titleEl && (!titleEl.textContent || titleEl.textContent === '-')) titleEl.textContent = taskId;
-                if (metaEl && (!metaEl.textContent || metaEl.textContent === '-')) metaEl.textContent = `ID: ${taskId}`;
-                if (cardEl) cardEl.style.display = 'block';
+                const container = document.getElementById('submissions-list');
 
-                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/student-tasks/${taskId}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.error || `No se pudo cargar la tarea (${response.status})`);
+                if (submissions.length === 0) {
+                    container.innerHTML = `
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <p class="text-secondary">No hay entregas ${filter === 'pending' ? 'pendientes de corrección' : 'con este filtro'}.</p>
+                            </div>
+                        </div>
+                    `;
+                    return;
                 }
 
-                currentTask = await response.json();
-                if (titleEl) titleEl.textContent = currentTask.title || taskId;
-                if (metaEl) {
-                    const due = currentTask.dueDate ? PE.Utils.formatDate(currentTask.dueDate, 'long') : 'Sin fecha';
-                    metaEl.textContent = `ID: ${taskId} · Límite: ${due}`;
-                }
-            } catch (e) {
-                console.error('Error cargando contexto de tarea:', e);
-                // Mantener el panel visible para poder archivar/eliminar aunque no cargue el detalle.
-                PE.UI.notify('No se pudo cargar el detalle de la tarea (pero puedes archivar o eliminar por ID).', 'warning');
+                container.innerHTML = submissions.map(s => `
+                    <div class="card mb-3 submission-card ${s.status === 'reviewed' ? 'reviewed' : ''}">
+                        <div class="card-body">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                                <div>
+                                    <h4 style="margin: 0 0 0.5rem;">${PE.Utils.escapeHtml(s.activityTitle)}</h4>
+                                    <p class="text-secondary mb-1">
+                                        <strong>Estudiante:</strong> ${PE.Utils.escapeHtml(s.userName || 'Estudiante')}
+                                    </p>
+                                    <p class="text-secondary mb-2">
+                                        Entregado: ${PE.Utils.formatDate(s.createdAt, 'long')} | ${s.wordCount} palabras
+                                    </p>
+                                    <span class="badge badge-${s.status === 'reviewed' ? 'success' : 'warning'}">
+                                        ${s.status === 'reviewed' ? 'Corregido' : 'Pendiente'}
+                                    </span>
+                                </div>
+                                <button class="btn ${s.status === 'reviewed' ? 'btn-outline' : 'btn-primary'}" onclick="reviewSubmission('${s.id}')">
+                                    ${s.status === 'reviewed' ? 'Ver/Editar' : 'Corregir'}
+                                </button>
+                            </div>
+                            <div style="background: var(--bg-light); padding: 1rem; border-radius: 0.5rem; margin-top: 1rem; max-height: 150px; overflow-y: auto;">
+                                ${s.content.substring(0, 500)}${s.content.length > 500 ? '...' : ''}
+                            </div>
+                            ${s.feedback ? `
+                                <div class="alert alert-success mt-3">
+                                    <strong>Tu corrección:</strong> ${PE.Utils.escapeHtml(s.feedback)}
+                                    ${s.grade ? ` | <strong>Calificación:</strong> ${s.grade}` : ''}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('');
             }
-        }
 
-        function populateFilters() {
-            // Poblar filtro de sesiones
-            const sessionFilter = document.getElementById('session-filter');
-            const sessions = PE.CourseData.sessions;
-            sessions.forEach(session => {
-                const option = document.createElement('option');
-                option.value = session.id;
-                option.textContent = `Sesión ${session.id}: ${session.title}`;
-                sessionFilter.appendChild(option);
-            });
+            renderSubmissions();
 
-            // Poblar filtro de estudiantes
-            const studentFilter = document.getElementById('student-filter');
-            allUsers.forEach(user => {
-                const option = document.createElement('option');
-                option.value = user.id;
-                option.textContent = user.name;
-                studentFilter.appendChild(option);
-            });
-        }
-
-        function setupEventListeners() {
-            // Filtros principales
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     document.querySelectorAll('.filter-btn').forEach(b => {
@@ -320,626 +180,58 @@
                     });
                     btn.classList.add('active', 'btn-primary');
                     btn.classList.remove('btn-outline');
-                    currentFilter = btn.dataset.filter;
-                    currentPage = 1;
-                    applyFilters();
+                    renderSubmissions(btn.dataset.filter);
                 });
             });
-
-            // Búsqueda
-            document.getElementById('search-input').addEventListener('input', PE.Utils.debounce(() => {
-                currentPage = 1;
-                applyFilters();
-            }, 300));
-
-            // Filtro de sesión
-            document.getElementById('session-filter').addEventListener('change', () => {
-                currentPage = 1;
-                applyFilters();
-            });
-
-            // Filtro de estudiante
-            document.getElementById('student-filter').addEventListener('change', () => {
-                currentPage = 1;
-                applyFilters();
-            });
-
-            // Límite por página
-            document.getElementById('limit-select').addEventListener('change', (e) => {
-                itemsPerPage = parseInt(e.target.value);
-                currentPage = 1;
-                applyFilters();
-            });
-
-            // Paginación
-            document.getElementById('prev-page').addEventListener('click', () => {
-                if (currentPage > 1) {
-                    currentPage--;
-                    renderPage();
-                }
-            });
-
-            document.getElementById('next-page').addEventListener('click', () => {
-                const totalPages = Math.ceil(filteredSubmissions.length / itemsPerPage);
-                if (currentPage < totalPages) {
-                    currentPage++;
-                    renderPage();
-                }
-            });
-        }
-
-        function applyFilters() {
-            const searchTerm = document.getElementById('search-input').value.toLowerCase();
-            const sessionFilter = document.getElementById('session-filter').value;
-            const studentFilter = document.getElementById('student-filter').value;
-
-            filteredSubmissions = allSubmissions.filter(s => {
-                // Si estamos viendo una tarea especifica, solo mostrar sus entregas
-                if (currentTaskId && String(s.taskId || '') !== String(currentTaskId)) return false;
-
-                // Filtro principal
-                if (currentFilter === 'pending' && s.status !== 'pending') return false;
-                if (currentFilter === 'reviewed' && s.status !== 'reviewed') return false;
-                if (currentFilter === 'recent') {
-                    const daysDiff = (Date.now() - new Date(s.createdAt).getTime()) / (1000 * 60 * 60 * 24);
-                    if (daysDiff > 7) return false;
-                }
-
-                // Búsqueda
-                if (searchTerm) {
-                    const activityMatch = (s.activityTitle || '').toLowerCase().includes(searchTerm);
-                    const studentMatch = (s.userName || '').toLowerCase().includes(searchTerm);
-                    if (!activityMatch && !studentMatch) return false;
-                }
-
-                // Filtro de sesión
-                if (sessionFilter && String(s.sessionId) !== sessionFilter) return false;
-
-                // Filtro de estudiante
-                if (studentFilter && String(s.userId) !== studentFilter) return false;
-
-                return true;
-            });
-
-            renderPage();
-        }
-
-        function renderPage() {
-            const container = document.getElementById('submissions-list');
-            const paginationInfo = document.getElementById('pagination-info');
-
-            if (filteredSubmissions.length === 0) {
-                container.innerHTML = `
-                    <div class="card">
-                        <div class="card-body text-center">
-                            <p class="text-secondary">No hay entregas con estos filtros.</p>
-                            <button class="btn btn-outline mt-3" onclick="resetFilters()">Limpiar filtros</button>
-                        </div>
-                    </div>
-                `;
-                paginationInfo.style.display = 'none';
-                return;
-            }
-
-            // Calcular paginación
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            const paginatedSubmissions = filteredSubmissions.slice(startIndex, endIndex);
-            const totalPages = Math.ceil(filteredSubmissions.length / itemsPerPage);
-
-            // Mostrar info de paginación
-            paginationInfo.style.display = 'block';
-            document.getElementById('pagination-text').textContent =
-                `Mostrando ${startIndex + 1}-${Math.min(endIndex, filteredSubmissions.length)} de ${filteredSubmissions.length}`;
-            document.getElementById('page-indicator').textContent = `Página ${currentPage} de ${totalPages}`;
-            document.getElementById('prev-page').disabled = currentPage === 1;
-            document.getElementById('next-page').disabled = currentPage === totalPages;
-
-            // Renderizar entregas
-            container.innerHTML = paginatedSubmissions.map(s => `
-                <div class="card mb-3 submission-card ${s.status === 'reviewed' ? 'reviewed' : ''}">
-                    <div class="card-body">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
-                            <div style="flex: 1; min-width: 300px;">
-                                <h4 style="margin: 0 0 0.5rem;">${PE.Utils.escapeHtml(s.activityTitle)}</h4>
-                                <p class="text-secondary mb-1">
-                                    <strong>Estudiante:</strong> ${PE.Utils.escapeHtml(s.userName || 'Estudiante')}
-                                </p>
-                                <p class="text-secondary mb-2">
-                                    📅 Entregado: ${PE.Utils.formatDate(s.createdAt, 'long')} |
-                                    📝 ${s.wordCount} palabras
-                                    ${s.sessionId ? ` | 🎓 Sesión ${s.sessionId}` : ''}
-                                </p>
-                                <span class="badge badge-${s.status === 'reviewed' ? 'success' : 'warning'}">
-                                    ${s.status === 'reviewed' ? '✓ Corregido' : '📝 Pendiente'}
-                                </span>
-                            </div>
-                            <div style="display:flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
-                                <button class="btn ${s.status === 'reviewed' ? 'btn-outline' : 'btn-primary'}" onclick="reviewSubmission('${s.id}')">
-                                    ${s.status === 'reviewed' ? '👁️ Ver/Editar' : '✍️ Corregir'}
-                                </button>
-                                <button class="btn btn-danger btn-sm" onclick="deleteSubmission('${s.id}')">🗑️</button>
-                            </div>
-                        </div>
-                        <div style="background: var(--bg-light); padding: 1rem; border-radius: 0.5rem; margin-top: 1rem; max-height: 150px; overflow-y: auto;">
-                            ${s.content.substring(0, 500)}${s.content.length > 500 ? '...' : ''}
-                        </div>
-                        ${s.feedback ? `
-                            <div class="alert alert-success mt-3">
-                                <strong>💬 Tu corrección:</strong> ${PE.Utils.escapeHtml(s.feedback)}
-                                ${s.grade ? ` | <strong>⭐ Calificación:</strong> ${s.grade}` : ''}
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        async function deleteSubmission(id) {
-            const targetId = String(id);
-            const s = allSubmissions.find(sub => String(sub.id) === targetId);
-            const label = s ? `${s.activityTitle || 'Entrega'} (${s.userName || 'Estudiante'})` : `Entrega ${targetId}`;
-
-            if (!confirm(`¿Eliminar ${label} de la vista del profesor? El estudiante seguirá viendo su entrega y su nota.`)) return;
-
-            try {
-                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
-                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/submissions/${targetId}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.error || `Error eliminando (${response.status})`);
-                }
-
-                allSubmissions = allSubmissions.filter(sub => String(sub.id) !== targetId);
-                refreshStats();
-                applyFilters();
-                PE.UI.notify('Entrega archivada', 'success');
-            } catch (e) {
-                console.error('Error eliminando entrega:', e);
-                PE.UI.notify('Error al eliminar la entrega', 'error');
-            }
-        }
-
-        async function deleteDuplicateSubmissionsForCurrentTask() {
-            if (!currentTaskId) return;
-
-            // Duplicadas = mas de 1 entrega para (taskId, userId). Se conserva la mas reciente.
-            const list = allSubmissions
-                .filter(s => String(s.taskId || '') === String(currentTaskId))
-                .slice()
-                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-            const byUser = new Map();
-            for (const s of list) {
-                const key = String(s.userId || '');
-                if (!byUser.has(key)) byUser.set(key, []);
-                byUser.get(key).push(s);
-            }
-
-            const toDelete = [];
-            for (const subs of byUser.values()) {
-                if (subs.length <= 1) continue;
-                // Conserva la mas reciente (subs[0]). Borra el resto SOLO si estan pendientes.
-                for (const dup of subs.slice(1)) {
-                    if (dup.status === 'pending') toDelete.push(dup);
-                }
-            }
-
-            if (toDelete.length === 0) {
-                PE.UI.notify('No hay entregas duplicadas pendientes para borrar', 'info');
-                return;
-            }
-
-            if (!confirm(`Se borrarán ${toDelete.length} entregas duplicadas pendientes (se conserva la más reciente por alumno). ¿Continuar?`)) return;
-
-            try {
-                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
-                for (const dup of toDelete) {
-                    await fetch(`${window.PE_CONFIG.API_URL}/api/submissions/${dup.id}`, {
-                        method: 'DELETE',
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                }
-                // Recargar datos para mantener consistencia con API/estado.
-                await loadData();
-                applyFilters();
-                PE.UI.notify('Duplicadas eliminadas', 'success');
-            } catch (e) {
-                console.error('Error borrando duplicadas:', e);
-                PE.UI.notify('Error al borrar duplicadas', 'error');
-            }
-        }
-
-        function resetFilters() {
-            document.getElementById('search-input').value = '';
-            document.getElementById('session-filter').value = '';
-            document.getElementById('student-filter').value = '';
-            document.getElementById('limit-select').value = '20';
-            itemsPerPage = 20;
-            currentPage = 1;
-            currentFilter = 'pending';
-
-            // Resetear botones de filtro
-            document.querySelectorAll('.filter-btn').forEach(b => {
-                b.classList.remove('active', 'btn-primary');
-                b.classList.add('btn-outline');
-            });
-            document.querySelector('[data-filter="pending"]').classList.add('active', 'btn-primary');
-            document.querySelector('[data-filter="pending"]').classList.remove('btn-outline');
-
-            applyFilters();
-        }
-
-        async function archiveCurrentTask() {
-            if (!currentTaskId) return;
-            if (!confirm('¿Archivar esta tarea? Quedará inactiva y no aparecerá para estudiantes.')) return;
-
-            try {
-                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
-                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/student-tasks/${currentTaskId}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ status: 'inactive' })
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.error || `Error archivando (${response.status})`);
-                }
-
-                PE.UI.notify('Tarea archivada', 'success');
-                // Mantener en pagina, pero actualizar contexto si se desea
-                await loadTaskContext(currentTaskId);
-            } catch (e) {
-                console.error('Error archivando tarea:', e);
-                PE.UI.notify('Error al archivar la tarea', 'error');
-            }
-        }
-
-        async function deleteCurrentTask() {
-            if (!currentTaskId) return;
-            if (!confirm('¿Eliminar esta tarea? Esta acción no se puede deshacer.')) return;
-
-            try {
-                const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
-                const response = await fetch(`${window.PE_CONFIG.API_URL}/api/student-tasks/${currentTaskId}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.error || `Error eliminando (${response.status})`);
-                }
-
-                PE.UI.notify('Tarea eliminada', 'success');
-                // Volver a lista de tareas para evitar quedarse en un taskId inexistente
-                window.location.href = 'tareas.html';
-            } catch (e) {
-                console.error('Error eliminando tarea:', e);
-                PE.UI.notify('Error al eliminar la tarea', 'error');
-            }
-        }
+        });
 
         async function reviewSubmission(id) {
-            const targetId = String(id);
-            const s = allSubmissions.find(sub => String(sub.id) === targetId);
+            let submissions = await PE.Submissions.getAll();
+            submissions = Array.isArray(submissions) ? submissions : [];
+            const s = submissions.find(sub => sub.id === id);
 
-            if (!s) return;
-
-            // Cargar rúbricas disponibles
-            const storedRubrics = localStorage.getItem('pe_c2_rubrics');
-            const rubrics = storedRubrics ? JSON.parse(storedRubrics) : [];
-            const activeRubrics = rubrics.filter(r => r.active);
-            const selectedRubricId = s.rubricId || (activeRubrics.length > 0 ? activeRubrics[0].id : '');
-            const selectedRubric = rubrics.find(r => r.id === selectedRubricId) || activeRubrics[0];
-
-            const modalContent = `
-                <p><strong>👤 Estudiante:</strong> ${PE.Utils.escapeHtml(s.userName || 'Estudiante')}</p>
-                <p><strong>📅 Fecha:</strong> ${PE.Utils.formatDate(s.createdAt, 'long')}</p>
-                <div style="background: var(--bg-light); padding: 1rem; border-radius: 0.5rem; max-height: 300px; overflow-y: auto; margin-bottom: 1rem; border: 1px solid var(--border-color);">
-                    ${s.content}
-                </div>
-                <p class="text-secondary mb-2">📝 ${s.wordCount} palabras</p>
-
-                <div class="form-group mb-3">
-                    <label class="form-label">📊 Rúbrica de evaluación</label>
-                    <select id="rubric-select" class="form-control form-select" onchange="loadRubricCriteria(this.value)">
-                        <option value="">Sin rúbrica (evaluación simple)</option>
-                        ${activeRubrics.map(r => `
-                            <option value="${r.id}" ${selectedRubricId === r.id ? 'selected' : ''}>${r.name}</option>
-                        `).join('')}
-                    </select>
-                </div>
-
-                ${selectedRubric ? `
-                    <div id="rubric-evaluation" class="mb-3">
-                        <div class="alert alert-info mb-2">
-                            <strong>📝 Evaluación por criterios:</strong> Puntuación máxima: ${selectedRubric.maxPoints} puntos
-                        </div>
-                        <div id="criteria-scores">
-                            ${selectedRubric.criteria.map((c, i) => {
-                                const savedScore = s.criterionScores && s.criterionScores[c.name] !== undefined ? s.criterionScores[c.name] : '';
-                                const maxScore = (selectedRubric.maxPoints * c.weight) / 100;
-                                return `
-                                    <div class="form-group mb-2">
-                                        <label class="form-label">
-                                            <strong>${c.name}</strong> 
-                                            <span class="text-secondary">(${c.weight}%)</span>
-                                            <small class="text-secondary">- Max: ${maxScore.toFixed(1)}</small>
-                                        </label>
-                                        <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                            <input type="range" 
-                                                class="form-control-range" 
-                                                min="0" 
-                                                max="${maxScore}" 
-                                                step="0.1" 
-                                                value="${savedScore || 0}"
-                                                id="criterion-range-${i}"
-                                                oninput="updateCriterionScore(${i}, ${maxScore})">
-                                            <input type="number" 
-                                                class="form-control" 
-                                                style="width: 80px;"
-                                                min="0" 
-                                                max="${maxScore}" 
-                                                step="0.1"
-                                                value="${savedScore || 0}"
-                                                id="criterion-input-${i}"
-                                                oninput="syncCriterionScore(${i}, ${maxScore})">
-                                        </div>
-                                        <p class="text-secondary mb-0 mt-1" style="font-size: 0.8rem;">${c.description || ''}</p>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                        <div class="alert alert-primary mt-3">
-                            <strong>📊 Nota Total: <span id="total-grade">0</span> / ${selectedRubric.maxPoints}</strong>
-                            <span class="badge badge-info ml-2" id="grade-equivalent">-</span>
-                        </div>
+            if (s) {
+                PE.UI.showModal('Corregir: ' + s.activityTitle, `
+                    <p><strong>Estudiante:</strong> ${PE.Utils.escapeHtml(s.userName || 'Estudiante')}</p>
+                    <p><strong>Fecha:</strong> ${PE.Utils.formatDate(s.createdAt, 'long')}</p>
+                    <div style="background: var(--bg-light); padding: 1rem; border-radius: 0.5rem; max-height: 250px; overflow-y: auto; margin-bottom: 1rem;">
+                        ${s.content}
                     </div>
-                ` : '<div id="rubric-evaluation"></div>'}
-
-                <div class="form-group mb-3">
-                    <label class="form-label">💬 Retroalimentación general</label>
-                    <textarea id="feedback-text" class="form-control" rows="6" placeholder="Escribe tu corrección y comentarios...">${s.feedback || ''}</textarea>
-                </div>
-
-                <div class="form-group mb-3">
-                    <label class="form-label">⭐ Calificación cualitativa (opcional)</label>
-                    <select id="feedback-grade" class="form-control form-select">
-                        <option value="">Sin calificación</option>
-                        <option value="Excelente" ${s.grade === 'Excelente' ? 'selected' : ''}>Excelente</option>
-                        <option value="Muy bien" ${s.grade === 'Muy bien' ? 'selected' : ''}>Muy bien</option>
-                        <option value="Bien" ${s.grade === 'Bien' ? 'selected' : ''}>Bien</option>
-                        <option value="Suficiente" ${s.grade === 'Suficiente' ? 'selected' : ''}>Suficiente</option>
-                        <option value="Necesita mejorar" ${s.grade === 'Necesita mejorar' ? 'selected' : ''}>Necesita mejorar</option>
-                    </select>
-                </div>
-            `;
-
-            PE.UI.showModal('✍️ Corregir: ' + s.activityTitle, modalContent, [
-                { text: 'Cancelar' },
-                {
-                    text: '💾 Guardar corrección',
-                    class: 'btn-primary',
-                    callback: async () => {
-                        const feedback = document.getElementById('feedback-text').value;
-                        const grade = document.getElementById('feedback-grade').value;
-                        const rubricSelect = document.getElementById('rubric-select');
-                        const rubricId = rubricSelect ? rubricSelect.value : '';
-                        
-                        // Calcular puntuación total si hay rúbrica
-                        let numericGrade = null;
-                        let criterionScores = null;
-                        
-                        if (rubricId && selectedRubric) {
-                            const totalGradeEl = document.getElementById('total-grade');
-                            numericGrade = parseFloat(totalGradeEl?.textContent || 0);
-                            
-                            criterionScores = {};
-                            selectedRubric.criteria.forEach((c, i) => {
-                                const input = document.getElementById(`criterion-input-${i}`);
-                                if (input) {
-                                    criterionScores[c.name] = parseFloat(input.value) || 0;
-                                }
-                            });
-                        }
-
-                        if (!feedback.trim()) {
-                            PE.UI.notify('Escribe tu retroalimentación', 'error');
-                            return;
-                        }
-
-                        // Guardar corrección con datos de rúbrica
-                        await saveGrading(id, feedback, grade, rubricId, numericGrade, criterionScores);
-                        PE.UI.notify('✅ Corrección guardada correctamente', 'success');
-                        location.reload();
-                    },
-                    close: false
-                }
-            ]);
-
-            // Calcular nota inicial si hay datos guardados
-            if (selectedRubric && s.criterionScores) {
-                calculateTotalGrade(selectedRubric);
-            }
-        }
-
-        function loadRubricCriteria(rubricId) {
-            const storedRubrics = localStorage.getItem('pe_c2_rubrics');
-            const rubrics = storedRubrics ? JSON.parse(storedRubrics) : [];
-            const rubric = rubrics.find(r => r.id === rubricId);
-
-            const evaluationDiv = document.getElementById('rubric-evaluation');
-
-            if (!rubric) {
-                evaluationDiv.innerHTML = '';
-                return;
-            }
-
-            evaluationDiv.innerHTML = `
-                <div class="alert alert-info mb-2">
-                    <strong>📝 Evaluación por criterios:</strong> Puntuación máxima: ${rubric.maxPoints} puntos
-                </div>
-                <div id="criteria-scores">
-                    ${rubric.criteria.map((c, i) => `
-                        <div class="form-group mb-2">
-                            <label class="form-label">
-                                <strong>${c.name}</strong> 
-                                <span class="text-secondary">(${c.weight}%)</span>
-                                <small class="text-secondary">- Max: ${((rubric.maxPoints * c.weight) / 100).toFixed(1)}</small>
-                            </label>
-                            <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                <input type="range" 
-                                    class="form-control-range" 
-                                    min="0" 
-                                    max="${(rubric.maxPoints * c.weight) / 100}" 
-                                    step="0.1" 
-                                    value="0"
-                                    id="criterion-range-${i}"
-                                    oninput="updateCriterionScore(${i}, ${(rubric.maxPoints * c.weight) / 100})">
-                                <input type="number" 
-                                    class="form-control" 
-                                    style="width: 80px;"
-                                    min="0" 
-                                    max="${(rubric.maxPoints * c.weight) / 100}" 
-                                    step="0.1"
-                                    value="0"
-                                    id="criterion-input-${i}"
-                                    oninput="syncCriterionScore(${i}, ${(rubric.maxPoints * c.weight) / 100})">
-                            </div>
-                            <p class="text-secondary mb-0 mt-1" style="font-size: 0.8rem;">${c.description || ''}</p>
-                        </div>
-                    `).join('')}
-                </div>
-                <div class="alert alert-primary mt-3">
-                    <strong>📊 Nota Total: <span id="total-grade">0</span> / ${rubric.maxPoints}</strong>
-                    <span class="badge badge-info ml-2" id="grade-equivalent">-</span>
-                </div>
-            `;
-        }
-
-        function updateCriterionScore(index, maxScore) {
-            const range = document.getElementById(`criterion-range-${index}`);
-            const input = document.getElementById(`criterion-input-${index}`);
-            if (range && input) {
-                input.value = range.value;
-                calculateTotalGrade();
-            }
-        }
-
-        function syncCriterionScore(index, maxScore) {
-            const range = document.getElementById(`criterion-range-${index}`);
-            const input = document.getElementById(`criterion-input-${index}`);
-            if (range && input) {
-                range.value = input.value;
-                calculateTotalGrade();
-            }
-        }
-
-        function calculateTotalGrade(rubric) {
-            const rubricSelect = document.getElementById('rubric-select');
-            if (!rubric && rubricSelect) {
-                const storedRubrics = localStorage.getItem('pe_c2_rubrics');
-                const rubrics = storedRubrics ? JSON.parse(storedRubrics) : [];
-                rubric = rubrics.find(r => r.id === rubricSelect.value);
-            }
-
-            if (!rubric) return;
-
-            let total = 0;
-            rubric.criteria.forEach((c, i) => {
-                const input = document.getElementById(`criterion-input-${i}`);
-                if (input) {
-                    total += parseFloat(input.value) || 0;
-                }
-            });
-
-            const totalGradeEl = document.getElementById('total-grade');
-            if (totalGradeEl) {
-                totalGradeEl.textContent = total.toFixed(1);
-            }
-
-            // Calcular equivalente cualitativo
-            const gradeEquivalentEl = document.getElementById('grade-equivalent');
-            if (gradeEquivalentEl) {
-                const percentage = (total / rubric.maxPoints) * 100;
-                let equivalent = '-';
-                if (percentage >= 90) equivalent = 'Excelente';
-                else if (percentage >= 80) equivalent = 'Muy bien';
-                else if (percentage >= 70) equivalent = 'Bien';
-                else if (percentage >= 60) equivalent = 'Suficiente';
-                else equivalent = 'Necesita mejorar';
-                
-                gradeEquivalentEl.textContent = equivalent;
-            }
-
-            return total;
-        }
-
-        async function saveGrading(id, feedback, grade, rubricId, numericGrade, criterionScores) {
-            try {
-                const submission = allSubmissions.find(s => String(s.id) === String(id));
-                if (!submission) return;
-
-                // Actualizar submission
-                submission.feedback = feedback;
-                submission.grade = grade;
-                submission.rubricId = rubricId;
-                submission.numericGrade = numericGrade;
-                submission.criterionScores = criterionScores;
-                submission.status = 'reviewed';
-                submission.reviewedAt = new Date().toISOString();
-
-                // Guardar en localStorage
-                const storedSubmissions = localStorage.getItem('pe_c2_submissions');
-                let submissions = storedSubmissions ? JSON.parse(storedSubmissions) : [];
-                const index = submissions.findIndex(s => String(s.id) === String(id));
-                if (index >= 0) {
-                    submissions[index] = submission;
-                }
-                localStorage.setItem('pe_c2_submissions', JSON.stringify(submissions));
-
-                // Intentar guardar en API usando el endpoint correcto
-                try {
-                    const token = PE.Utils?.storage?.get('token') || localStorage.getItem('pe_c2_token');
-                    
-                    const feedbackData = {
-                        feedback_text: feedback,
-                        grade: grade || null,
-                        numeric_grade: numericGrade || null,
-                        annotations: null,
-                        rubric_id: rubricId || null,
-                        criterion_scores: criterionScores || null
-                    };
-
-                    const response = await fetch(`${window.PE_CONFIG.API_URL}/api/submissions/${id}/feedback`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
+                    <p class="text-secondary">${s.wordCount} palabras</p>
+                    <div class="form-group">
+                        <label class="form-label">Retroalimentación</label>
+                        <textarea id="feedback-text" class="form-control" rows="5">${s.feedback || ''}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Calificación</label>
+                        <select id="feedback-grade" class="form-control form-select">
+                            <option value="">Sin calificación</option>
+                            <option value="Excelente" ${s.grade === 'Excelente' ? 'selected' : ''}>Excelente</option>
+                            <option value="Muy bien" ${s.grade === 'Muy bien' ? 'selected' : ''}>Muy bien</option>
+                            <option value="Bien" ${s.grade === 'Bien' ? 'selected' : ''}>Bien</option>
+                            <option value="Suficiente" ${s.grade === 'Suficiente' ? 'selected' : ''}>Suficiente</option>
+                            <option value="Necesita mejorar" ${s.grade === 'Necesita mejorar' ? 'selected' : ''}>Necesita mejorar</option>
+                        </select>
+                    </div>
+                `, [
+                    { text: 'Cancelar' },
+                    {
+                        text: 'Guardar corrección',
+                        class: 'btn-primary',
+                        callback: async () => {
+                            const feedback = document.getElementById('feedback-text').value;
+                            const grade = document.getElementById('feedback-grade').value;
+                            if (!feedback.trim()) {
+                                PE.UI.notify('Escribe tu retroalimentación', 'error');
+                                return;
+                            }
+                            await PE.Submissions.addFeedback(id, feedback, grade);
+                            PE.UI.notify('Corrección guardada', 'success');
+                            location.reload();
                         },
-                        body: JSON.stringify(feedbackData)
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Error al guardar en API');
+                        close: false
                     }
-                    
-                    console.log('Feedback guardado en API correctamente');
-                } catch (e) {
-                    console.warn('No se pudo guardar en API, usando localStorage:', e.message);
-                }
-            } catch (error) {
-                console.error('Error guardando calificación:', error);
-                throw error;
+                ]);
             }
         }
     </script>
