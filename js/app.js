@@ -2256,13 +2256,23 @@ const Forms = {
         submitBtn.innerHTML = '<div class="loader" style="width: 20px; height: 20px;"></div>';
 
         try {
-            await Auth.register(validation.data);
+            const registeredUser = await Auth.register(validation.data);
             await Auth.login(validation.data.email, validation.data.password);
             UI.notify('Registro exitoso. Bienvenido/a al curso.', 'success');
 
-            // Redirigir inmediatamente al dashboard
+            // Redirigir según el curso del usuario
             const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
-            const redirectUrl = basePath + '/usuario/dashboard.html';
+            let redirectUrl;
+
+            if (registeredUser.role === 'admin') {
+                redirectUrl = basePath + '/admin/index.html';
+            } else if (registeredUser.course_code === 'C1-ARTE-SOCIEDAD' || registeredUser.course_name?.includes('C1')) {
+                // Usuario del curso C1 - redirigir a debates
+                redirectUrl = basePath + '/debates.html';
+            } else {
+                // Usuario del curso C2 - redirigir a dashboard
+                redirectUrl = basePath + '/usuario/dashboard.html';
+            }
 
             setTimeout(() => {
                 window.location.replace(redirectUrl);
