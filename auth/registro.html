@@ -287,9 +287,15 @@
                         PE.UI.notify(`Registro completado. Bienvenido/a, ${response.user.name}!`, 'success');
 
                         setTimeout(() => {
-                            window.location.href = response.user.role === 'admin'
-                                ? '../admin/index.html'
-                                : '../usuario/dashboard.html';
+                            if (response.user.role === 'admin') {
+                                window.location.href = '../admin/index.html';
+                            } else if (response.user.course_code === 'C1-ARTE-SOCIEDAD' || response.user.course_name?.includes('C1')) {
+                                // Usuario del curso C1 - redirigir a debates
+                                window.location.href = '../debates.html';
+                            } else {
+                                // Usuario del curso C2 - redirigir a dashboard
+                                window.location.href = '../usuario/dashboard.html';
+                            }
                         }, 500);
                         return;
                     }

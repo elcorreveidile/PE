@@ -950,12 +950,19 @@ const Auth = {
 
                 UI.notify(`Bienvenido/a, ${response.user.name}!`, 'success');
 
-                // Redirigir inmediatamente al dashboard correspondiente
-                // Usar location.replace para evitar que el usuario pueda volver atrás con el botón del navegador
+                // Redirigir según el curso del usuario
                 const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
-                const redirectUrl = response.user.role === 'admin'
-                    ? basePath + '/admin/index.html'
-                    : basePath + '/usuario/dashboard.html';
+                let redirectUrl;
+
+                if (response.user.role === 'admin') {
+                    redirectUrl = basePath + '/admin/index.html';
+                } else if (response.user.course_code === 'C1-ARTE-SOCIEDAD' || response.user.course_name?.includes('C1')) {
+                    // Usuario del curso C1 - redirigir a debates
+                    redirectUrl = basePath + '/debates.html';
+                } else {
+                    // Usuario del curso C2 - redirigir a dashboard
+                    redirectUrl = basePath + '/usuario/dashboard.html';
+                }
 
                 // Pequeño delay para permitir que la notificación se muestre
                 setTimeout(() => {

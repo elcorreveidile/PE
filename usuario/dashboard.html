@@ -9,6 +9,23 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <script>
+        // Redirección inteligente por curso - ejecutar antes de cargar el resto de la página
+        (function() {
+            const currentUser = localStorage.getItem('pe_c2_currentUser');
+            if (currentUser) {
+                try {
+                    const user = JSON.parse(currentUser);
+                    // Si es usuario del curso C1, redirigir a debates
+                    if (user.course_code === 'C1-ARTE-SOCIEDAD' || user.course_name?.includes('C1')) {
+                        window.location.href = '../debates.html';
+                    }
+                } catch (e) {
+                    console.error('Error al parsear usuario:', e);
+                }
+            }
+        })();
+    </script>
 </head>
 <body>
     <!-- Header -->
