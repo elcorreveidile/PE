@@ -1847,12 +1847,33 @@ const UI = {
         const basePath = window.location.pathname.includes('/PE/') ? '/PE' : '';
 
         if (user) {
+            // Detectar si estamos en debates.html para redirigir correctamente
+            const isInDebates = window.location.pathname.includes('/debates.html');
+            const isC1Student = user.course_code === 'C1-ARTE-SOCIEDAD' || user.course_name?.includes('C1');
+
+            let userAreaLink;
+            let userAreaText;
+
+            if (isInDebates) {
+                userAreaLink = '#-'; // En debates, el enlace lleva a la misma página (scroll arriba)
+                userAreaText = 'Mis debates';
+            } else if (user.role === 'admin') {
+                userAreaLink = basePath + '/admin/index.html';
+                userAreaText = 'Panel admin';
+            } else if (isC1Student) {
+                userAreaLink = basePath + '/debates.html';
+                userAreaText = 'Mis debates';
+            } else {
+                userAreaLink = basePath + '/usuario/dashboard.html';
+                userAreaText = 'Mi área';
+            }
+
             authContainer.innerHTML = `
                 <span style="color: rgba(255,255,255,0.8); margin-right: 1rem;">
                     Hola, ${Utils.escapeHtml(user.name)}
                 </span>
-                <a href="${user.role === 'admin' ? basePath + '/admin/index.html' : basePath + '/usuario/dashboard.html'}" class="btn btn-outline-white btn-sm">
-                    ${user.role === 'admin' ? 'Panel admin' : 'Mi área'}
+                <a href="${userAreaLink}" class="btn btn-outline-white btn-sm">
+                    ${userAreaText}
                 </a>
                 <button onclick="Auth.logout()" class="btn btn-accent btn-sm">Salir</button>
             `;

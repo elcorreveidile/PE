@@ -1012,6 +1012,24 @@ Cerramos el curso como lo empezamos: ante una obra de arte y con más preguntas 
             `;
 
             window.scrollTo(0, 0);
+
+            // Añadir botón de envío de tareas al final de cada sesión
+            setTimeout(() => {
+                const sessionNav = document.querySelector('.session-nav');
+                if (sessionNav) {
+                    const taskButtonHTML = `
+                        <div style="margin: 32px 0 20px 0; text-align: center;">
+                            <button onclick="document.querySelector('[data-submission-form]')?.scrollIntoView({behavior: 'smooth', block: 'center'})" class="btn btn-accent" style="font-size: 1.1rem; padding: 16px 32px;">
+                                📝 Enviar tarea para esta sesión
+                            </button>
+                            <p style="margin-top: 12px; color: #5A5043; font-size: .9rem;">
+                                Click para abrir el formulario de envío
+                            </p>
+                        </div>
+                    `;
+                    sessionNav.insertAdjacentHTML('beforebegin', taskButtonHTML);
+                }
+            }, 100);
         }
 
         // Función para volver al grid
@@ -1041,17 +1059,29 @@ Cerramos el curso como lo empezamos: ante una obra de arte y con más preguntas 
         // ═══════════════════════════════════════════════════════════════
 
         // Verificar autenticación al cargar
-        const currentUser = PE.Utils.storage.get('currentUser');
+        let currentUser = null;
+        try {
+            // Intentar obtener usuario del localStorage
+            const userStr = localStorage.getItem('pe_c2_currentUser');
+            if (userStr) {
+                currentUser = JSON.parse(userStr);
+                console.log('✅ Usuario autenticado encontrado:', currentUser.name);
+            }
+        } catch (e) {
+            console.warn('❌ Error al obtener usuario:', e);
+        }
 
-        if (currentUser) {
+        if (currentUser && currentUser.email) {
             // Usuario autenticado - mostrar mensaje de bienvenida
-            console.log('Usuario autenticado:', currentUser.name);
+            console.log('✅ Usuario autenticado - email:', currentUser.email);
+
+            // Mostrar mensaje de bienvenida
             const welcomeDiv = document.getElementById('c1-user-welcome');
             if (welcomeDiv) {
                 welcomeDiv.style.display = 'block';
                 welcomeDiv.innerHTML = `
                     <div class="card" style="background: linear-gradient(135deg, rgba(178,58,34,.1), rgba(39,56,75,.1)); border-left: 4px solid #B23A22; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
-                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
                             <div style="display: flex; align-items: center; gap: 16px;">
                                 <div style="font-size: 2rem;">👋</div>
                                 <div>
@@ -1059,7 +1089,9 @@ Cerramos el curso como lo empezamos: ante una obra de arte y con más preguntas 
                                     <p style="margin: 0; font-size: .9rem; color: #5A5043;">Bienvenido/a al curso C1 - Arte y Sociedad</p>
                                 </div>
                             </div>
-                            <a href="usuario/logout.html" class="btn btn-sm btn-outline">Cerrar sesión</a>
+                            <button onclick="window.location.reload()" class="btn btn-sm btn-outline" style="background: rgba(255,255,255,0.2); color: white; border-color: rgba(255,255,255,0.4);">
+                                🔄 Recargar página
+                            </button>
                         </div>
                     </div>
                 `;
@@ -1070,80 +1102,22 @@ Cerramos el curso como lo empezamos: ante una obra de arte y con más preguntas 
             window.showSession = function(n) {
                 originalShowSession(n);
 
-                // Añadir formulario de envío de tareas después de la sección de tarea
+                // Añadir botón prominente de envío de tareas
                 setTimeout(() => {
-                    const session = DEBATES_C1.find(s => s.n === n);
-                    if (!session) return;
-
-                    const taskSection = document.querySelector('.debate-section:last-of-type');
+                    const taskSection = document.querySelector('.debate-task');
                     if (taskSection) {
-                        // Crear formulario de envío
-                        const formHTML = `
-                            <div class="debate-section" style="margin-top: 40px; background: linear-gradient(135deg, rgba(178,58,34,.08), rgba(39,56,75,.08)); border-radius: 8px; padding: 24px;">
-                                <div class="debate-section-header">
-                                    <span class="debate-badge" style="color: #B23A22; border-color: #B23A22;">Enviar tarea</span>
-                                    <span style="font-size: .8rem; color: #5A5043;">Producción escrita - Sesión ${session.n}</span>
-                                    <hr class="debate-divider" />
-                                </div>
-
-                                <div id="submission-form-c1-${session.n}">
-                                    <form id="c1-task-form-${session.n}" data-submission-form>
-                                        <input type="hidden" name="sessionId" value="${session.n}">
-                                        <input type="hidden" name="sessionTitle" value="${session.titulo}">
-                                        <input type="hidden" name="activityId" value="tarea-sesion-${session.n}">
-                                        <input type="hidden" name="activityTitle" value="Tarea para casa - Sesión ${session.n}">
-
-                                        <div style="margin-bottom: 20px;">
-                                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--tinta);">Tu respuesta (${session.tarea.split('En')[1]?.split(' ')[0] || '200-250'} palabras):</label>
-                                            <textarea
-                                                id="c1-content-${session.n}"
-                                                name="content"
-                                                class="form-control"
-                                                rows="12"
-                                                placeholder="Escribe aquí tu respuesta a la tarea..."
-                                                required
-                                                style="width: 100%; padding: 12px; border: 1px solid rgba(28,24,20,.2); border-radius: 4px; font-family: 'Spectral', Georgia, serif; font-size: 1rem; line-height: 1.6; resize: vertical;"
-                                            ></textarea>
-                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                                                <span style="font-size: .85rem; color: #5A5043;">Palabras: <span id="word-count-${session.n}">0</span></span>
-                                                <span style="font-size: .85rem; color: #5A5043;">Guardado automático cada 30 segundos</span>
-                                            </div>
-                                        </div>
-
-                                        <div style="display: flex; gap: 12px;">
-                                            <button type="button" class="btn btn-secondary" onclick="saveC1Draft(${session.n})" style="flex: 1;">
-                                                💾 Guardar borrador
-                                            </button>
-                                            <button type="submit" class="btn btn-primary" style="flex: 2;">
-                                                📤 Enviar tarea
-                                            </button>
-                                        </div>
-                                    </form>
-
-                                    <div id="c1-submissions-${session.n}" style="margin-top: 24px;">
-                                        <!-- Aquí se mostrarán las entregas anteriores -->
-                                    </div>
-                                </div>
+                        const submitButtonHTML = `
+                            <div style="margin: 32px 0 20px 0; text-align: center; background: rgba(178,58,34,.15); border-radius: 8px; padding: 24px;">
+                                <h4 style="margin: 0 0 16px 0; color: var(--tinta);">¿Ya escribiste tu tarea?</h4>
+                                <button onclick="PE.C1Submissions.showSubmissionForm(${n})" class="btn btn-accent" style="font-size: 1.1rem; padding: 16px 32px; min-width: 200px;">
+                                    📝 Enviar esta tarea
+                                </button>
+                                <p style="margin-top: 12px; color: #5A5043; font-size: .9rem;">
+                                    ${DEBATES_C1[n - 1].tarea.split('.')[0].substring(0, 100)}...
+                                </p>
                             </div>
                         `;
-
-                        taskSection.insertAdjacentHTML('afterend', formHTML);
-
-                        // Inicializar contador de palabras
-                        const textarea = document.getElementById(`c1-content-${session.n}`);
-                        const wordCount = document.getElementById(`word-count-${session.n}`);
-                        if (textarea && wordCount) {
-                            textarea.addEventListener('input', () => {
-                                const words = textarea.value.trim().split(/\s+/).filter(w => w.length > 0).length;
-                                wordCount.textContent = words;
-                            });
-                        }
-
-                        // Cargar envíos anteriores
-                        loadC1Submissions(session.n);
-
-                        // Inicializar formulario de envío
-                        initC1SubmissionForm(session.n);
+                        taskSection.insertAdjacentHTML('afterend', submitButtonHTML);
                     }
                 }, 100);
             };
@@ -1205,6 +1179,215 @@ Cerramos el curso como lo empezamos: ante una obra de arte y con más preguntas 
             }
         }
 
+        // Sistema de envío de tareas para curso C1
+        window.PE.C1Submissions = {
+            currentSession: null,
+
+            showSubmissionForm(sessionNum) {
+                this.currentSession = sessionNum;
+                const session = DEBATES_C1[sessionNum - 1];
+
+                // Crear modal de envío
+                const modalHTML = `
+                    <div id="c1-submission-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.7); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px;">
+                        <div style="background: white; border-radius: 8px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 32px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                                <h3 style="margin: 0; font-family: 'Fraunces', serif;">Enviar tarea - Sesión ${sessionNum}</h3>
+                                <button onclick="PE.C1Submissions.closeModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #5A5043;">&times;</button>
+                            </div>
+
+                            <p style="margin: 0 0 20px 0; color: #5A5043; font-style: italic;">
+                                ${session.tarea.split('.')[0].substring(0, 150)}...
+                            </p>
+
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--tinta);">Tu respuesta:</label>
+                                <textarea
+                                    id="c1-submission-text"
+                                    class="form-control"
+                                    rows="12"
+                                    placeholder="Escribe aquí tu respuesta..."
+                                    style="width: 100%; padding: 12px; border: 1px solid rgba(28,24,20,.2); border-radius: 4px; font-family: 'Spectral', Georgia, serif; font-size: 1rem; line-height: 1.6; resize: vertical;"
+                                ></textarea>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                                    <span style="font-size: .85rem; color: #5A5043;">Palabras: <span id="c1-word-count">0</span></span>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 12px;">
+                                <button type="button" onclick="PE.C1Submissions.saveDraft()" class="btn btn-secondary" style="flex: 1;">
+                                    💾 Guardar borrador
+                                </button>
+                                <button type="button" onclick="PE.C1Submissions.submitTask()" class="btn btn-primary" style="flex: 2;">
+                                    📤 Enviar tarea
+                                </button>
+                            </div>
+
+                            <div id="c1-submission-history" style="margin-top: 24px;">
+                                <!-- Historial de envíos -->
+                            </div>
+
+                            <div style="text-align: center; margin-top: 20px;">
+                                <button onclick="PE.C1Submissions.closeModal()" class="btn btn-outline">
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Añadir modal al DOM
+                const modalDiv = document.createElement('div');
+                modalDiv.innerHTML = modalHTML;
+                document.body.appendChild(modalDiv);
+
+                // Inicializar contador de palabras
+                const textarea = document.getElementById('c1-submission-text');
+                const wordCount = document.getElementById('c1-word-count');
+                if (textarea && wordCount) {
+                    textarea.addEventListener('input', () => {
+                        const words = textarea.value.trim().split(/\s+/).filter(w => w.length > 0).length;
+                        wordCount.textContent = words;
+                    });
+
+                    // Cargar borrador anterior si existe
+                    this.loadDraft(sessionNum);
+                }
+
+                // Cargar envíos anteriores
+                this.loadSubmissions(sessionNum);
+            },
+
+            closeModal() {
+                const modal = document.getElementById('c1-submission-modal');
+                if (modal) {
+                    modal.remove();
+                }
+            },
+
+            async saveDraft() {
+                const textarea = document.getElementById('c1-submission-text');
+                if (!textarea || !this.currentSession) return;
+
+                const content = textarea.value.trim();
+                if (!content) {
+                    alert('Escribe algo antes de guardar');
+                    return;
+                }
+
+                // Guardar en localStorage
+                localStorage.setItem(`c1-draft-${this.currentSession}`, content);
+
+                // Si hay API, intentar guardar también en el servidor
+                try {
+                    if (window.PE && window.PE.API) {
+                        const words = content.split(/\s+/).filter(w => w.length > 0).length;
+                        const formData = {};
+                        formData.session_id = `C1-${this.currentSession}`;
+                        formData.session_title = DEBATES_C1[this.currentSession - 1].titulo;
+                        formData.activity_id = `tarea-sesion-${this.currentSession}`;
+                        formData.activity_title = `Tarea - Sesión ${this.currentSession}`;
+                        formData.content = content;
+                        formData.word_count = words;
+
+                        await window.PE.API.post('/drafts', formData);
+                        alert('✅ Borrador guardado en el servidor');
+                    }
+                } catch (error) {
+                    console.error('Error al guardar en servidor:', error);
+                    alert('✅ Borrador guardado localmente');
+                }
+            },
+
+            async submitTask() {
+                const textarea = document.getElementById('c1-submission-text');
+                if (!textarea || !this.currentSession) return;
+
+                const content = textarea.value.trim();
+                if (!content) {
+                    alert('Escribe tu respuesta antes de enviar');
+                    return;
+                }
+
+                const words = content.split(/\s+/).filter(w => w.length > 0).length;
+
+                if (words < 150) {
+                    alert('La tarea debe tener al menos 150 palabras');
+                    return;
+                }
+
+                if (!confirm(`¿Enviar tarea (${words} palabras)?`)) {
+                    return;
+                }
+
+                try {
+                    const formData = {};
+                    formData.session_id = `C1-${this.currentSession}`;
+                    formData.session_title = DEBATES_C1[this.currentSession - 1].titulo;
+                    formData.activity_id = `tarea-sesion-${this.currentSession}`;
+                    formData.activity_title = `Tarea - Sesión ${this.currentSession}`;
+                    formData.content = content;
+                    formData.word_count = words;
+
+                    const response = await window.PE.API.post('/submissions', formData);
+
+                    if (response.success || response.id) {
+                        alert('🎉 ¡Tarea enviada correctamente!');
+                        this.closeModal();
+                        // Limpiar localStorage
+                        localStorage.removeItem(`c1-draft-${this.currentSession}`);
+                    } else {
+                        throw new Error(response.error || 'Error al enviar tarea');
+                    }
+                } catch (error) {
+                    console.error('Error al enviar tarea:', error);
+                    alert('❌ Error al enviar tarea: ' + error.message);
+                }
+            },
+
+            loadDraft(sessionNum) {
+                const draft = localStorage.getItem(`c1-draft-${sessionNum}`);
+                const textarea = document.getElementById('c1-submission-text');
+                if (draft && textarea) {
+                    textarea.value = draft;
+                    // Actualizar contador
+                    const words = draft.split(/\s+/).filter(w => w.length > 0).length;
+                    const wordCount = document.getElementById('c1-word-count');
+                    if (wordCount) wordCount.textContent = words;
+                }
+            },
+
+            async loadSubmissions(sessionNum) {
+                try {
+                    const submissions = await window.PE.API.get(`/submissions?session_id=C1-${sessionNum}`);
+                    const container = document.getElementById('c1-submission-history');
+
+                    if (!container || !submissions || submissions.length === 0) {
+                        return;
+                    }
+
+                    container.innerHTML = `
+                        <h4 style="margin: 0 0 12px 0; font-size: 1rem;">Tus envíos anteriores:</h4>
+                        ${submissions.map(sub => `
+                            <div style="background: rgba(28,24,20,.05); border-left: 3px solid ${sub.status === 'reviewed' ? '#27384B' : '#B23A22'}; padding: 12px; margin-bottom: 8px; border-radius: 4px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <div style="font-size: .85rem; color: #5A5043;">${new Date(sub.created_at).toLocaleDateString('es-ES')}</div>
+                                        <div style="font-size: .9rem; color: var(--tinta);">${sub.word_count || 0} palabras</div>
+                                    </div>
+                                    <span class="badge" style="background: ${sub.status === 'reviewed' ? '#27384B' : '#B23A22'}; color: white; padding: 4px 8px; border-radius: 12px; font-size: .75rem;">
+                                        ${sub.status === 'reviewed' ? 'Revisado' : 'Pendiente'}
+                                    </span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    `;
+                } catch (error) {
+                    console.error('Error al cargar envíos:', error);
+                }
+            }
+        };
+
         // Función para guardar borrador del curso C1
         async function saveC1Draft(sessionNum) {
             const textarea = document.getElementById(`c1-content-${sessionNum}`);
@@ -1217,13 +1400,13 @@ Cerramos el curso como lo empezamos: ante una obra de arte y con más preguntas 
             }
 
             const words = content.split(/\s+/).filter(w => w.length > 0).length;
-            const formData = new FormData();
-            formData.append('session_id', `C1-${sessionNum}`);
-            formData.append('session_title', DEBATES_C1[sessionNum - 1].titulo);
-            formData.append('activity_id', `tarea-sesion-${sessionNum}`);
-            formData.append('activity_title', `Tarea para casa - Sesión ${sessionNum}`);
-            formData.append('content', content);
-            formData.append('word_count', words);
+            const formData = {};
+            formData.session_id = `C1-${sessionNum}`;
+            formData.session_title = DEBATES_C1[sessionNum - 1].titulo;
+            formData.activity_id = `tarea-sesion-${sessionNum}`;
+            formData.activity_title = `Tarea para casa - Sesión ${sessionNum}`;
+            formData.content = content;
+            formData.word_count = words;
 
             try {
                 PE.UI.notify('Guardando borrador...', 'info');
@@ -1278,13 +1461,13 @@ Cerramos el curso como lo empezamos: ante una obra de arte y con más preguntas 
                     return;
                 }
 
-                const formData = new FormData();
-                formData.append('session_id', `C1-${sessionNum}`);
-                formData.append('session_title', DEBATES_C1[sessionNum - 1].titulo);
-                formData.append('activity_id', `tarea-sesion-${sessionNum}`);
-                formData.append('activity_title', `Tarea para casa - Sesión ${sessionNum}`);
-                formData.append('content', content);
-                formData.append('word_count', words);
+                const formData = {};
+                formData.session_id = `C1-${sessionNum}`;
+                formData.session_title = DEBATES_C1[sessionNum - 1].titulo;
+                formData.activity_id = `tarea-sesion-${sessionNum}`;
+                formData.activity_title = `Tarea para casa - Sesión ${sessionNum}`;
+                formData.content = content;
+                formData.word_count = words;
 
                 try {
                     PE.UI.notify('Enviando tarea...', 'info');
