@@ -425,6 +425,21 @@
 
             <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 26px; padding: 0 clamp(20px,4vw,48px);">
                 <span class="debate-badge" style="color: #5A5043; border-color: #5A5043; font-size: .72rem; letter-spacing: .26em; text-transform: uppercase;">Índice del curso</span>
+
+            <div id="fix-c1-container" style="display: none; padding: 0 clamp(20px,4vw,48px);">
+                <div class="card" style="background: linear-gradient(135deg, rgba(178,58,34,.1), rgba(39,56,75,.1)); border-left: 4px solid #B23A22; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+                    <h3 style="margin: 0 0 10px 0; color: var(--tinta);">⚠️ Actualización necesaria</h3>
+                    <p style="margin: 0 0 16px 0; color: #5A5043;">
+                        Tu cuenta no tiene el código del curso C1 configurado correctamente. Haz clic abajo para arreglarlo.
+                    </p>
+                    <button id="fix-c1-button" class="btn btn-primary" style="padding: 12px 24px;">
+                        🔧 Actualizar mi cuenta para curso C1
+                    </button>
+                </div>
+            </div>
+
+            <!-- Botón para arreglar usuarios C1 sin course_code correcto -->
+
                 <hr class="debate-divider" />
             </div>
 
@@ -457,7 +472,6 @@
     <script src="js/courses.js"></script>
     <script src="js/course-redirect.js"></script>
     <script src="js/app.js"></script>
-    <script>
         // Datos del curso C1 - Arte y sociedad en la cultura hispánica
         const DEBATES_C1 = [
             {
@@ -1470,4 +1484,50 @@ Cerramos el curso como lo empezamos: ante una obra de arte y con más preguntas 
         }
     </script>
 </body>
+
+    <script>
+        // Verificar si el usuario necesita actualización de course_code
+        document.addEventListener('DOMContentLoaded', async () => {
+            const currentUser = window.PE?.Auth?.getCurrentUser();
+            
+            if (!currentUser) return;
+            
+            // Mostrar botón si el usuario no tiene course_code correcto
+            if (currentUser.course_code !== 'C1-ARTE-SOCIEDAD' && !currentUser.course_name?.includes('C1')) {
+                const container = document.getElementById('fix-c1-container');
+                if (container) {
+                    container.style.display = 'block';
+                    
+                    document.getElementById('fix-c1-button').addEventListener('click', async () => {
+                        try {
+                            const btn = document.getElementById('fix-c1-button');
+                            btn.disabled = true;
+                            btn.textContent = '⏳ Actualizando...';
+                            
+                            const response = await window.PE.API.post('/fix-c1-users/fix-c1-user');
+                            
+                            if (response.message) {
+                                alert('✅ ' + response.message);
+                                
+                                // Actualizar el usuario en localStorage
+                                if (response.course_code) {
+                                    currentUser.course_code = response.course_code;
+                                    currentUser.course_id = response.course_id;
+                                    window.PE.Utils.storage.set('currentUser', currentUser);
+                                }
+                                
+                                // Recargar la página para aplicar cambios
+                                window.location.reload();
+                            }
+                        } catch (error) {
+                            alert('❌ Error: ' + error.message);
+                            const btn = document.getElementById('fix-c1-button');
+                            btn.disabled = false;
+                            btn.textContent = '🔧 Actualizar mi cuenta para curso C1';
+                        }
+                    });
+                }
+            }
+        });
+    </script>
 </html>
