@@ -29,7 +29,6 @@ const contactRoutes = require('./routes/contact');
 const studentTasksRoutes = require('./routes/studentTasks');
 const coursesRoutes = require('./routes/courses');
 const publicRoutes = require('./routes/public');
-const fixC1UsersRoutes = require('./routes/fix-c1-users'); // Temporal para arreglar usuarios C1
 
 // Importar middleware
 const { trackVisit } = require('./middleware/visits');
@@ -121,7 +120,6 @@ app.use('/api/contact', contactRoutes);
 app.use('/api/student-tasks', studentTasksRoutes);
 app.use('/api/courses', coursesRoutes);
 app.use('/api/public', publicRoutes);
-app.use('/api/fix-c1-users', fixC1UsersRoutes); // Temporal para arreglar usuarios C1
 
 // Ruta de health check
 app.get('/api/health', (req, res) => {
