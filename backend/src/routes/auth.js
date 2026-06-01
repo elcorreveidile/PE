@@ -171,10 +171,6 @@ router.post('/register', [
                 }
             }
         }
-            if (registrationCode !== validCode) {
-                return res.status(400).json({ error: 'Codigo de registro invalido' });
-            }
-        }
 
         // Verificar si el email ya existe
         const existingUser = await query('SELECT id FROM users WHERE email = $1', [email]);
