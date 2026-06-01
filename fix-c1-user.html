@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Actualizar perfil C1 | Producción Escrita</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 5px;
+            color: #007bff;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Actualizar perfil C1</h1>
+        <p class="subtitle">Esta página actualizará tu perfil para que funcione correctamente con el curso C1 de Arte y Sociedad</p>
+
+        <div class="info-box">
+            <strong>¿Qué hace esta herramienta?</strong>
+            Actualiza tu perfil de usuario para asignarte al curso C1 correctamente. Esto arreglará el enlace "Mi Área" para que te lleve a debates.html en lugar del dashboard de C2.
+        </div>
+
+        <button id="fixButton" onclick="updateProfile()">
+            Actualizar mi perfil ahora
+        </button>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: #666;">Actualizando perfil...</p>
+        </div>
+
+        <div class="result" id="result"></div>
+    </div>
+
+    <script src="/js/config.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        async function updateProfile() {
+            const button = document.getElementById('fixButton');
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+
+            // Verificar si el usuario está autenticado
+            const currentUser = PE.Auth.getCurrentUser();
+            if (!currentUser) {
+                showResult('error', '❌ No tienes iniciada sesión. Primero inicia sesión en <a href="/auth/login.html" style="color: #007bff;">cognoscencia.com/auth/login.html</a>');
+                return;
+            }
+
+            button.disabled = true;
+            loading.style.display = 'block';
+            result.style.display = 'none';
+
+            try {
+                const response = await PE.API.post('/fix-c1/fix-c1-profile');
+
+                if (response.success) {
+                    if (response.updated) {
+                        showResult('success', `✅ ${response.message}<br><br>Tu perfil ha sido actualizado. Ahora puedes ir a "Mi Área" y te llevará correctamente a debates.html.`);
+
+                        // Actualizar localStorage
+                        if (response.user) {
+                            PE.Utils.storage.set('currentUser', response.user);
+                        }
+
+                        // Habilitar botón para recargar
+                        button.textContent = '↻ Recargar página';
+                        button.onclick = () => window.location.href = '/debates.html';
+                        button.disabled = false;
+                    } else {
+                        showResult('success', `✅ ${response.message}<br><br>Tu perfil ya está configurado correctamente. "Mi Área" ya te debería llevar a debates.html.`);
+                        button.disabled = false;
+                    }
+                } else {
+                    throw new Error(response.error || 'Error desconocido');
+                }
+            } catch (error) {
+                showResult('error', `❌ Error: ${error.message}<br><br>Si el problema persiste, contacta con el profesor.`);
+                button.disabled = false;
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function showResult(type, message) {
+            const result = document.getElementById('result');
+            result.className = 'result ' + type;
+            result.innerHTML = message;
+            result.style.display = 'block';
+        }
+
+        // Verificar si el usuario necesita actualización al cargar
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentUser = PE.Auth?.getCurrentUser();
+            if (currentUser && currentUser.course_code === 'C1-ARTE-SOCIEDAD') {
+                document.getElementById('fixButton').textContent = '✅ Tu perfil ya está actualizado';
+                document.getElementById('fixButton').disabled = true;
+            }
+        });
+    </script>
+</body>
+</html>
