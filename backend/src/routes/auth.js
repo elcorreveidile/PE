@@ -171,10 +171,6 @@ router.post('/register', [
                 }
             }
         }
-            if (registrationCode !== validCode) {
-                return res.status(400).json({ error: 'Codigo de registro invalido' });
-            }
-        }
 
         // Verificar si el email ya existe
         const existingUser = await query('SELECT id FROM users WHERE email = $1', [email]);
@@ -185,12 +181,27 @@ router.post('/register', [
         // Hash de la contrasena
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Insertar usuario con course_id
-        const result = await query(`
-            INSERT INTO users (email, password, name, level, motivation, course_id)
-            VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id, course_id
-        `, [email, hashedPassword, name, level || 'C2', motivation || null, courseId]);
+        // Insertar usuario (con o sin course_id según exista la columna)
+        let result;
+        try {
+            result = await query(`
+                INSERT INTO users (email, password, name, level, motivation, course_id)
+                VALUES ($1, $2, $3, $4, $5, $6)
+                RETURNING id, course_id
+            `, [email, hashedPassword, name, level || 'C2', motivation || null, courseId]);
+        } catch (columnError) {
+            // Si falla por la columna course_id, intentar sin ella
+            if (columnError.message && columnError.message.includes('course_id')) {
+                console.warn('Columna course_id no existe, insertando sin ella');
+                result = await query(`
+                    INSERT INTO users (email, password, name, level, motivation)
+                    VALUES ($1, $2, $3, $4, $5)
+                    RETURNING id
+                `, [email, hashedPassword, name, level || 'C2', motivation || null]);
+            } else {
+                throw columnError;
+            }
+        }
 
         const userId = result.rows[0].id;
 
@@ -245,12 +256,19 @@ router.post('/login', [
         const { email, password } = req.body;
 
         // Buscar usuario con información del curso
-        const result = await query(`
-            SELECT u.*, c.name as course_name, c.title as course_title, c.code as course_code
-            FROM users u
-            LEFT JOIN courses c ON u.course_id = c.id
-            WHERE u.email = $1
-        `, [email]);
+        let result;
+        try {
+            result = await query(`
+                SELECT u.*, c.name as course_name, c.title as course_title, c.code as course_code
+                FROM users u
+                LEFT JOIN courses c ON u.course_id = c.id
+                WHERE u.email = $1
+            `, [email]);
+        } catch (joinError) {
+            // Si falla el JOIN (tabla courses no existe), hacer query simple
+            console.warn('Error al hacer JOIN con courses, usando query simple:', joinError.message);
+            result = await query('SELECT * FROM users WHERE email = $1', [email]);
+        }
 
         if (result.rows.length === 0) {
             return res.status(401).json({ error: 'Email o contrasena incorrectos' });
