@@ -4,6 +4,14 @@
   "trailingSlash": false,
   "rewrites": [
     {
+      "source": "/debates",
+      "destination": "/debates/index.html"
+    },
+    {
+      "source": "/debates/:path*",
+      "destination": "/debates/:path*.html"
+    },
+    {
       "source": "/sesion-:num",
       "destination": "/sesiones/sesion-:num.html"
     },
