@@ -1,0 +1,557 @@
+/**
+ * CSS para curso C1: Arte y sociedad en la cultura hispánica
+ * Fuentes: Fraunces (títulos), Spectral (cuerpo)
+ * Colores: papel, tinta, bermellón, azul
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,500&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+
+:root {
+    --papel: #F2EBDD;
+    --papel-2: #EAE0CC;
+    --tinta: #1C1814;
+    --tinta-suave: #5A5043;
+    --bermellon: #B23A22;
+    --azul: #27384B;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    font-family: 'Spectral', Georgia, serif;
+    color: var(--tinta);
+    background-color: var(--papel);
+    background-image: radial-gradient(rgba(28,24,20,.025) 1px, transparent 1px);
+    background-size: 4px 4px;
+    margin: 0;
+    min-height: 100vh;
+}
+
+.disp {
+    font-family: 'Fraunces', Georgia, serif;
+}
+
+::selection {
+    background: var(--bermellon);
+    color: var(--papel);
+}
+
+/* Animaciones */
+.fade-up {
+    opacity: 0;
+    transform: translateY(14px);
+    animation: fadeUp .7s cubic-bezier(.2,.7,.2,1) forwards;
+}
+
+@keyframes fadeUp {
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* Header */
+.debates-header {
+    border-bottom: 1px solid rgba(28,24,20,.14);
+    padding: 16px 0;
+}
+
+.debates-header .container {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 clamp(20px, 4vw, 48px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.debates-header .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: var(--tinta);
+}
+
+.debates-header .logo-icon {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 1.1rem;
+    width: 38px;
+    height: 38px;
+    background: var(--bermellon);
+    color: var(--papel);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.debates-header .logo-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.debates-header .logo-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.debates-header .logo-subtitle {
+    font-size: 0.75rem;
+    color: var(--tinta-suave);
+}
+
+.debates-header nav {
+    display: flex;
+    gap: 24px;
+}
+
+.debates-header nav a {
+    font-family: 'Fraunces', serif;
+    font-size: 0.85rem;
+    text-decoration: none;
+    color: var(--tinta-suave);
+    transition: color 0.2s;
+}
+
+.debates-header nav a:hover,
+.debates-header nav a.active {
+    color: var(--bermellon);
+}
+
+/* Sellos/badges */
+.sello {
+    font-family: 'Fraunces', serif;
+    display: inline-block;
+    font-size: .62rem;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border: 1px solid currentColor;
+    border-radius: 2px;
+}
+
+.sello-bermellon {
+    color: var(--bermellon);
+    border-color: var(--bermellon);
+}
+
+.sello-azul {
+    color: var(--azul);
+    border-color: var(--azul);
+}
+
+.sello-tinta {
+    color: var(--tinta);
+    border-color: var(--tinta);
+}
+
+/* Contenedor principal */
+.container {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 clamp(20px, 4vw, 48px);
+}
+
+.main-container {
+    padding: clamp(28px, 5vw, 72px) clamp(20px, 4vw, 48px);
+}
+
+/* Portada */
+.portada-header {
+    margin-bottom: clamp(36px, 5vw, 64px);
+}
+
+.portada-badges {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 22px;
+}
+
+.portada-title {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    line-height: 0.98;
+    margin: 0;
+    font-size: clamp(2.6rem, 7vw, 5rem);
+    letter-spacing: -0.01em;
+}
+
+.portada-title em {
+    font-weight: 400;
+    color: var(--bermellon);
+}
+
+.portada-description {
+    max-width: 640px;
+    margin-top: 22px;
+    font-size: 1.18rem;
+    line-height: 1.6;
+    color: var(--tinta-suave);
+}
+
+/* Índice */
+.indice-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 26px;
+}
+
+.indice-label {
+    font-family: 'Fraunces', serif;
+    font-size: .72rem;
+    letter-spacing: .26em;
+    text-transform: uppercase;
+    color: var(--tinta-suave);
+}
+
+.regla {
+    height: 1px;
+    background: var(--tinta);
+    opacity: .16;
+    border: 0;
+    flex: 1;
+}
+
+/* Grid de sesiones */
+.sesiones-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(248px, 1fr));
+    gap: 18px;
+}
+
+/* Cartela (tarjeta de sesión) */
+.cartela {
+    text-align: left;
+    cursor: pointer;
+    background: rgba(255,253,247,.55);
+    border: 1px solid rgba(28,24,20,.18);
+    border-radius: 6px;
+    padding: 20px 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 168px;
+    text-decoration: none;
+    color: inherit;
+    transition: transform .35s cubic-bezier(.2,.7,.2,1), box-shadow .35s, border-color .35s;
+}
+
+.cartela:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 40px -22px rgba(28,24,20,.55);
+    border-color: var(--bermellon);
+}
+
+.cartela:hover .cartela-num {
+    color: var(--bermellon);
+}
+
+.cartela-num {
+    font-family: 'Fraunces', serif;
+    font-size: 2.1rem;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--tinta);
+    transition: color .3s;
+}
+
+.cartela-titulo {
+    font-family: 'Fraunces', serif;
+    font-size: 1.18rem;
+    font-weight: 600;
+    line-height: 1.15;
+}
+
+.cartela-obra {
+    font-size: .82rem;
+    color: var(--tinta-suave);
+    font-style: italic;
+}
+
+.cartela-nudo {
+    margin-top: auto;
+    font-size: .9rem;
+    color: var(--azul);
+    line-height: 1.35;
+}
+
+/* Página de sesión */
+.sesion-container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: clamp(22px, 4vw, 52px) clamp(20px, 4vw, 40px);
+}
+
+.btn-volver {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--tinta-suave);
+    font-family: 'Fraunces', serif;
+    font-size: .78rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    margin-bottom: 30px;
+    padding: 0;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-volver:hover {
+    color: var(--bermellon);
+}
+
+.sesion-header {
+    margin-bottom: 38px;
+}
+
+.sesion-numero {
+    font-family: 'Fraunces', serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--bermellon);
+    letter-spacing: .1em;
+}
+
+.sesion-titulo {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(2rem, 5.5vw, 3.1rem);
+    line-height: 1.04;
+    margin: 10px 0 12px;
+}
+
+.sesion-obra {
+    font-style: italic;
+    color: var(--tinta-suave);
+    font-size: 1.05rem;
+    margin: 0;
+}
+
+/* Bloques de contenido */
+.bloque {
+    margin-bottom: 40px;
+}
+
+.bloque-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.bloque-tiempo {
+    font-size: .8rem;
+    color: var(--tinta-suave);
+    font-style: italic;
+}
+
+/* Lectura */
+.lectura p {
+    margin: 0 0 1.05em 0;
+    line-height: 1.78;
+    font-size: 1.12rem;
+}
+
+.lectura p:first-child::first-letter {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    float: left;
+    font-size: 3.4rem;
+    line-height: .78;
+    padding: .06em .12em 0 0;
+    color: var(--bermellon);
+}
+
+/* Léxico */
+.lexico {
+    margin-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.lexico-item {
+    font-size: .88rem;
+    background: var(--papel-2);
+    padding: 4px 11px;
+    border-radius: 20px;
+    color: var(--azul);
+}
+
+/* Listas de preguntas */
+.preguntas-lista {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.pregunta-item {
+    display: flex;
+    gap: 14px;
+    align-items: baseline;
+}
+
+.pregunta-num {
+    font-family: 'Fraunces', serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.pregunta-num.azul { color: var(--azul); }
+.pregunta-num.bermellon { color: var(--bermellon); }
+
+.pregunta-texto {
+    font-size: 1.06rem;
+    line-height: 1.5;
+}
+
+/* Nudo del debate */
+.nudo-texto {
+    font-style: italic;
+    font-size: 1.15rem;
+    margin-top: 0;
+    margin-bottom: 18px;
+    color: var(--tinta);
+}
+
+/* Referencias */
+.referencias-box {
+    margin-top: 24px;
+    background: rgba(39,56,75,.05);
+    border-left: 2px solid var(--azul);
+    padding: 16px 18px;
+    border-radius: 0 4px 4px 0;
+}
+
+.referencias-titulo {
+    font-family: 'Fraunces', serif;
+    font-size: .7rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--azul);
+    margin-bottom: 12px;
+}
+
+.referencias-lista {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ref-link {
+    color: var(--tinta);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(28,24,20,.3);
+    padding-bottom: 1px;
+    font-size: 1.02rem;
+    transition: color .2s, border-color .2s;
+}
+
+.ref-link:hover {
+    color: var(--bermellon);
+    border-color: var(--bermellon);
+}
+
+.ref-fuente {
+    font-size: .85rem;
+    color: var(--tinta-suave);
+    font-style: italic;
+}
+
+/* Tarea */
+.tarea-box {
+    background: rgba(178,58,34,.06);
+    border: 1px solid rgba(178,58,34,.25);
+    border-radius: 6px;
+    padding: 20px 22px;
+    font-size: 1.08rem;
+    line-height: 1.65;
+}
+
+/* Navegación entre sesiones */
+.sesion-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.sesion-nav-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'Fraunces', serif;
+    font-size: .9rem;
+    padding: 0;
+    text-decoration: none;
+    color: var(--tinta);
+    transition: color 0.2s;
+}
+
+.sesion-nav-btn:hover {
+    color: var(--bermellon);
+}
+
+.sesion-nav-btn.disabled {
+    color: rgba(28,24,20,.25);
+    cursor: default;
+    pointer-events: none;
+}
+
+/* Footer */
+.debates-footer {
+    border-top: 1px solid rgba(28,24,20,.14);
+    margin-top: 20px;
+}
+
+.debates-footer .container {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 20px clamp(20px, 4vw, 48px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.footer-autor {
+    font-family: 'Fraunces', serif;
+    font-size: .82rem;
+    color: var(--tinta-suave);
+}
+
+.footer-logo {
+    font-family: 'Fraunces', serif;
+    font-size: .95rem;
+    color: var(--bermellon);
+    letter-spacing: .1em;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .debates-header nav {
+        display: none;
+    }
+
+    .sesiones-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .sesion-nav {
+        flex-direction: column;
+        gap: 16px;
+    }
+}
