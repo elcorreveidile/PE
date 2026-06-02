@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debates | C1 Arte y Sociedad en la Cultura Hispánica</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,500&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    
+    
+    <style>
+        /* Estilos específicos para Debates C1 */
+        .debates-container {
+            font-family: 'Spectral', Georgia, serif;
+            color: #1C1814;
+            background-color: #F2EBDD;
+            background-image: radial-gradient(rgba(28,24,20,.025) 1px, transparent 1px);
+            background-size: 4px 4px;
+            min-height: 100vh;
+        }
+
+        .debates-container * {
+            box-sizing: border-box;
+        }
+
+        .debates-container ::selection {
+            background: #B23A22;
+            color: #F2EBDD;
+        }
+
+        .debates-header {
+            background: linear-gradient(135deg, #27384B, #1a2838);
+            color: white;
+            padding: clamp(28px,5vw,72px) clamp(20px,4vw,48px);
+            margin-bottom: 40px;
+        }
+
+        .debates-content {
+            max-width: 1120px;
+            margin: 0 auto;
+        }
+
+        .debates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(248px, 1fr));
+            gap: 18px;
+            margin-top: 26px;
+        }
+
+        .debate-card {
+            background: rgba(255,253,247,.55);
+            border: 1px solid rgba(28,24,20,.18);
+            border-radius: 6px;
+            padding: 20px 20px 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 168px;
+            transition: transform .35s cubic-bezier(.2,.7,.2,1), box-shadow .35s, border-color .35s;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .debate-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 18px 40px -22px rgba(28,24,20,.55);
+            border-color: #B23A22;
+        }
+
+        .debate-card:hover .debate-number {
+            color: #B23A22;
+        }
+
+        .debate-number {
+            font-family: 'Fraunces', serif;
+            font-size: 2.1rem;
+            font-weight: 600;
+            line-height: 1;
+            color: #1C1814;
+            transition: color .3s;
+        }
+
+        .debate-title {
+            font-family: 'Fraunces', serif;
+            font-size: 1.18rem;
+            font-weight: 600;
+            line-height: 1.15;
+        }
+
+        .debate-work {
+            font-size: .82rem;
+            color: #5A5043;
+            font-style: italic;
+        }
+
+        .debate-theme {
+            margin-top: auto;
+            font-size: .9rem;
+            color: #27384B;
+            line-height: 1.35;
+        }
+
+        .debate-detail {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: clamp(22px,4vw,52px) clamp(20px,4vw,40px);
+        }
+
+        .debate-section {
+            margin-bottom: 40px;
+        }
+
+        .debate-section-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .debate-badge {
+            font-family: 'Fraunces', serif;
+            display: inline-block;
+            font-size: .62rem;
+            letter-spacing: .22em;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border: 1px solid currentColor;
+            border-radius: 2px;
+        }
+
+        .debate-divider {
+            flex: 1;
+            height: 1px;
+            background: #1C1814;
+            opacity: .16;
+            border: 0;
+        }
+
+        .debate-reading p {
+            margin: 0 0 1.05em 0;
+            line-height: 1.78;
+            font-size: 1.12rem;
+        }
+
+        .debate-reading p:first-child::first-letter {
+            font-family: 'Fraunces', serif;
+            font-weight: 600;
+            float: left;
+            font-size: 3.4rem;
+            line-height: .78;
+            padding: .06em .12em 0 0;
+            color: #B23A22;
+        }
+
+        .debate-vocab {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .debate-vocab-item {
+            font-size: .88rem;
+            background: #EAE0CC;
+            padding: 4px 11px;
+            border-radius: 20px;
+            color: #27384B;
+        }
+
+        .debate-questions {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .debate-questions li {
+            display: flex;
+            gap: 14px;
+            align-items: baseline;
+        }
+
+        .debate-questions .question-number {
+            font-family: 'Fraunces', serif;
+            font-size: 1.05rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .debate-questions .question-text {
+            font-size: 1.06rem;
+            line-height: 1.5;
+        }
+
+        .debate-references {
+            margin-top: 24px;
+            background: rgba(39,56,75,.05);
+            border-left: 2px solid #27384B;
+            padding: 16px 18px;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .debate-references-title {
+            font-family: 'Fraunces', serif;
+            font-size: .7rem;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+            color: #27384B;
+            margin-bottom: 12px;
+        }
+
+        .debate-references ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .debate-references a {
+            color: #1C1814;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(28,24,20,.3);
+            padding-bottom: 1px;
+            font-size: 1.02rem;
+            transition: color .2s, border-color .2s;
+        }
+
+        .debate-references a:hover {
+            color: #B23A22;
+            border-color: #B23A22;
+        }
+
+        .debate-references span {
+            font-size: .85rem;
+            color: #5A5043;
+            font-style: italic;
+        }
+
+        .debate-task {
+            background: rgba(178,58,34,.06);
+            border: 1px solid rgba(178,58,34,.25);
+            border-radius: 6px;
+            padding: 20px 22px;
+            font-size: 1.08rem;
+            line-height: 1.65;
+        }
+
+        .back-link {
+            font-family: 'Fraunces', serif;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #5A5043;
+            font-size: .78rem;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+            margin-bottom: 30px;
+            padding: 0;
+        }
+
+        .session-header {
+            margin-bottom: 38px;
+        }
+
+        .session-number {
+            font-family: 'Fraunces', serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #B23A22;
+            letter-spacing: .1em;
+        }
+
+        .session-title {
+            font-family: 'Fraunces', serif;
+            font-weight: 600;
+            font-size: clamp(2rem,5.5vw,3.1rem);
+            line-height: 1.04;
+            margin: 10px 0 12px;
+        }
+
+        .session-work {
+            font-style: italic;
+            color: #5A5043;
+            font-size: 1.05rem;
+            margin: 0;
+        }
+
+        .session-nav {
+            margin: 10px 0 26px;
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .session-nav button {
+            font-family: 'Fraunces', serif;
+            background: none;
+            border: none;
+            font-size: .9rem;
+            padding: 0;
+        }
+
+        .session-nav button:disabled {
+            color: rgba(28,24,20,.25);
+            cursor: default;
+        }
+
+        .session-nav button:not(:disabled) {
+            color: #1C1814;
+            cursor: pointer;
+        }
+
+        .debate-theme-question {
+            font-style: italic;
+            font-size: 1.15rem;
+            margin-top: 0;
+            margin-bottom: 18px;
+            color: #1C1814;
+        }
+
+        .nav-spacing {
+            height: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="debates-container">
+        <!-- Header de Debates -->
+        <div class="debates-header">
+            <div class="debates-content">
+                <div style="display: flex; gap: 10px; margin-bottom: 22px;">
+                    <span class="debate-badge" style="color: #B23A22; border-color: #B23A22;">C1 · Avanzado</span>
+                    <span class="debate-badge" style="color: white; border-color: white;">12 sesiones</span>
+                </div>
+                <h1 style="font-family: 'Fraunces', serif; font-weight: 600; line-height: .98; margin: 0; font-size: clamp(2.6rem,7vw,5rem); letter-spacing: -.01em;">
+                    Arte y sociedad<br />
+                    <em style="font-weight: 400; color: #B23A22;">en la cultura hispánica</em>
+                </h1>
+                <p style="max-width: 640px; margin-top: 22px; font-size: 1.18rem; line-height: 1.6; opacity: 0.9;">
+                    Cada día partimos de una obra, leemos un texto, lo comentamos y abrimos el
+                    debate. Doce miradas para hablar, leer y discutir en español.
+                </p>
+            </div>
+        </div>
+
+        <!-- Grid de sesiones -->
+        <div class="debates-content">
+            <!-- Mensaje de bienvenida para usuarios autenticados -->
+            <div id="c1-user-welcome" style="display: none; padding: 0 clamp(20px,4vw,48px);">
+                <div class="card" style="background: linear-gradient(135deg, rgba(178,58,34,.1), rgba(39,56,75,.1)); border-left: 4px solid #B23A22; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div style="font-size: 2rem;">👋</div>
+                        <div>
+                            <h3 style="margin: 0 0 4px 0; color: var(--tinta);">Bienvenido/a al curso C1</h3>
+                            <p style="margin: 0; font-size: .9rem; color: #5A5043;">Puedes ver el contenido y enviar tus tareas directamente desde cada sesión.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 26px; padding: 0 clamp(20px,4vw,48px);">
+                <span class="debate-badge" style="color: #5A5043; border-color: #5A5043; font-size: .72rem; letter-spacing: .26em; text-transform: uppercase;">Índice del curso</span>
+                <hr class="debate-divider" />
+            </div>
+
+            <div class="debates-grid" style="padding: 0 clamp(20px,4vw,48px);">
+                <!-- Las tarjetas de sesión se generarán con JavaScript -->
+            </div>
+
+            <div class="nav-spacing"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <span>&copy; 2026 Javier Benítez Láinez | CLM - Universidad de Granada</span>
+                <span>
+                    <a href="#">Contacto</a>
+                    <span style="color: rgba(255,255,255,0.3); margin: 0 0.5rem;">|</span>
+                    <a href="#">Términos y Condiciones</a>
+                    <span style="color: rgba(255,255,255,0.3); margin: 0 0.5rem;">|</span>
+                    <a href="#">Privacidad</a>
+                </span>
+            </div>
+        </div>
+    </footer>
+
+    
+    
+    
+    
+    
+    <script>
+        // Datos del curso C1 - Arte y sociedad en la cultura hispánica
+        const DEBATES_C1 = [
+            {
+                n: 1,
+                titulo: "Las Meninas y la mirada",
+                obra: "Diego Velázquez · 1656",
+                nudo: "¿Quién tiene derecho a representar a quién?",
+                lectura: `Cuando entramos en Las Meninas creemos mirar un cuadro, pero el cuadro nos está mirando a nosotros. En una sala del Alcázar de Madrid, Velázquez se pinta de pie ante un lienzo enorme cuyo reverso vemos, de modo que ignoramos qué está pintando. A su lado, la infanta Margarita aparece rodeada de su séquito: dos meninas o damas de honor, dos bufones de la corte y un perro que dormita en primer plano. Todos parecen detenerse un instante; varios levantan la vista hacia un punto que está fuera del cuadro, el lugar exacto que ocupa quien lo contempla.
+
+En ese punto, sin embargo, hay otra presencia. Al fondo, un espejo borroso devuelve la imagen de los reyes, Felipe IV y Mariana de Austria. Si el espejo los refleja, ellos están donde estamos nosotros. Por un instante, quien observa el cuadro ocupa el lugar del monarca, y la escena entera parece organizarse alrededor de una mirada que no vemos pero que lo gobierna todo.
+
+El filósofo Michel Foucault dedicó a este cuadro las primeras páginas de uno de sus libros más célebres. Para él, Las Meninas juega sin descanso con lo visible y lo invisible: los personajes contemplan una escena que a nosotros se nos escapa, y la verdadera imagen —la que Velázquez pinta en su lienzo— nos queda vedada para siempre. El punto hacia el que convergen todas las miradas es, a la vez, uno y triple: lo comparten los reyes reflejados, el propio pintor y nosotros, los espectadores. Por eso suele decirse que el cuadro no representa una escena: representa el acto mismo de representar.
+
+Hay además una reivindicación callada. Al autorretratarse con paleta y pinceles junto a la familia real, Velázquez defiende que pintar no es un oficio manual, sino una actividad del intelecto, digna de codearse con la realeza. La cruz de la Orden de Santiago que luce en el pecho se añadió años después, cuando el pintor obtuvo por fin ese reconocimiento que perseguía.
+
+El verdadero tema, entonces, no es la infanta ni la corte, sino la mirada misma: quién mira, quién es mirado y, sobre todo, quién decide cómo se nos representa. Velázquez desplaza al rey del centro de la escena y coloca ahí, con una ambigüedad calculada, a cualquiera que se detenga ante el lienzo. Cuatro siglos después, en una época que produce y difunde imágenes sin descanso, esa pregunta sigue intacta.`,
+                lexico: ["el lienzo", "el reverso", "el séquito", "la menina", "el bufón", "el punto de fuga", "el espejo", "el autorretrato", "lo visible / lo invisible", "reivindicar", "desplazar", "ambiguo"],
+                comentario: [
+                    "Según el texto, ¿en qué lugar exacto se sitúa el espectador y por qué resulta inquietante esa posición?",
+                    "¿Qué refleja el espejo del fondo y qué consecuencia tiene para quien mira el cuadro?",
+                    "Foucault habla de un punto «a la vez uno y triple». ¿Quiénes lo comparten?",
+                    "Explica con tus palabras por qué se dice que el cuadro «representa el acto de representar».",
+                    "¿Qué reivindica Velázquez al autorretratarse junto a la familia real?",
+                ],
+                debate: [
+                    "Hoy producimos y publicamos imágenes sin parar. ¿Quién decide realmente cómo se nos representa?",
+                    "¿Es legítimo fotografiar y difundir a una persona por la calle sin su consentimiento?",
+                    "¿Debe el arte tener una libertad para representar que la imagen cotidiana no debería tener?",
+                    "En las redes elegimos cómo mostrarnos: ¿somos el pintor o el modelo de nuestra propia imagen?",
+                ],
+                referencias: [
+                    { titulo: "Las Meninas — ficha de la obra", fuente: "Museo Nacional del Prado", url: "https://www.museodelprado.es/coleccion/obra-de-arte/las-meninas/5a3c54b9-d0c0-4ffa-acb7-cea3576159fb" },
+                    { titulo: "Las meninas: la mirada de Foucault sobre el cuadro", fuente: "Filosofía & Co.", url: "https://filco.es/las-meninas-foucault/" },
+                ],
+                tarea: "Elige una imagen tuya publicada en redes (o que alguien te haya hecho) y analízala como si fuera un pequeño autorretrato. En 200–250 palabras, responde: ¿quién decidió cómo apareces?, ¿qué muestras y qué queda fuera del encuadre?, ¿quién dirige la mirada? Relaciona tu análisis con la idea de que, en Las Meninas, el verdadero tema no es la corte sino la mirada.",
+            },
+            {
+                n: 2,
+                titulo: "Goya y el horror",
+                obra: "Francisco de Goya · 1808–1814",
+                nudo: "¿Debe el arte ser político?",
+                lectura: `El 3 de mayo de 1808, Goya pinta un fusilamiento, pero no como se pintaban hasta entonces las escenas de guerra. No hay héroes a caballo, ni banderas, ni gloria. Hay un grupo de hombres anónimos iluminados por un farol en mitad de la noche, frente a un pelotón de soldados que apenas tienen rostro: una hilera de espaldas y bayonetas, una máquina de matar sin culpa individual. En el centro, un hombre con camisa blanca levanta los brazos en un gesto que recuerda a un crucificado, y en el suelo se amontonan ya los cuerpos de quienes han caído antes que él. Goya no celebra una batalla: retrata el instante anterior a una ejecución.
+
+Esa decisión cambia algo en la historia del arte. Por primera vez, el pintor se coloca del lado de las víctimas y no del poder que ordena disparar. La guerra deja de ser una empresa noble y se convierte en lo que es: muerte administrada, sufrimiento sin sentido. Años más tarde, en la serie de grabados Los desastres de la guerra, Goya llevará esa mirada al extremo. Ochenta y dos estampas muestran mutilaciones, hambre, cadáveres y abusos cometidos por los dos bandos, sin distinguir entre buenos y malos. No hay consuelo ni moraleja; solo el testimonio descarnado de lo que los seres humanos son capaces de hacerse.
+
+Muchos críticos ven en estos grabados el nacimiento de algo parecido al reportaje de guerra moderno. Goya trabaja como trabajaría más tarde un fotoperiodista: observa, selecciona un instante y lo fija para que nadie pueda mirar hacia otro lado. Sus imágenes no informan de una fecha ni de un lugar concreto; aspiran a algo más difícil, a que el espectador sienta el horror en su propio cuerpo. Por eso, dos siglos después, siguen pareciéndose a las fotografías que llegan de cualquier conflicto actual.
+
+Los desastres, además, no se publicaron en vida del artista. Eran demasiado incómodos para el poder, y hubo que esperar a 1863, treinta y cinco años después de su muerte, para que vieran la luz. Ese silencio dice mucho: un arte que denuncia molesta, y el poder prefiere que no se vea. Goya lo sabía y grabó igualmente, como si confiara en que algún día esas planchas hablarían.
+
+Queda entonces una pregunta que el propio Goya parece lanzarnos desde el farol encendido de su cuadro. ¿Sirve de algo mostrar el horror? ¿Cambia en algo a quien lo contempla, o solo lo acostumbra a verlo? El arte de Goya no responde: se limita a no apartar la vista, y nos pide que tampoco lo hagamos nosotros.`,
+                lexico: ["el fusilamiento", "el pelotón", "la bayoneta", "el grabado", "la estampa", "el testimonio", "la denuncia", "descarnado", "la mutilación", "el reportaje", "fijar un instante", "incómodo"],
+                comentario: [
+                    "¿En qué se diferencia este fusilamiento de las escenas de guerra que se pintaban antes?",
+                    "¿Qué significa que Goya se coloque «del lado de las víctimas»?",
+                    "¿Por qué en Los desastres de la guerra no se distingue entre buenos y malos?",
+                    "¿Por qué el texto compara a Goya con un fotoperiodista?",
+                    "¿Qué revela el hecho de que los grabados no se publicaran hasta 1863?",
+                ],
+                debate: [
+                    "¿Debe el arte denunciar la injusticia, o esa no es su función?",
+                    "Las imágenes muy crudas, ¿nos hacen reaccionar o terminan por insensibilizarnos?",
+                    "¿Tiene un Estado derecho a censurar una obra que lo incomoda?",
+                    "Vemos imágenes de guerra a diario en el móvil: ¿nos afectan como el cuadro de Goya o ya casi no las miramos?",
+                ],
+                referencias: [
+                    { titulo: "El 3 de mayo de 1808 en Madrid: los fusilamientos", fuente: "Museo Nacional del Prado", url: "https://www.museodelprado.es/aprende/enciclopedia/voz/3-de-mayo-de-1808-en-madrid-los-fusilamientos-de/f0f52ca5-546a-44c4-8da0-f3c2603340b5" },
+                    { titulo: "Goya, ¿precursor del fotoperiodismo?", fuente: "The Conversation", url: "https://theconversation.com/goya-precursor-del-fotoperiodismo-157975" },
+                ],
+                tarea: "Busca una fotografía de prensa actual (de un conflicto, una catástrofe o una injusticia) que te haya impactado. En 200–250 palabras, descríbela y compárala con la mirada de Goya: ¿de qué lado se sitúa quien hizo la imagen?, ¿busca informar, denunciar o conmover?, ¿crees que mirarla sirve de algo? Cita la fuente de la fotografía.",
+            },
+            {
+                n: 3,
+                titulo: "Guernica y la memoria",
+                obra: "Pablo Picasso · 1937",
+                nudo: "¿Sirve el arte para no olvidar?",
+                lectura: `En abril de 1937, durante la Guerra Civil española, aviones alemanes e italianos al servicio del bando sublevado bombardearon durante horas la pequeña localidad vasca de Guernica. No era un objetivo militar: era una población civil en día de mercado. La noticia recorrió el mundo y llegó a París, donde Pablo Picasso tenía el encargo de pintar una obra para el pabellón español de una exposición internacional. En poco más de un mes, casi sin dormir, Picasso transformó aquel encargo en el cuadro antibélico más famoso del siglo XX.
+
+El Guernica no cuenta el bombardeo como lo haría una crónica. No hay aviones, ni bombas, ni fecha. Hay un caballo que relincha de dolor, un toro impasible, una madre que sostiene a su hijo muerto, una mujer que cae entre llamas, una lámpara que ilumina la escena como un ojo. Todo está pintado en blanco, negro y gris, como si fuera una fotografía de periódico ampliada hasta lo monstruoso. Picasso renuncia al color y al detalle realista para quedarse con lo esencial: el grito, el caos, el sufrimiento de los inocentes.
+
+Esa renuncia es precisamente lo que ha hecho del cuadro un símbolo universal. Al no representar un episodio concreto, el Guernica puede representarlos todos. Cada vez que estalla una guerra y la población civil paga el precio, alguien recupera la imagen del caballo herido o de la madre que aúlla. La obra dejó de pertenecer a 1937 para convertirse en un lenguaje común con el que el mundo nombra el horror de la guerra.
+
+El cuadro tiene además una larga historia de exilio. Picasso decidió que no volvería a España mientras durase la dictadura de Franco, y durante décadas el Guernica vivió en un museo de Nueva York, como un emigrante que espera. Solo en 1981, ya en democracia, regresó a Madrid. Su vuelta se vivió como un acto de reparación: el cuadro no solo denunciaba una masacre, sino que se había convertido en parte de la memoria de un país que necesitaba reconciliarse con su pasado.
+
+Hoy se expone en el Museo Reina Sofía, protegido y estudiado hasta el último trazo. Pero su función no es decorativa ni meramente histórica. Sigue funcionando como un recordatorio incómodo, una pregunta que cada generación debe volver a hacerse: ¿qué hacemos con la memoria del dolor? Olvidar parece una forma de traición a las víctimas; recordar sin cesar puede convertirse en un rito vacío si no cambia nada en nosotros.
+
+Quizá ahí esté la verdadera fuerza del Guernica. No nos da lecciones ni señala culpables con el dedo; nos pone delante el sufrimiento y nos deja solos con él. Lo que hagamos después —mirar y olvidar, o mirar y comprometernos— ya no depende del cuadro, sino de nosotros.`,
+                lexico: ["el bombardeo", "la población civil", "el encargo", "el pabellón", "antibélico", "el blanco y negro", "el exilio", "la dictadura", "la reparación", "la memoria histórica", "el símbolo", "impasible"],
+                comentario: [
+                    "¿Por qué el texto subraya que Guernica «no era un objetivo militar»?",
+                    "¿Qué efecto busca Picasso al pintar solo en blanco, negro y gris?",
+                    "¿Por qué el hecho de no representar un episodio concreto convierte al cuadro en símbolo universal?",
+                    "¿Qué significó el regreso del cuadro a España en 1981?",
+                    "Según el texto, ¿qué pregunta nos sigue planteando hoy el Guernica?",
+                ],
+                debate: [
+                    "¿Sirve realmente el arte para que una sociedad no olvide su pasado, o el olvido acaba imponiéndose?",
+                    "Conmemorar las tragedias cada año, ¿mantiene viva la memoria o se vuelve un rito vacío?",
+                    "¿Es legítimo que un país retire o esconda símbolos que recuerdan episodios dolorosos de su historia?",
+                    "¿Qué imágenes de hoy crees que serán el «Guernica» de las guerras actuales?",
+                ],
+                referencias: [
+                    { titulo: "Repensar Guernica — investigación sobre la obra", fuente: "Museo Reina Sofía", url: "https://guernica.museoreinasofia.es/" },
+                    { titulo: "Significado del cuadro Guernica y qué representa", fuente: "Cultura Genial", url: "https://www.culturagenial.com/es/cuadro-guernica-de-pablo-picasso/" },
+                ],
+                tarea: "Piensa en un hecho doloroso de la historia de tu país que se conmemore de alguna forma (un monumento, una fecha, una obra). En 200–250 palabras, explica cómo se recuerda, si crees que esa memoria sigue viva o se ha vuelto rutina, y qué papel juega el arte en mantenerla. Relaciónalo con lo que comentamos sobre el Guernica.",
+            },
+            {
+                n: 4,
+                titulo: "Frida Kahlo: cuerpo e identidad",
+                obra: "Frida Kahlo · 1926–1954",
+                nudo: "¿Se ha convertido Frida en un producto?",
+                lectura: `Pocos rostros son hoy tan reconocibles como el de Frida Kahlo: las cejas unidas, la mirada fija, las flores en el pelo. Aparece en camisetas, tazas, imanes y carcasas de móvil en todo el mundo, muchas veces en manos de gente que no sabría nombrar un solo cuadro suyo. Conviene, por eso, volver al principio, a la mujer que pintó ese rostro una y otra vez por una razón muy concreta: pasó buena parte de su vida en cama.
+
+A los dieciocho años, Frida sufrió un accidente de tranvía que le destrozó la columna y la condenó a decenas de operaciones y a largos periodos de inmovilidad. Empezó a pintar mientras se recuperaba, con un espejo colocado sobre su cama. De ahí nace su tema central: el autorretrato. Frida se pinta a sí misma no por vanidad, sino porque es lo que tiene más cerca y lo que mejor conoce. En sus cuadros muestra su cuerpo abierto, su columna rota, su corazón fuera del pecho, sus abortos y su dolor físico con una franqueza que en su época resultaba casi escandalosa.
+
+Pero su pintura es mucho más que una crónica del sufrimiento. Frida convierte su cuerpo en un territorio donde se cruzan la identidad mexicana, la política y la condición de ser mujer. Viste trajes tradicionales, se rodea de símbolos prehispánicos y reivindica un México popular frente a la influencia europea. Militó en el comunismo, vivió una relación intensa y tormentosa con el muralista Diego Rivera y exploró su propia sexualidad con una libertad poco común. Todo eso está en sus autorretratos, que son a la vez muy íntimos y muy políticos.
+
+El problema llega después. Con el tiempo, esa figura compleja se ha ido simplificando hasta convertirse en un producto. La industria ha extraído de Frida lo más vendible —el color, las flores, la imagen exótica— y ha dejado fuera lo incómodo: el dolor, la enfermedad, la ideología. La mujer que era abanderada del comunismo se vende hoy como marca registrada en tequilas y artículos de belleza. A este fenómeno se le ha llamado, no sin ironía, «fridomanía».
+
+Surge entonces una tensión difícil de resolver. Por un lado, esa popularidad ha llevado a millones de personas a interesarse por una artista latinoamericana, algo poco frecuente. Por otro, el icono comercial amenaza con tapar a la pintora: cuanto más se repite su cara en objetos, menos se miran sus cuadros. La pregunta no es solo sobre Frida, sino sobre lo que el mercado hace con cualquier figura transgresora cuando descubre que vende.
+
+Quizá la mejor manera de hacerle justicia sea exactamente la contraria a comprar otra camiseta: detenerse ante uno de sus autorretratos y sostener la mirada que ella sostuvo, durante años, frente a un espejo y frente al dolor.`,
+                lexico: ["el autorretrato", "la columna vertebral", "la inmovilidad", "la franqueza", "prehispánico", "reivindicar", "transgresor", "la mercantilización", "la marca registrada", "el icono", "la vanidad", "abanderado/a"],
+                comentario: [
+                    "Según el texto, ¿por qué el autorretrato se convierte en el tema central de Frida?",
+                    "¿Qué quiere decir que sus cuadros son «a la vez muy íntimos y muy políticos»?",
+                    "¿Qué elementos de Frida ha conservado la industria y cuáles ha dejado fuera?",
+                    "Explica la ironía que encierra la palabra «fridomanía».",
+                    "¿Qué tensión plantea el texto entre la popularidad de Frida y su obra?",
+                ],
+                debate: [
+                    "¿Está bien que la imagen de un artista se use para vender productos, o eso traiciona su obra?",
+                    "Cuando un símbolo rebelde se vuelve comercial, ¿pierde su fuerza o la difunde más?",
+                    "¿Quién debería decidir cómo se usa la imagen de una figura ya fallecida?",
+                    "¿Conoces algún caso parecido en tu país o tu cultura de alguien convertido en «marca»?",
+                ],
+                referencias: [
+                    { titulo: "La Casa Azul — el museo y su historia", fuente: "Museo Frida Kahlo", url: "https://www.museofridakahlo.org.mx/museo/" },
+                    { titulo: "Por qué Frida Kahlo es mucho más que una artista", fuente: "Infobae", url: "https://www.infobae.com/historias/2026/03/14/por-que-frida-kahlo-es-mucho-mas-que-una-artista-y-como-su-rostro-llego-a-la-cultura-pop/" },
+                ],
+                tarea: "Elige una figura (artista, músico, activista o personaje histórico) cuya imagen se haya convertido en producto comercial en tu país o cultura. En 200–250 palabras, explica qué representaba esa persona y qué se ha conservado o perdido al convertirla en marca. ¿Crees que esa popularidad la honra o la traiciona? Conecta tu reflexión con el caso de Frida.",
+            },
+            {
+                n: 5,
+                titulo: "El muralismo mexicano",
+                obra: "Rivera, Orozco, Siqueiros · 1920–1950",
+                nudo: "¿Arte para el pueblo o adoctrinamiento?",
+                lectura: `Tras la Revolución mexicana, el país necesitaba reinventarse, y lo hizo, entre otras cosas, pintando las paredes. En 1921, el ministro de Educación José Vasconcelos tuvo una idea poco común: en lugar de encerrar el arte en los museos, lo sacaría a la calle. Encargó a un grupo de pintores que cubrieran los muros de los edificios públicos —escuelas, ministerios, palacios— con enormes murales que contaran la historia de México a un pueblo que, en buena parte, no sabía leer. Así nació el muralismo, uno de los movimientos artísticos más influyentes del continente.
+
+Tres nombres destacan sobre los demás, los llamados «tres grandes»: Diego Rivera, José Clemente Orozco y David Alfaro Siqueiros. Sus murales no eran decorativos. Narraban la conquista, la opresión de los indígenas, las luchas campesinas, la Revolución y la promesa de un futuro mejor. Eran lecciones de historia pintadas a gran escala, pensadas para que cualquiera, al cruzar un patio o subir una escalera, recibiera un mensaje claro sobre quién era el pueblo mexicano y de dónde venía.
+
+Hasta aquí, la idea resulta seductora: un arte gratuito, accesible, que devuelve la cultura a la mayoría en lugar de reservarla a una élite. Los propios muralistas lo defendían en su manifiesto, donde declaraban que el arte debía dejar de ser un lujo individual para convertirse en educación y combate. Querían un arte útil, comprometido, al servicio del pueblo.
+
+Pero ahí mismo aparece la sombra. Aquel arte estaba financiado y dirigido por el Estado, y contaba la historia que al Estado le interesaba contar. Los héroes y los villanos estaban repartidos de antemano; el mensaje, casi siempre, reforzaba la legitimidad del nuevo régimen surgido de la Revolución. ¿Dónde termina la educación y dónde empieza la propaganda? Cuando un gobierno paga a unos artistas para que enseñen al pueblo qué debe pensar de su propia historia, la frontera se vuelve borrosa. Algunos historiadores han llegado a señalar en aquellos murales tonos que rozan el adoctrinamiento.
+
+El propio Siqueiros era explícito: para él, el arte y la política eran inseparables, y el arte debía ser difusor y guía de una ideología. No lo ocultaba. Y quizá esa franqueza nos ayude a pensar el problema con calma: tal vez todo arte público lleve dentro un mensaje, y la cuestión no sea si lo tiene, sino si lo confiesa y si nos deja espacio para discutirlo.
+
+Hoy seguimos rodeados de imágenes que el poder o las empresas colocan en el espacio público para moldear lo que pensamos. Los murales mexicanos, monumentales y hermosos, nos obligan a una pregunta incómoda que no ha caducado: ¿puede un arte ser a la vez profundamente bello y profundamente instrumental?, ¿y quién decide la diferencia entre enseñar y dirigir?`,
+                lexico: ["el muro", "el mural", "encargar", "el ministerio", "el manifiesto", "el adoctrinamiento", "la propaganda", "la legitimidad", "el régimen", "comprometido", "instrumental", "la élite"],
+                comentario: [
+                    "¿Qué idea poco común tuvo Vasconcelos en 1921 y con qué fin?",
+                    "¿Por qué los murales se pintaban en edificios públicos y no en museos?",
+                    "Según el texto, ¿qué hacía atractivo el proyecto muralista?",
+                    "¿Dónde sitúa el texto la frontera entre educación y propaganda?",
+                    "¿Qué quería decir Siqueiros al afirmar que el arte debía ser «difusor y guía»?",
+                ],
+                debate: [
+                    "¿Puede un arte pagado por el Estado ser libre, o siempre acaba sirviendo a quien lo paga?",
+                    "¿Dónde está, para ti, la línea entre educar y adoctrinar?",
+                    "El arte del espacio público —murales, monumentos, publicidad—, ¿nos forma o nos manipula?",
+                    "¿Conoces imágenes que en tu país transmitan una idea concreta de la historia o de la nación?",
+                ],
+                referencias: [
+                    { titulo: "México y la Revolución: el muralismo", fuente: "Secretaría de Cultura de México", url: "https://www.cultura.gob.mx/mexico1900-1950/conceptos/detalle/?id=2" },
+                    { titulo: "Los herederos del muralismo mexicano, un siglo después", fuente: "Infobae", url: "https://www.infobae.com/cultura/2022/08/17/los-herederos-del-muralismo-mexicano-un-siglo-despues/" },
+                ],
+                tarea: "Busca una imagen colocada en un espacio público de tu ciudad o país (un mural, un monumento, un cartel oficial o una gran campaña). En 200–250 palabras, descríbela y analiza qué mensaje transmite y a quién beneficia. ¿Te parece que educa, que conmemora o que adoctrina? Relaciónalo con el caso del muralismo mexicano.",
+            },
+            {
+                n: 6,
+                titulo: "Lorca en Nueva York: «La aurora»",
+                obra: "Federico García Lorca · Poeta en Nueva York (1929-1930)",
+                nudo: "¿Qué le hace la gran ciudad al ser humano?",
+                lectura: `En 1929, Federico García Lorca llegó a Nueva York. Venía de una crisis personal y de una Granada de huertas y acequias, y se encontró de golpe con la mayor metrópoli del mundo: rascacielos, multitudes y una enorme maquinaria financiera. El choque fue brutal, y de él nació Poeta en Nueva York, un libro muy distinto a su obra anterior. Aquí no hay gitanos ni romances, sino una ciudad que el poeta vive como un infierno moderno. Dentro de ese libro está «La aurora», el poema que vamos a leer y comentar.
+
+En la poesía de siempre, el amanecer simboliza la esperanza, el comienzo, la luz. Lorca le da la vuelta a ese símbolo. Su amanecer neoyorquino no trae esperanza: llega sobre un paisaje de fango y aguas podridas, entre bandadas de pájaros oscuros, y nadie sale a recibirlo. La ciudad no descansa ni se renueva; simplemente reanuda su rutina. En una de sus imágenes más duras, el dinero aparece como un enjambre que devora a los niños abandonados. La luz, que debería salvar, aquí no salva a nadie.
+
+Lo que Lorca denuncia no es solo una ciudad concreta, sino una forma de vida: la del capitalismo que convierte a las personas en números y no deja sitio para lo humano, lo natural ni lo espiritual. El muchacho de la vega granadina mira Manhattan y ve un mundo sin raíces, donde la gente se mueve como autómatas y la naturaleza ha quedado sepultada bajo el cemento. Es, casi un siglo después, una crítica que resuena en cualquier gran ciudad de hoy.
+
+El poema tiene además una segunda vida que nos interesa especialmente. En 1996, el cantaor granadino Enrique Morente —una de las grandes voces del flamenco del siglo XX— grabó el disco Omega junto al grupo de rock Lagartija Nick. En él puso música a varios poemas de Poeta en Nueva York, entre ellos «La aurora». Así, los versos que Lorca escribió en Manhattan regresaron a Granada convertidos en cante jondo mezclado con guitarras eléctricas. Dos granadinos universales, el poeta y el cantaor, se daban la mano por encima del tiempo.
+
+Por eso esta sesión se enlaza con la siguiente. Hoy leemos «La aurora» como poema y desentrañamos sus imágenes; en la próxima clase la escucharemos en la voz rota de Morente y hablaremos de un flamenco que, como Lorca en Nueva York, se atrevió a salirse de su sitio.
+
+Antes de clase, lee «La aurora» (tienes el texto enlazado más abajo) y, si puedes, escucha la versión de Morente. Fíjate en cómo cada imagen del poema contradice lo que solemos asociar a un amanecer.`,
+                lexico: ["la metrópoli", "el rascacielos", "el fango", "la aurora", "el enjambre", "el autómata", "la explotación", "el cante jondo", "desentrañar", "sepultar", "las raíces", "resonar"],
+                comentario: [
+                    "¿Por qué dice el texto que «La aurora» le da la vuelta al símbolo tradicional del amanecer?",
+                    "¿Qué visión de Nueva York transmite Lorca en el poema?",
+                    "Más allá de una ciudad concreta, ¿qué forma de vida critica Lorca?",
+                    "¿Qué relación establece el texto entre la vega granadina y la mirada sobre Manhattan?",
+                    "¿Qué imágenes del poema te han parecido más impactantes y por qué?",
+                ],
+                debate: [
+                    "¿La gran ciudad deshumaniza, como sugiere Lorca, o también libera y da oportunidades?",
+                    "Casi un siglo después, ¿sigue siendo válida su crítica al dinero y a la prisa?",
+                    "¿Hay lugar para la naturaleza y lo espiritual en una metrópoli moderna?",
+                    "¿Cómo es el amanecer en tu ciudad: se parece más al de Lorca o a la esperanza de siempre?",
+                ],
+                referencias: [
+                    { titulo: "«La aurora»: texto del poema y sus versiones musicales", fuente: "PoeMAS · UNED", url: "https://poemas.uned.es/poema/la-aurora-federico-garcia-lorca/" },
+                    { titulo: "Diez años sin Morente, el amigo de los modernos", fuente: "La Voz del Sur", url: "https://www.lavozdelsur.es/levantaos/diez-anos-sin-morente-amigo-modernos_253315_102.html" },
+                ],
+                tarea: "Lee «La aurora» entera y elige los dos o tres versos que más te golpeen. En 200–250 palabras, explica qué imagen crea Lorca en ellos y qué sensación te producen. Después escucha la versión de Enrique Morente (Omega, 1996): ¿la música refuerza o transforma lo que sentiste al leer? Guarda esta reflexión: la retomamos en la sesión de flamenco.",
+            },
+            {
+                n: 7,
+                titulo: "Flamenco: Morente y «Omega»",
+                obra: "Enrique Morente · Omega (1996)",
+                nudo: "¿El flamenco debe conservarse intacto o reinventarse?",
+                lectura: `En la sesión anterior leímos «La aurora», de Lorca. Hoy la escuchamos cantada y, de paso, entramos en uno de los grandes debates del flamenco. En 1996, el cantaor granadino Enrique Morente publicó Omega, un disco que ponía música a poemas de Poeta en Nueva York y a canciones del cantautor Leonard Cohen, acompañado nada menos que por una banda de rock, Lagartija Nick: guitarras eléctricas, batería atronadora y, a la vez, guitarra flamenca y cante jondo.
+
+El resultado escandalizó al mundo del flamenco. Para los puristas, mezclar el cante con el rock era una traición, casi un sacrilegio. ¿Cómo se atrevía una de las voces más respetadas a profanar la tradición? Morente no se inmutó. Estaba convencido de que el flamenco no es una pieza de museo que haya que conservar bajo un cristal, sino un arte vivo que respira, cambia y se mezcla con lo que tiene alrededor, como hizo desde su origen. Hoy Omega se considera un disco clave, comparable a La leyenda del tiempo de Camarón, otro que en su día fue acusado de lo mismo.
+
+El caso de Morente plantea la pregunta de esta sesión, que recoge y amplía la del flamenco como patrimonio. Una tradición, ¿se protege mejor encerrándola y repitiéndola igual que siempre, o manteniéndola abierta y dejándola evolucionar? Quienes defienden lo primero temen que, si todo se mezcla, lo auténtico se pierda. Quienes defienden lo segundo recuerdan que el propio flamenco nació de la mezcla y que un arte que no cambia, simplemente, se muere.
+
+Aquí conviene volver al estereotipo. El flamenco que se vende al turista —lunares, abanicos, espectáculo de una hora— es precisamente la versión congelada y predecible, la «españolada» convertida en souvenir. Lo de Morente es lo contrario: un flamenco que se arriesga, que dialoga con Lorca y con el rock, que puede incomodar pero que está vivo. Paradójicamente, romper la tradición fue su forma de mantenerla en pie.
+
+Morente, granadino como Lorca, murió en 2010 dejando una huella enorme. Su hija Estrella, que canta en Omega, continúa hoy ese camino. Y aquel poema que Lorca escribió mirando los rascacielos de Nueva York volvió, gracias a la voz de Morente, a sonar en Granada: prueba de que la tradición y la vanguardia no siempre son enemigas; a veces son la misma cosa vista en dos momentos distintos.
+
+Escuchad «La aurora» en su versión de Omega y comparadla con el poema que leísteis. ¿Os parece una traición a Lorca y al flamenco, o la mejor manera de mantenerlos vivos?`,
+                lexico: ["el cantaor", "el cante jondo", "el purista", "la tradición", "la vanguardia", "profanar", "el sacrilegio", "fusionar", "congelado", "arriesgarse", "la huella", "reinventar"],
+                comentario: [
+                    "¿Qué tenía de provocador el disco Omega en 1996?",
+                    "¿Por qué los puristas lo consideraron una traición?",
+                    "¿Cómo entendía Morente el flamenco: como pieza de museo o como arte vivo?",
+                    "Según el texto, ¿qué relación hay entre el flamenco «de souvenir» y la versión de Morente?",
+                    "¿Por qué se dice que «romper la tradición fue su forma de mantenerla en pie»?",
+                ],
+                debate: [
+                    "¿Una tradición se protege mejor repitiéndola igual o dejándola cambiar?",
+                    "¿Quién tiene autoridad para decidir qué es «auténtico» en un arte?",
+                    "Mezclar géneros —flamenco y rock, por ejemplo—, ¿enriquece o desvirtúa?",
+                    "¿Hay en tu cultura una tradición que esté cambiando? ¿Te parece bien o mal?",
+                ],
+                referencias: [
+                    { titulo: "El flamenco — ficha del Patrimonio Inmaterial", fuente: "UNESCO", url: "https://ich.unesco.org/es/RL/el-flamenco-00363" },
+                    { titulo: "Omega (Enrique Morente y Lagartija Nick)", fuente: "La Fonoteca", url: "https://lafonoteca.net/disco/omega_lagartija-nick/" },
+                ],
+                tarea: "Escucha «La aurora» en la versión de Enrique Morente (Omega, 1996) y vuelve al poema de Lorca que leíste. En 200–250 palabras, compara las dos experiencias: ¿qué aporta la música a las palabras?, ¿crees que Morente respeta el poema o lo transforma? Termina con tu postura: ¿es Omega una traición a la tradición o una forma de salvarla?",
+            },
+            {
+                n: 8,
+                titulo: "La Alhambra y el turismo",
+                obra: "Granada nazarí · s. XIII–XV",
+                nudo: "¿Cómo es vivir en una ciudad-museo?",
+                lectura: `La Alhambra es uno de los monumentos más visitados de España. Cada año, millones de personas suben la colina para recorrer sus patios, sus fuentes y sus salas de yeserías, ese palacio nazarí que parece encaje tallado en piedra. Es, con razón, motivo de orgullo para Granada y una de las cumbres del arte islámico en Occidente. Pero detrás de la postal hay una realidad menos amable, y es la que viven cada día quienes habitan a sus pies.
+
+Granada se ha convertido, en buena medida, en una ciudad organizada para el visitante. En barrios históricos como el Albaicín o el Realejo, una cuarta parte de las viviendas son ya pisos turísticos. Donde antes había vecinos y comercios de toda la vida, hoy hay alojamientos de alquiler, taquillas de equipaje y tiendas de recuerdos. Los precios de la vivienda suben, las familias se marchan a los pueblos de alrededor y el barrio, poco a poco, se vacía de vida cotidiana para llenarse de maletas con ruedas.
+
+A este fenómeno se le llama turistificación, y no afecta solo a Granada: lo sufren Venecia, Barcelona, Lisboa y tantas otras ciudades hermosas. La lógica es siempre parecida. El turismo trae dinero y empleo, de modo que parece una bendición; pero, si nadie lo regula, acaba expulsando a los residentes y transformando la ciudad en un decorado. El propio patrimonio sufre: la dirección de la Alhambra ha advertido de que el turismo de masas tiene consecuencias graves para la conservación de los monumentos. Demasiados pies gastan el suelo que vienen a admirar.
+
+Surge entonces una paradoja incómoda. Una ciudad como Granada necesita el turismo para vivir, pero ese mismo turismo amenaza con vaciarla de aquello que la hacía deseable: sus vecinos, su comercio, su vida de calle. Una ciudad sin habitantes deja de ser una ciudad y se convierte en un parque temático, bello pero hueco. ¿Qué sentido tiene conservar las piedras si se expulsa a la gente que les daba sentido?
+
+No hay respuestas fáciles. Prohibir el turismo es absurdo e injusto; dejarlo crecer sin control es suicida. Entre ambos extremos, ayuntamientos y vecinos buscan a tientas un equilibrio: limitar los pisos turísticos, proteger la vivienda, repartir mejor los beneficios. Llegan, casi siempre, cuando buena parte del daño ya está hecho.
+
+La Alhambra seguirá ahí, paciente, como lleva siete siglos. La pregunta no es por ella, sino por la ciudad que la rodea y por todas las que se le parecen. ¿Es posible vivir en un lugar que el mundo entero quiere visitar? ¿O estamos condenados a elegir entre la pobreza sin turistas y la belleza sin vecinos?`,
+                lexico: ["la yesería", "nazarí", "la postal", "el piso turístico", "la turistificación", "la gentrificación", "el residente", "el decorado", "el parque temático", "la conservación", "regular", "vaciarse"],
+                comentario: [
+                    "¿Qué contraste plantea el texto entre la «postal» de la Alhambra y la vida real de Granada?",
+                    "¿Qué es la turistificación y cómo se manifiesta en barrios como el Albaicín?",
+                    "¿Por qué dice el texto que el turismo «parece una bendición» pero puede ser un problema?",
+                    "¿Qué ha advertido la dirección de la Alhambra sobre el turismo de masas?",
+                    "Explica la paradoja final: ¿por qué una ciudad puede «morir de éxito» turístico?",
+                ],
+                debate: [
+                    "¿Debe una ciudad limitar el número de turistas o de pisos turísticos? ¿Cómo?",
+                    "¿Quién tiene más derecho sobre un barrio histórico: sus vecinos o los visitantes que lo sostienen económicamente?",
+                    "¿Has visto en tu país o ciudad un lugar transformado por el turismo, para bien o para mal?",
+                    "¿Se puede conservar un monumento y, a la vez, mantener viva la ciudad que lo rodea?",
+                ],
+                referencias: [
+                    { titulo: "Patronato de la Alhambra y Generalife — sitio oficial", fuente: "Patronato de la Alhambra", url: "https://www.alhambra-patronato.es/" },
+                    { titulo: "«Nadie puede vivir en el Albaicín»: viviendas turísticas en Granada", fuente: "elDiario.es", url: "https://www.eldiario.es/andalucia/granada/nadie-vivir-albaicin-regulacion-viviendas-turistica-granada-abre-brecha-vecinos-propietarios_1_11719132.html" },
+                ],
+                tarea: "Piensa en un lugar de tu país muy visitado por turistas. En 200–250 palabras, describe cómo es y cómo ha cambiado (o podría cambiar) la vida de quienes viven allí a causa del turismo. ¿Qué medidas propondrías para equilibrar las dos cosas? Relaciónalo con lo que comentamos sobre Granada y la Alhambra.",
+            },
+            {
+                n: 9,
+                titulo: "Arte urbano y grafiti",
+                obra: "Banksy y El Niño de las Pinturas",
+                nudo: "¿Vandalismo o arte? Dos formas de pintar la calle.",
+                lectura: `Una pared de la ciudad amanece con una pintada. Para unos es una agresión que hay que borrar cuanto antes; para otros, una obra que merece protegerse. La misma imagen, lecturas opuestas. Ese desacuerdo resume el debate que rodea al arte urbano desde que nació.
+
+El grafiti moderno surgió a finales de los años sesenta en los barrios pobres de Nueva York. Jóvenes, en su mayoría afroamericanos y latinos, empezaron a firmar con su «tag» los vagones del metro: una forma de decir «existo» en una ciudad que los ignoraba. Era ilegal y efímero. Con el tiempo, aquellas firmas se volvieron murales, y nombres como Basquiat o Keith Haring saltaron de la calle a las galerías. El arte urbano empezaba a tomarse en serio.
+
+Su figura más célebre es hoy Banksy, un artista británico que mantiene en secreto su identidad. Sus imágenes, hechas con plantilla en muros de medio mundo, critican la guerra, el consumismo o la hipocresía del poder con un humor ácido. Nacen ilegales en la calle y acaban vendiéndose por millones: el que ayer era un vándalo perseguido es hoy una estrella del mercado del arte.
+
+Frente a él podemos poner a un artista muy distinto y mucho más cercano: Raúl Ruiz (1977), conocido como El Niño de las Pinturas, el grafitero más reconocido de Granada. Empezó de adolescente firmando muros como cualquier otro escritor de grafiti, pero con los años llenó el barrio del Realejo de rostros: caras de niños y adolescentes pintadas con un realismo asombroso, acompañadas de frases y poemas breves, casi como haikus, que hablan de la infancia, la injusticia o la ternura. Sus muros no gritan consignas: conversan en voz baja con quien pasa. Su obra ha viajado por más de veinte países y ha llegado hasta Nueva York, donde dedicó un mural a Federico García Lorca inspirado en Poeta en Nueva York, el mismo libro que leímos hace unas sesiones.
+
+Lo interesante no es comparar sus estilos, sino lo que cada uno significa. Banksy se esconde: borra su nombre y su cara para que solo hable el mensaje, una crítica afilada y universal lanzada desde el anonimato. El Niño de las Pinturas hace lo contrario: da la cara, es un vecino conocido y convierte el muro en un gesto íntimo, en poesía pegada a un barrio concreto. Uno provoca y denuncia; el otro emociona e invita a pensar. Uno apunta al mundo entero; el otro abraza su calle. Y, sin embargo, los dos hacen lo mismo de fondo: sacar el arte del museo, regalarlo a quien pase por allí y plantear, cada uno a su manera, una pregunta incómoda.
+
+Porque esa es la cuestión que sigue sin resolverse: ¿de quién es la pared de una ciudad? Las calles están llenas de imágenes que nadie ha votado —anuncios gigantes, marcas, publicidad que invade la mirada— y, a la vez, se persigue a quien pinta un mensaje en un muro. ¿Dónde acaba el arte y empieza el vandalismo? ¿Importa el permiso, la intención, la belleza? Banksy y El Niño no responden con teorías, sino con muros: nos dejan delante de la pregunta y, como buen arte urbano, se marchan antes del amanecer.`,
+                lexico: ["la pintada", "el grafiti", "el tag", "la plantilla", "efímero", "el anonimato", "la consigna", "hiperrealista", "íntimo", "la zona gris", "el espacio público", "la propiedad"],
+                comentario: [
+                    "¿Dónde y cómo surgió el grafiti moderno, según el texto?",
+                    "¿Qué paradoja señala el texto en el caso de Banksy?",
+                    "¿Qué caracteriza la obra de El Niño de las Pinturas: qué pinta y qué añade a sus muros?",
+                    "El texto compara a Banksy y a El Niño no por su estilo, sino por su significado. ¿En qué se diferencian?",
+                    "¿Qué hacen «de fondo» los dos, a pesar de sus diferencias?",
+                ],
+                debate: [
+                    "¿Pintar un muro sin permiso es arte o un delito? ¿De qué depende?",
+                    "¿Qué te dice más: ocultarse como Banksy o dar la cara y el barrio como El Niño de las Pinturas?",
+                    "¿Por qué aceptamos la publicidad en el espacio público y no el grafiti?",
+                    "¿Hay grafitis o murales en tu ciudad? ¿Los ves como arte o como suciedad?",
+                ],
+                referencias: [
+                    { titulo: "El Niño de las Pinturas (Raúl Ruiz): su obra, Nueva York y Lorca", fuente: "Patrimonio · Universidad de Granada", url: "https://patrimonio.ugr.es/obra-del-mes/sin-titulo-el-nino-de-las-pinturas/" },
+                    { titulo: "Banksy: el arte urbano como protesta social", fuente: "Medialab", url: "https://medialab.news/bansky-el-arte-urbano-como-protesta-social/" },
+                ],
+                tarea: "Fotografía (o recuerda) un grafiti o un mural de tu ciudad. En 200–250 palabras, descríbelo y argumenta si para ti es arte o vandalismo, explicando tus criterios. Después, di a cuál de los dos se parece más en su significado —la denuncia anónima de Banksy o la poesía de barrio de El Niño de las Pinturas— y por qué.",
+            },
+            {
+                n: 10,
+                titulo: "Almodóvar y la imagen de España",
+                obra: "Pedro Almodóvar · 1980–",
+                nudo: "¿Quién define la imagen de un país?",
+                lectura: `Cuando alguien que no ha estado nunca en España imagina el país, ¿qué ve? Quizá toros, sol, flamenco y siesta. O quizá, si ha visto cine, mujeres fuertes al borde de un ataque de nervios, colores saturados, pasiones desbordadas y humor irreverente: el mundo de Pedro Almodóvar. Para buena parte del público extranjero, Almodóvar es España, igual que para otros lo es una bailaora de lunares. ¿Cómo se construye esa imagen y quién decide cuál se impone?
+
+Almodóvar nació y creció en una España rural, gris y católica, bajo la dictadura de Franco. Cuando esta terminó, en los años de la «movida madrileña», su cine estalló como una reacción contra aquella sobriedad: color, libertad sexual, modernidad, exceso. Curiosamente, ese estilo provocó rechazo en España y entusiasmo fuera. Con Mujeres al borde de un ataque de nervios (1988) llegó el reconocimiento internacional, y poco a poco Almodóvar se convirtió en uno de los embajadores culturales del país, en lo que algunos llaman «la marca España».
+
+Lo interesante es que su relación con esa imagen es ambigua. Por un lado, usa elementos muy españoles —el folclore, lo castizo, el melodrama, la religión—, pero los reescribe con ironía, los lleva al kitsch, los pone patas arriba. No repite el cliché: juega con él, lo transforma. Por otro, al hacerlo, crea una nueva imagen de España que también acaba volviéndose tópico: ahora «lo español» puede ser tanto el tricornio como el universo almodovariano.
+
+Esto plantea la pregunta de la sesión. La imagen que el mundo tiene de un país no es neutral ni casual: la construyen las películas, la música, la publicidad turística, los gobiernos con sus campañas. Existe incluso una expresión, «marca país», para ese esfuerzo deliberado por vender una determinada idea de una nación. Pero ¿quién controla ese relato? ¿El Estado, que querría una imagen amable y vendible? ¿Los artistas, que muchas veces muestran lo incómodo? ¿Los propios extranjeros, que eligen qué quieren ver?
+
+El caso de Almodóvar muestra la tensión. A veces ha reforzado clichés; a veces los ha desmontado; a veces ha enfadado a quienes querían una España más «decente» de cara al exterior. Y, sin embargo, ha llevado el español y la cultura española a los grandes festivales del mundo sin renunciar a su idioma ni a su mirada.
+
+Quizá la lección sea que la imagen de un país nunca la define una sola voz. Es siempre una batalla entre relatos: el oficial y el incómodo, el turístico y el artístico, el de dentro y el de fuera. Cada película, cada canción, cada anuncio añade un trazo a un retrato que nunca se termina del todo y en el que rara vez estamos todos de acuerdo.`,
+                lexico: ["el embajador cultural", "la marca país", "castizo", "el kitsch", "el melodrama", "el folclore", "irreverente", "el cliché", "reescribir", "ambiguo", "el relato", "desbordado"],
+                comentario: [
+                    "¿Qué dos imágenes de España contrapone el texto al principio?",
+                    "¿Cómo influyeron el final del franquismo y la «movida» en el cine de Almodóvar?",
+                    "¿De qué manera usa Almodóvar los elementos «españoles»: los repite o los transforma?",
+                    "¿Qué significa la expresión «marca país»?",
+                    "Según el texto, ¿por qué la imagen de un país «nunca la define una sola voz»?",
+                ],
+                debate: [
+                    "¿Quién debería tener más peso al definir la imagen de un país: sus artistas o sus gobiernos?",
+                    "¿Es bueno o malo que un solo cineasta «represente» a todo un país en el extranjero?",
+                    "¿La imagen que el mundo tiene de tu país se parece a la realidad? ¿Quién la ha creado?",
+                    "¿Preferirías una imagen «amable» y turística de tu país o una más honesta aunque incómoda?",
+                ],
+                referencias: [
+                    { titulo: "La riqueza visual del cine de Pedro Almodóvar", fuente: "The Conversation (UGR)", url: "https://theconversation.com/la-riqueza-visual-del-cine-de-pedro-almodovar-113875" },
+                    { titulo: "Por qué Almodóvar es la auténtica Marca España", fuente: "El Español", url: "https://www.elespanol.com/bluper/series/20200114/almodovar-autentica-marca-espana-no-quieran-reconocerlo/459455021_0.html" },
+                ],
+                tarea: "Piensa en la imagen que el resto del mundo tiene de tu país. En 200–250 palabras, describe ese cliché y compáralo con tu experiencia real. ¿Qué películas, música o campañas lo han creado? ¿Hay artistas de tu país que lo desmonten, como hace Almodóvar? Relaciónalo con lo comentado en clase.",
+            },
+            {
+                n: 11,
+                titulo: "Arte, redes e inteligencia artificial",
+                obra: "Imagen generada · s. XXI",
+                nudo: "Autoría, original y copia.",
+                lectura: `Escribes una frase en una aplicación —«un retrato al óleo de una mujer triste bajo la lluvia»— y, en segundos, aparece una imagen que parece pintada por un maestro. No has tocado un pincel ni has movido un dedo más allá del teclado. La pregunta surge de inmediato: esa imagen, ¿es tuya?, ¿es arte?, ¿de quién es?
+
+La inteligencia artificial generativa ha puesto patas arriba ideas que parecían firmes desde hace siglos. Hasta ahora dábamos por hecho que detrás de toda obra había un autor humano: alguien con una intención, una técnica y una mirada. Pero una máquina que produce miles de imágenes a partir de unas palabras no tiene intención ni conciencia. Por eso, en varios países, los tribunales y las oficinas de derechos de autor han decidido que una obra hecha íntegramente por una IA no puede registrarse a nombre de nadie: si no hay autor humano, no hay autoría que proteger.
+
+Pero el asunto se complica enseguida. ¿Y si una persona escribe el texto, elige entre cientos de resultados, los retoca y los combina? ¿Cuánta intervención humana hace falta para que vuelva a haber «autor»? Los casos reales ya están en los tribunales, y las respuestas cambian de un país a otro. La frontera entre crear y encargar se ha vuelto borrosa.
+
+Hay además un problema anterior, y más grave. Estas máquinas han aprendido analizando millones de imágenes hechas por artistas reales, casi siempre sin pedirles permiso ni pagarles nada. Cuando una IA imita el estilo de un ilustrador vivo, ¿lo homenajea o lo roba? Muchos creadores denuncian que su trabajo se ha usado para entrenar la herramienta que ahora amenaza con dejarlos sin empleo. Es lo que algunos llaman extractivismo cultural: tomar el trabajo de muchos para alimentar un producto del que se benefician unos pocos.
+
+Y queda la pregunta más incómoda, la que afecta al valor mismo del arte. Si una imagen bonita se puede generar en segundos y por miles, ¿qué hace especial a una obra? Tal vez descubramos que lo que valorábamos no era solo el resultado —la imagen final—, sino el gesto humano que había detrás: el tiempo, el esfuerzo, la decisión, la vida de alguien volcada en una tela. Una copia perfecta sin autor quizá nos enseñe, por contraste, qué buscábamos en el original.
+
+No se trata de estar a favor o en contra de la tecnología, que ya está aquí y no se irá. Se trata de decidir, como sociedad, qué reglas queremos: cómo proteger a los creadores, cómo distinguir lo humano de lo automático y qué seguimos llamando arte cuando cualquiera puede fabricar imágenes sin fin. La máquina ha respondido a muchas preguntas técnicas; las importantes, las que tienen que ver con qué valoramos, seguimos teniendo que responderlas nosotros.`,
+                lexico: ["la IA generativa", "el algoritmo", "la autoría", "los derechos de autor", "registrar", "la intervención humana", "el extractivismo", "entrenar un modelo", "la copia", "el original", "el gesto", "automático"],
+                comentario: [
+                    "¿Por qué, según el texto, una obra hecha solo por una IA no puede registrarse a nombre de nadie?",
+                    "¿En qué casos vuelve a ser «borrosa» la frontera de la autoría?",
+                    "¿Qué problema plantea el modo en que se han entrenado estas máquinas?",
+                    "¿Qué significa la expresión «extractivismo cultural»?",
+                    "¿Qué sugiere el texto que valorábamos realmente en una obra de arte?",
+                ],
+                debate: [
+                    "Una imagen generada por IA a partir de tu idea, ¿es tuya, de nadie o de la máquina?",
+                    "¿Debería pagarse a los artistas cuyas obras se usan para entrenar a las IA?",
+                    "Si una IA imita el estilo de un artista, ¿lo homenajea o lo roba?",
+                    "¿Cambia el valor de una obra saber que la hizo una máquina y no una persona?",
+                ],
+                referencias: [
+                    { titulo: "La inteligencia artificial frente al arte y los derechos de autor", fuente: "UOC", url: "https://www.uoc.edu/es/news/2025/inteligencia-artificial-apropiacion-indebida-arte-derechos-de-autor" },
+                    { titulo: "Arte, IA y derechos de autor: ¿a quién le pertenecen las obras?", fuente: "Chequeado", url: "https://chequeado.com/investigaciones/arte-inteligencia-artificial-derechos-de-autor-y-copyright-a-quien-le-pertenecen-las-obras/" },
+                ],
+                tarea: "Busca dos imágenes sobre un mismo tema: una hecha por una persona y otra generada por IA (o genera tú una). En 200–250 palabras, compáralas: ¿notas la diferencia?, ¿cuál te emociona más y por qué?, ¿importa quién (o qué) la hizo? Defiende tu postura sobre si una imagen creada por IA puede considerarse arte.",
+            },
+            {
+                n: 12,
+                titulo: "¿De quién es el arte?",
+                obra: "Museos, restitución y acceso",
+                nudo: "Debate de cierre del curso.",
+                lectura: `Llegamos a la última sesión, y lo hacemos con una pregunta que recoge muchas de las anteriores: ¿de quién es el arte? A lo largo del curso hemos visto obras que cambiaban de dueño, de sentido y de lugar. Ahora miramos el sitio donde guardamos casi todo ese arte —el museo— y descubrimos que tampoco él es un lugar neutral.
+
+Los grandes museos europeos están llenos de objetos llegados de muy lejos: esculturas griegas, bronces africanos, momias egipcias, tesoros americanos. Muchos no llegaron comprándolos, sino tomándolos. Los bronces de Benín, por ejemplo, fueron saqueados por tropas británicas en 1897 y repartidos por museos de medio mundo. Los mármoles del Partenón fueron arrancados de Atenas a comienzos del siglo XIX y siguen en Londres. Durante generaciones, estos objetos se exhibieron como trofeos, con una cartela que daba su nombre y su fecha, pero no contaba cómo habían llegado allí.
+
+En los últimos años, los países de origen reclaman cada vez con más fuerza la devolución de lo que les quitaron, y algunos museos han empezado a responder. Francia devolvió obras a Benín y Senegal; Alemania y los Países Bajos han iniciado restituciones; el Vaticano entregó a Atenas fragmentos del Partenón. Otros, como el Museo Británico, se resisten y proponen, a lo sumo, «préstamos». A este movimiento de revisar el pasado colonial de las colecciones se le llama «descolonizar el museo».
+
+El debate es genuino y tiene dos caras. Quienes piden la devolución argumentan que esos objetos forman parte de la identidad de un pueblo y que conservarlos es perpetuar un robo: ningún país debería tener que viajar al extranjero para ver su propio patrimonio. Quienes se resisten responden que los grandes museos universales permiten que cualquiera, en un solo lugar, conozca el arte de toda la humanidad, y que algunas piezas estarían peor protegidas en sus lugares de origen. Hay incluso un punto intermedio: que una adquisición fuera legal según las leyes de su época no la hace, hoy, moralmente aceptable.
+
+Detrás de todo ello late una pregunta que nos acompaña desde la primera sesión, cuando hablábamos de quién tenía derecho a mirar y a representar. El arte, ¿pertenece a quien lo creó, a quien lo posee, al país que lo vio nacer o a toda la humanidad? ¿Es el museo un lugar de conocimiento compartido o un almacén de botín? Probablemente no haya una respuesta única, y por eso vale la pena discutirlo entre todos.
+
+Cerramos el curso como lo empezamos: ante una obra de arte y con más preguntas que certezas. Quizá sea eso lo que mejor hace el arte —y la cultura que hemos recorrido estas doce sesiones—: no darnos respuestas cómodas, sino obligarnos a pensar, a hablar y a escucharnos. Que la conversación siga fuera de clase.`,
+                lexico: ["el museo", "la colección", "el saqueo", "el expolio", "la restitución", "la devolución", "descolonizar", "la cartela", "el botín", "perpetuar", "el préstamo", "universal"],
+                comentario: [
+                    "¿Por qué dice el texto que el museo «tampoco es un lugar neutral»?",
+                    "¿Qué ejemplos de objetos saqueados menciona y cómo llegaron a Europa?",
+                    "¿Qué significa «descolonizar el museo» y qué países han empezado a hacerlo?",
+                    "Resume los dos argumentos enfrentados sobre la devolución.",
+                    "¿Con qué sesión del curso enlaza el texto y por qué?",
+                ],
+                debate: [
+                    "¿Deben los museos devolver las obras que se llevaron en contextos coloniales?",
+                    "¿Es mejor ver el arte de toda la humanidad reunido en un gran museo o repartido en sus países de origen?",
+                    "Que algo fuera legal en su época, ¿lo hace justo hoy?",
+                    "De todo lo que hemos visto en el curso: el arte, ¿de quién es?",
+                ],
+                referencias: [
+                    { titulo: "Cómo descolonizar un museo: de revisar el colonialismo a devolver lo robado", fuente: "Newtral", url: "https://www.newtral.es/descolonizar-museo/20240125/" },
+                    { titulo: "Descolonizar el arte: Europa y España frente a la restitución", fuente: "Artisting", url: "https://artisting.es/descolonizar-el-arte-europa-y-espana-frente-a-la-restitucion-de-obras-coloniales/" },
+                ],
+                tarea: "Elige la sesión del curso que más te haya marcado. En 250–300 palabras, explica por qué, qué aprendiste y cómo ha cambiado tu manera de mirar el arte o la sociedad. Termina respondiendo, con tu propia voz, a la pregunta que cierra el curso: ¿de quién es el arte?",
+            },
+        ];
+
+        // Renderizar las tarjetas de sesión
+        const debatesGrid = document.querySelector('.debates-grid');
+        debatesGrid.innerHTML = DEBATES_C1.map((s, i) => `
+            <div class="debate-card" onclick="showSession(${s.n})" style="animation: fadeInUp 0.5s ease-out ${i * 0.05}s both;">
+                <div class="debate-number">${String(s.n).padStart(2, '0')}</div>
+                <div class="debate-title">${s.titulo}</div>
+                <div class="debate-work">${s.obra}</div>
+                <div class="debate-theme">${s.nudo}</div>
+            </div>
+        `).join('');
+
+        // Función para mostrar una sesión específica
+        function showSession(n) {
+            const session = DEBATES_C1.find(s => s.n === n);
+            if (!session) return;
+
+            const container = document.querySelector('.debates-container');
+            const idx = n - 1;
+            const anterior = idx > 0 ? idx - 1 : null;
+            const siguiente = idx < DEBATES_C1.length - 1 ? idx + 1 : null;
+
+            // Guardar el contenido original
+            if (!container.dataset.originalContent) {
+                container.dataset.originalContent = container.innerHTML;
+            }
+
+            container.innerHTML = `
+                <div class="debate-detail">
+                    <button class="back-link" onclick="backToGrid()">← Índice del curso</button>
+
+                    <header class="session-header">
+                        <span class="session-number">Sesión ${String(session.n).padStart(2, '0')}</span>
+                        <h1 class="session-title">${session.titulo}</h1>
+                        <p class="session-work">${session.obra}</p>
+                    </header>
+
+                    <div class="debate-section">
+                        <div class="debate-section-header">
+                            <span class="debate-badge" style="color: #1C1814; border-color: #1C1814;">Lectura</span>
+                            <span style="font-size: .8rem; color: #5A5043; font-style: italic;">≈ 15 min</span>
+                            <hr class="debate-divider" />
+                        </div>
+                        <div class="debate-reading">
+                            ${session.lectura.split('\n\n').map(p => `<p>${p}</p>`).join('')}
+                        </div>
+                        <div class="debate-vocab">
+                            ${session.lexico.map(w => `<span class="debate-vocab-item">${w}</span>`).join('')}
+                        </div>
+                    </div>
+
+                    <div class="debate-section">
+                        <div class="debate-section-header">
+                            <span class="debate-badge" style="color: #27384B; border-color: #27384B;">Comentario del texto</span>
+                            <span style="font-size: .8rem; color: #5A5043; font-style: italic;">≈ 15 min</span>
+                            <hr class="debate-divider" />
+                        </div>
+                        <ol class="debate-questions">
+                            ${session.comentario.map(q => `
+                                <li>
+                                    <span class="question-number" style="color: #27384B;">${session.comentario.indexOf(q) + 1}</span>
+                                    <span class="question-text">${q}</span>
+                                </li>
+                            `).join('')}
+                        </ol>
+                    </div>
+
+                    <div class="debate-section">
+                        <div class="debate-section-header">
+                            <span class="debate-badge" style="color: #B23A22; border-color: #B23A22;">Debate</span>
+                            <span style="font-size: .8rem; color: #5A5043; font-style: italic;">≈ 25 min</span>
+                            <hr class="debate-divider" />
+                        </div>
+                        <p class="debate-theme-question">${session.nudo}</p>
+                        <ol class="debate-questions">
+                            ${session.debate.map(q => `
+                                <li>
+                                    <span class="question-number" style="color: #B23A22;">${session.debate.indexOf(q) + 1}</span>
+                                    <span class="question-text">${q}</span>
+                                </li>
+                            `).join('')}
+                        </ol>
+                        ${session.referencias ? `
+                            <div class="debate-references">
+                                <div class="debate-references-title">Para preparar el debate</div>
+                                <ul>
+                                    ${session.referencias.map(r => `
+                                        <li>
+                                            <a href="${r.url}" target="_blank" rel="noreferrer">${r.titulo}</a>
+                                            <span> — ${r.fuente}</span>
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <div class="debate-section">
+                        <div class="debate-section-header">
+                            <span class="debate-badge" style="color: #1C1814; border-color: #1C1814;">Tarea para casa</span>
+                            <span style="font-size: .8rem; color: #5A5043; font-style: italic;">producción escrita</span>
+                            <hr class="debate-divider" />
+                        </div>
+                        <div class="debate-task">
+                            ${session.tarea}
+                        </div>
+                    </div>
+
+                    <hr class="debate-divider" style="margin: 10px 0 26px;" />
+                    <div class="session-nav">
+                        <button ${anterior === null ? 'disabled' : ''} onclick="showSession(${anterior + 1})">
+                            ${anterior !== null ? `← ${DEBATES_C1[anterior].titulo}` : ''}
+                        </button>
+                        <button ${siguiente === null ? 'disabled' : ''} onclick="showSession(${siguiente + 1})">
+                            ${siguiente !== null ? `${DEBATES_C1[siguiente].titulo} →` : ''}
+                        </button>
+                    </div>
+
+                    <div class="nav-spacing"></div>
+                </div>
+            `;
+
+            window.scrollTo(0, 0);
+        }
+
+        // Función para volver al grid
+        function backToGrid() {
+            const container = document.querySelector('.debates-container');
+            if (container.dataset.originalContent) {
+                container.innerHTML = container.dataset.originalContent;
+                delete container.dataset.originalContent;
+
+                // Re-renderizar las tarjetas
+                const debatesGrid = document.querySelector('.debates-grid');
+                debatesGrid.innerHTML = DEBATES_C1.map((s, i) => `
+                    <div class="debate-card" onclick="showSession(${s.n})" style="animation: fadeInUp 0.5s ease-out ${i * 0.05}s both;">
+                        <div class="debate-number">${String(s.n).padStart(2, '0')}</div>
+                        <div class="debate-title">${s.titulo}</div>
+                        <div class="debate-work">${s.obra}</div>
+                        <div class="debate-theme">${s.nudo}</div>
+                    </div>
+                `).join('');
+            }
+
+            window.scrollTo(0, 0);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // SISTEMA DE AUTENTICACIÓN Y SUBMISSIONS PARA CURSO C1
+        // ═══════════════════════════════════════════════════════════════
+
+        // Verificar autenticación al cargar
+        let currentUser = null;
+        try {
+            // Intentar obtener usuario del localStorage
+            const userStr = localStorage.getItem('pe_c2_currentUser');
+            if (userStr) {
+                currentUser = JSON.parse(userStr);
+                console.log('✅ Usuario autenticado encontrado:', currentUser.name);
+            }
+        } catch (e) {
+            console.warn('❌ Error al obtener usuario:', e);
+        }
+
+        if (currentUser && currentUser.email) {
+            // Usuario autenticado - mostrar mensaje de bienvenida
+            console.log('✅ Usuario autenticado - email:', currentUser.email);
+
+            // Mostrar mensaje de bienvenida
+            const welcomeDiv = document.getElementById('c1-user-welcome');
+            if (welcomeDiv) {
+                welcomeDiv.style.display = 'block';
+                welcomeDiv.innerHTML = `
+                    <div class="card" style="background: linear-gradient(135deg, rgba(178,58,34,.1), rgba(39,56,75,.1)); border-left: 4px solid #B23A22; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <div style="font-size: 2rem;">👋</div>
+                                <div>
+                                    <h3 style="margin: 0 0 4px 0; color: var(--tinta);">¡Hola, ${currentUser.name}!</h3>
+                                    <p style="margin: 0; font-size: .9rem; color: #5A5043;">Bienvenido/a al curso C1 - Arte y Sociedad</p>
+                                </div>
+                            </div>
+                            <button onclick="window.location.reload()" class="btn btn-sm btn-outline" style="background: rgba(255,255,255,0.2); color: white; border-color: rgba(255,255,255,0.4);">
+                                🔄 Recargar página
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Modificar la función showSession para añadir formulario de envío
+            const originalShowSession = window.showSession;
+            window.showSession = function(n) {
+                originalShowSession(n);
+
+                // Añadir botón prominente de envío de tareas
+                setTimeout(() => {
+                    const taskSection = document.querySelector('.debate-task');
+                    if (taskSection) {
+                        const submitButtonHTML = `
+                            <div style="margin: 32px 0 20px 0; text-align: center; background: rgba(178,58,34,.15); border-radius: 8px; padding: 24px;">
+                                <h4 style="margin: 0 0 16px 0; color: var(--tinta);">¿Ya escribiste tu tarea?</h4>
+                                <button onclick="PE.C1Submissions.showSubmissionForm(${n})" class="btn btn-accent" style="font-size: 1.1rem; padding: 16px 32px; min-width: 200px;">
+                                    📝 Enviar esta tarea
+                                </button>
+                                <p style="margin-top: 12px; color: #5A5043; font-size: .9rem;">
+                                    ${DEBATES_C1[n - 1].tarea.split('.')[0].substring(0, 100)}...
+                                </p>
+                            </div>
+                        `;
+                        taskSection.insertAdjacentHTML('afterend', submitButtonHTML);
+                    }
+                }, 100);
+            };
+        } else {
+            // Usuario no autenticado - mostrar mensaje de registro
+            console.log('Usuario no autenticado');
+
+            setTimeout(() => {
+                const debatesGrid = document.querySelector('.debates-content');
+                if (debatesGrid) {
+                    const authMessage = `
+                        <div class="card" style="max-width: 760px; margin: 40px auto; background: linear-gradient(135deg, #B23A22, #27384B); color: white; border-radius: 8px; padding: 32px; text-align: center;">
+                            <h2 style="margin: 0 0 16px 0;">🔐 Regístrate para enviar tareas</h2>
+                            <p style="margin: 0 0 24px 0; opacity: 0.9;">
+                                Para enviar tus tareas del curso C1, necesitas estar registrado.
+                                Usa el código <strong>C1-2026-ARTE</strong> para inscribirte.
+                            </p>
+                            <div style="display: flex; gap: 16px; justify-content: center;">
+                                <a href="#" class="btn btn-outline-white">Registrarse</a>
+                                <a href="#" class="btn btn-accent">Iniciar sesión</a>
+                            </div>
+                        </div>
+                    `;
+                    debatesGrid.insertAdjacentHTML('beforebegin', authMessage);
+                }
+            }, 100);
+        }
+
+        // Función para cargar envíos anteriores del curso C1
+        async function loadC1Submissions(sessionNum) {
+            try {
+                const submissions = await PE.API.get(`/submissions?session_id=C1-${sessionNum}`);
+                const container = document.getElementById(`c1-submissions-${sessionNum}`);
+
+                if (!container) return;
+
+                if (submissions && submissions.length > 0) {
+                    container.innerHTML = `
+                        <h4 style="margin: 0 0 12px 0; font-size: 1rem; color: var(--tinta);">Tus envíos anteriores:</h4>
+                        ${submissions.map(sub => `
+                            <div style="background: rgba(255,255,255,.8); border-left: 3px solid ${sub.status === 'reviewed' ? '#27384B' : '#B23A22'}; padding: 12px; margin-bottom: 8px; border-radius: 4px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <div style="font-size: .85rem; color: #5A5043;">${new Date(sub.created_at).toLocaleDateString('es-ES')}</div>
+                                        <div style="font-size: .9rem; color: var(--tinta);">${sub.word_count || 0} palabras</div>
+                                    </div>
+                                    <span class="badge" style="background: ${sub.status === 'reviewed' ? '#27384B' : '#B23A22'}; color: white; padding: 4px 8px; border-radius: 12px; font-size: .75rem;">
+                                        ${sub.status === 'reviewed' ? 'Revisado' : 'Pendiente'}
+                                    </span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    `;
+                } else {
+                    container.innerHTML = '<p style="color: #5A5043; font-style: italic;">No tienes envíos anteriores para esta sesión.</p>';
+                }
+            } catch (error) {
+                console.error('Error al cargar envíos:', error);
+            }
+        }
+
+        // Sistema de envío de tareas para curso C1
+        window.PE.C1Submissions = {
+            currentSession: null,
+
+            showSubmissionForm(sessionNum) {
+                this.currentSession = sessionNum;
+                const session = DEBATES_C1[sessionNum - 1];
+
+                // Crear modal de envío
+                const modalHTML = `
+                    <div id="c1-submission-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.7); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px;">
+                        <div style="background: white; border-radius: 8px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 32px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                                <h3 style="margin: 0; font-family: 'Fraunces', serif;">Enviar tarea - Sesión ${sessionNum}</h3>
+                                <button onclick="PE.C1Submissions.closeModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #5A5043;">&times;</button>
+                            </div>
+
+                            <p style="margin: 0 0 20px 0; color: #5A5043; font-style: italic;">
+                                ${session.tarea.split('.')[0].substring(0, 150)}...
+                            </p>
+
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--tinta);">Tu respuesta:</label>
+                                <textarea
+                                    id="c1-submission-text"
+                                    class="form-control"
+                                    rows="12"
+                                    placeholder="Escribe aquí tu respuesta..."
+                                    style="width: 100%; padding: 12px; border: 1px solid rgba(28,24,20,.2); border-radius: 4px; font-family: 'Spectral', Georgia, serif; font-size: 1rem; line-height: 1.6; resize: vertical;"
+                                ></textarea>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                                    <span style="font-size: .85rem; color: #5A5043;">Palabras: <span id="c1-word-count">0</span></span>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 12px;">
+                                <button type="button" onclick="PE.C1Submissions.saveDraft()" class="btn btn-secondary" style="flex: 1;">
+                                    💾 Guardar borrador
+                                </button>
+                                <button type="button" onclick="PE.C1Submissions.submitTask()" class="btn btn-primary" style="flex: 2;">
+                                    📤 Enviar tarea
+                                </button>
+                            </div>
+
+                            <div id="c1-submission-history" style="margin-top: 24px;">
+                                <!-- Historial de envíos -->
+                            </div>
+
+                            <div style="text-align: center; margin-top: 20px;">
+                                <button onclick="PE.C1Submissions.closeModal()" class="btn btn-outline">
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Añadir modal al DOM
+                const modalDiv = document.createElement('div');
+                modalDiv.innerHTML = modalHTML;
+                document.body.appendChild(modalDiv);
+
+                // Inicializar contador de palabras
+                const textarea = document.getElementById('c1-submission-text');
+                const wordCount = document.getElementById('c1-word-count');
+                if (textarea && wordCount) {
+                    textarea.addEventListener('input', () => {
+                        const words = textarea.value.trim().split(/\s+/).filter(w => w.length > 0).length;
+                        wordCount.textContent = words;
+                    });
+
+                    // Cargar borrador anterior si existe
+                    this.loadDraft(sessionNum);
+                }
+
+                // Cargar envíos anteriores
+                this.loadSubmissions(sessionNum);
+            },
+
+            closeModal() {
+                const modal = document.getElementById('c1-submission-modal');
+                if (modal) {
+                    modal.remove();
+                }
+            },
+
+            async saveDraft() {
+                const textarea = document.getElementById('c1-submission-text');
+                if (!textarea || !this.currentSession) return;
+
+                const content = textarea.value.trim();
+                if (!content) {
+                    alert('Escribe algo antes de guardar');
+                    return;
+                }
+
+                // Guardar en localStorage
+                localStorage.setItem(`c1-draft-${this.currentSession}`, content);
+
+                // Si hay API, intentar guardar también en el servidor
+                try {
+                    if (window.PE && window.PE.API) {
+                        const words = content.split(/\s+/).filter(w => w.length > 0).length;
+                        const formData = {};
+                        formData.session_id = `C1-${this.currentSession}`;
+                        formData.activity_id = `tarea-sesion-${this.currentSession}`;
+                        formData.activity_title = `Tarea - Sesión ${this.currentSession}`;
+                        formData.content = content;
+                        formData.word_count = words;
+
+                        await window.PE.API.post('/drafts', formData);
+                        alert('✅ Borrador guardado en el servidor');
+                    }
+                } catch (error) {
+                    console.error('Error al guardar en servidor:', error);
+                    alert('✅ Borrador guardado localmente');
+                }
+            },
+
+            async submitTask() {
+                const textarea = document.getElementById('c1-submission-text');
+                if (!textarea || !this.currentSession) return;
+
+                const content = textarea.value.trim();
+                if (!content) {
+                    alert('Escribe tu respuesta antes de enviar');
+                    return;
+                }
+
+                const words = content.split(/\s+/).filter(w => w.length > 0).length;
+
+                if (words < 150) {
+                    alert('La tarea debe tener al menos 150 palabras');
+                    return;
+                }
+
+                if (!confirm(`¿Enviar tarea (${words} palabras)?`)) {
+                    return;
+                }
+
+                try {
+                    const formData = {};
+                    formData.activity_id = `tarea-sesion-${this.currentSession}`;
+                    formData.activity_title = `Tarea - Sesión ${this.currentSession}`;
+                    formData.content = content;
+                    formData.word_count = words;
+
+                    const response = await window.PE.API.post('/submissions', formData);
+
+                    if (response.success || response.id) {
+                        alert('🎉 ¡Tarea enviada correctamente!');
+                        this.closeModal();
+                        // Limpiar localStorage
+                        localStorage.removeItem(`c1-draft-${this.currentSession}`);
+                    } else {
+                        throw new Error(response.error || 'Error al enviar tarea');
+                    }
+                } catch (error) {
+                    console.error('Error al enviar tarea:', error);
+                    alert('❌ Error al enviar tarea: ' + error.message);
+                }
+
+            loadDraft(sessionNum) {
+                const draft = localStorage.getItem(`c1-draft-${sessionNum}`);
+                const textarea = document.getElementById('c1-submission-text');
+                if (draft && textarea) {
+                    textarea.value = draft;
+                    // Actualizar contador
+                    const words = draft.split(/\s+/).filter(w => w.length > 0).length;
+                    const wordCount = document.getElementById('c1-word-count');
+                    if (wordCount) wordCount.textContent = words;
+                }
+            },
+
+            async loadSubmissions(sessionNum) {
+                try {
+                    const submissions = await window.PE.API.get(`/submissions?session_id=C1-${sessionNum}`);
+                    const container = document.getElementById('c1-submission-history');
+
+                    if (!container || !submissions || submissions.length === 0) {
+                        return;
+                    }
+
+                    container.innerHTML = `
+                        <h4 style="margin: 0 0 12px 0; font-size: 1rem;">Tus envíos anteriores:</h4>
+                        ${submissions.map(sub => `
+                            <div style="background: rgba(28,24,20,.05); border-left: 3px solid ${sub.status === 'reviewed' ? '#27384B' : '#B23A22'}; padding: 12px; margin-bottom: 8px; border-radius: 4px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <div style="font-size: .85rem; color: #5A5043;">${new Date(sub.created_at).toLocaleDateString('es-ES')}</div>
+                                        <div style="font-size: .9rem; color: var(--tinta);">${sub.word_count || 0} palabras</div>
+                                    </div>
+                                    <span class="badge" style="background: ${sub.status === 'reviewed' ? '#27384B' : '#B23A22'}; color: white; padding: 4px 8px; border-radius: 12px; font-size: .75rem;">
+                                        ${sub.status === 'reviewed' ? 'Revisado' : 'Pendiente'}
+                                    </span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    `;
+                } catch (error) {
+                    console.error('Error al cargar envíos:', error);
+                }
+            }
+        };
+
+        // Función para guardar borrador del curso C1
+        async function saveC1Draft(sessionNum) {
+            const textarea = document.getElementById(`c1-content-${sessionNum}`);
+            if (!textarea) return;
+
+            const content = textarea.value.trim();
+            if (!content) {
+                PE.UI.notify('Escribe algo antes de guardar', 'warning');
+                return;
+            }
+
+            const words = content.split(/\s+/).filter(w => w.length > 0).length;
+            const formData = {};
+            formData.session_id = `C1-${sessionNum}`;
+            formData.activity_id = `tarea-sesion-${sessionNum}`;
+            formData.activity_title = `Tarea para casa - Sesión ${sessionNum}`;
+            formData.content = content;
+            formData.word_count = words;
+
+            try {
+                PE.UI.notify('Guardando borrador...', 'info');
+
+                const response = await PE.API.post('/drafts', formData);
+
+                if (response.success || response.id) {
+                    PE.UI.notify('✅ Borrador guardado correctamente', 'success');
+                } else {
+                    throw new Error(response.error || 'Error al guardar');
+                }
+            } catch (error) {
+                console.error('Error al guardar borrador:', error);
+                PE.UI.notify('❌ Error al guardar borrador', 'error');
+            }
+        }
+
+        // Función para inicializar el formulario de envío del curso C1
+        function initC1SubmissionForm(sessionNum) {
+            const form = document.getElementById(`c1-task-form-${sessionNum}`);
+            if (!form) return;
+
+            // Guardar automático cada 30 segundos
+            let autoSaveInterval;
+            const textarea = document.getElementById(`c1-content-${sessionNum}`);
+
+            if (textarea) {
+                autoSaveInterval = setInterval(() => {
+                    const content = textarea.value.trim();
+                    if (content.length > 50) { // Solo guardar si hay contenido suficiente
+                        saveC1Draft(sessionNum);
+                        console.log('Autoguardado - Sesión', sessionNum);
+                    }
+                }, 30000); // 30 segundos
+            }
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                clearInterval(autoSaveInterval); // Detener autoguardado al enviar
+
+                const content = textarea.value.trim();
+                if (!content) {
+                    PE.UI.notify('Escribe tu respuesta antes de enviar', 'warning');
+                    return;
+                }
+
+                const words = content.split(/\s+/).filter(w => w.length > 0).length;
+
+                // Validar longitud mínima
+                if (words < 150) {
+                    PE.UI.notify('La tarea debe tener al menos 150 palabras', 'warning');
+                    return;
+                }
+
+                const formData = {};
+                formData.session_id = `C1-${sessionNum}`;
+                formData.activity_id = `tarea-sesion-${sessionNum}`;
+                formData.activity_title = `Tarea para casa - Sesión ${sessionNum}`;
+                formData.content = content;
+                formData.word_count = words;
+
+                try {
+                    PE.UI.notify('Enviando tarea...', 'info');
+
+                    const response = await PE.API.post('/submissions', formData);
+
+                    if (response.success || response.id) {
+                        PE.UI.notify('🎉 ¡Tarea enviada correctamente!', 'success');
+
+                        // Limpiar textarea
+                        textarea.value = '';
+                        document.getElementById(`word-count-${sessionNum}`).textContent = '0';
+
+                        // Recargar envíos
+                        await loadC1Submissions(sessionNum);
+                    } else {
+                        throw new Error(response.error || 'Error al enviar tarea');
+                    }
+                } catch (error) {
+                    console.error('Error al enviar tarea:', error);
+                    PE.UI.notify('❌ Error al enviar tarea: ' + error.message, 'error');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
