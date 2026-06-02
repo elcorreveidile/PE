@@ -4,6 +4,14 @@
   "trailingSlash": false,
   "rewrites": [
     {
+      "source": "/tertulias",
+      "destination": "/tertulias/index.html"
+    },
+    {
+      "source": "/tertulias/:path*",
+      "destination": "/tertulias/:path*.html"
+    },
+    {
       "source": "/debates",
       "destination": "/debates/index.html"
     },
